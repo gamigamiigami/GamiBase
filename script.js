@@ -1,7 +1,7 @@
 const FLOATIES = ["⭐", "🎈", "✨", "🌈", "💫", "🎀"];
 
 function spawnFloaties() {
-  const count = 14;
+  const count = 10;
   for (let i = 0; i < count; i++) {
     const el = document.createElement("div");
     el.className = "floaty";
@@ -9,138 +9,124 @@ function spawnFloaties() {
     el.style.left = Math.random() * 100 + "vw";
     el.style.animationDuration = 10 + Math.random() * 14 + "s";
     el.style.animationDelay = -Math.random() * 20 + "s";
-    el.style.fontSize = 1.4 + Math.random() * 2 + "rem";
+    el.style.fontSize = 1.2 + Math.random() * 1.6 + "rem";
     document.body.appendChild(el);
   }
 }
 
-function render(filterCategory, searchText) {
-  const main = document.getElementById("main-content");
-  main.innerHTML = "";
+function cardHTML(item, meta) {
+  const tags = (item.tags || []).map((t) => `<span class="tag">#${t}</span>`).join("");
+  const zip = item.zip
+    ? `<a class="zip-btn" href="${item.zip.url}" download onclick="event.stopPropagation()">📦 ${item.zip.label || "ダウンロード"}</a>`
+    : "";
+  return `
+    <a class="card" href="${item.url}" target="_blank" rel="noopener noreferrer">
+      <div class="emoji">${item.emoji || meta.emoji}</div>
+      <h3>${item.title}</h3>
+      <p class="desc">${item.description || ""}</p>
+      <div class="tag-row">${tags}</div>
+      <span class="visit" style="color:${meta.color}">サイトへ行く →</span>
+      ${zip}
+    </a>
+  `;
+}
 
-  const categories = Object.keys(CATEGORY_META).filter(
-    (c) => filterCategory === "all" || filterCategory === c
-  );
+function renderFolders() {
+  const grid = document.getElementById("folder-grid");
+  grid.innerHTML = "";
 
-  const q = (searchText || "").trim().toLowerCase();
-  let anyResult = false;
+  Object.entries(CATEGORY_META).forEach(([key, meta]) => {
+    const count = SITE_DATA.filter((d) => d.category === key).length;
+    const folder = document.createElement("button");
+    folder.className = "folder";
+    folder.style.setProperty("--folder-color", meta.color);
+    folder.innerHTML = `
+      <span class="folder-icon">${meta.emoji}</span>
+      <span class="folder-label">${meta.label}</span>
+      <span class="folder-count">${count}件</span>
+    `;
+    folder.addEventListener("click", () => openFolder(key));
+    grid.appendChild(folder);
+  });
+}
 
-  categories.forEach((cat) => {
-    const meta = CATEGORY_META[cat];
-    let items = SITE_DATA.filter((d) => d.category === cat);
+function openFolder(catKey) {
+  const meta = CATEGORY_META[catKey];
+  const items = SITE_DATA.filter((d) => d.category === catKey);
 
-    if (q) {
-      items = items.filter((d) => {
-        const hay = [d.title, d.description, ...(d.tags || [])].join(" ").toLowerCase();
-        return hay.includes(q);
-      });
-    }
+  document.getElementById("modal-title").innerHTML = `${meta.emoji} ${meta.label}`;
+  const content = document.getElementById("modal-content");
 
-    if (items.length === 0) return;
-    anyResult = true;
+  if (items.length === 0) {
+    content.innerHTML = `<div class="empty-msg">まだ何もないよ、これから増やそう！</div>`;
+  } else {
+    content.innerHTML = `<div class="card-grid">${items.map((i) => cardHTML(i, meta)).join("")}</div>`;
+  }
 
-    const section = document.createElement("section");
-    section.className = "category-section";
+  const overlay = document.getElementById("modal-overlay");
+  overlay.hidden = false;
+  requestAnimationFrame(() => overlay.classList.add("open"));
+}
 
-    const heading = document.createElement("h2");
-    heading.className = "category-heading";
-    heading.innerHTML = `<span class="badge" style="background:${meta.color}">${meta.emoji}</span> ${meta.label}`;
-    section.appendChild(heading);
+function closeModal() {
+  const overlay = document.getElementById("modal-overlay");
+  overlay.classList.remove("open");
+  setTimeout(() => { overlay.hidden = true; }, 200);
+}
 
-    const grid = document.createElement("div");
-    grid.className = "card-grid";
+function runSearch(q) {
+  const resultsWrap = document.getElementById("search-results");
+  const resultsContent = document.getElementById("search-results-content");
+  const stage = document.querySelector(".stage");
 
-    items.forEach((item, idx) => {
-      const card = document.createElement("a");
-      card.className = "card";
-      card.href = item.url;
-      card.target = "_blank";
-      card.rel = "noopener noreferrer";
-      card.style.animationDelay = idx * 0.05 + "s";
+  const query = q.trim().toLowerCase();
+  if (!query) {
+    resultsWrap.hidden = true;
+    stage.style.display = "";
+    return;
+  }
 
-      const tags = (item.tags || [])
-        .map((t) => `<span class="tag">#${t}</span>`)
-        .join("");
+  stage.style.display = "none";
+  resultsWrap.hidden = false;
 
-      card.innerHTML = `
-        <div class="emoji">${item.emoji || meta.emoji}</div>
-        <h3>${item.title}</h3>
-        <p class="desc">${item.description || ""}</p>
-        <div class="tag-row">${tags}</div>
-        <span class="visit" style="color:${meta.color}">サイトへ行く →</span>
-      `;
-
-      if (item.zip) {
-        const zipBtn = document.createElement("a");
-        zipBtn.className = "zip-btn";
-        zipBtn.href = item.zip.url;
-        zipBtn.download = "";
-        zipBtn.textContent = "📦 " + (item.zip.label || "ダウンロード");
-        zipBtn.addEventListener("click", (e) => e.stopPropagation());
-        card.appendChild(zipBtn);
-      }
-
-      grid.appendChild(card);
+  let html = "";
+  Object.entries(CATEGORY_META).forEach(([key, meta]) => {
+    const items = SITE_DATA.filter((d) => {
+      if (d.category !== key) return false;
+      const hay = [d.title, d.description, ...(d.tags || [])].join(" ").toLowerCase();
+      return hay.includes(query);
     });
-
-    section.appendChild(grid);
-    main.appendChild(section);
+    if (items.length === 0) return;
+    html += `
+      <section class="category-section">
+        <h2 class="category-heading"><span class="badge" style="background:${meta.color}">${meta.emoji}</span> ${meta.label}</h2>
+        <div class="card-grid">${items.map((i) => cardHTML(i, meta)).join("")}</div>
+      </section>
+    `;
   });
 
-  if (!anyResult) {
-    main.innerHTML = `<div class="empty-msg">🔍 見つからなかったよ…！ 別のキーワードを試してね</div>`;
-  }
+  resultsContent.innerHTML = html || `<div class="empty-msg">🔍 見つからなかったよ…！ 別のキーワードを試してね</div>`;
 }
 
 function init() {
   spawnFloaties();
+  renderFolders();
 
-  const tabsWrap = document.getElementById("tabs");
-  const allBtn = document.createElement("button");
-  allBtn.className = "tab-btn active";
-  allBtn.textContent = "✨ すべて";
-  allBtn.dataset.cat = "all";
-  allBtn.style.background = "linear-gradient(90deg, #FF6FA5, #C79CFF)";
-  allBtn.style.color = "white";
-  tabsWrap.appendChild(allBtn);
-
-  Object.entries(CATEGORY_META).forEach(([key, meta]) => {
-    const btn = document.createElement("button");
-    btn.className = "tab-btn";
-    btn.textContent = `${meta.emoji} ${meta.label}`;
-    btn.dataset.cat = key;
-    tabsWrap.appendChild(btn);
+  document.getElementById("modal-close").addEventListener("click", closeModal);
+  document.getElementById("modal-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "modal-overlay") closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeModal();
   });
 
-  let currentCat = "all";
   const searchInput = document.getElementById("search-input");
+  searchInput.addEventListener("input", () => runSearch(searchInput.value));
 
-  tabsWrap.addEventListener("click", (e) => {
-    const btn = e.target.closest(".tab-btn");
-    if (!btn) return;
-    currentCat = btn.dataset.cat;
-
-    [...tabsWrap.children].forEach((b) => {
-      b.classList.remove("active");
-      b.style.background = "";
-      b.style.color = "";
-    });
-    btn.classList.add("active");
-    if (currentCat === "all") {
-      btn.style.background = "linear-gradient(90deg, #FF6FA5, #C79CFF)";
-    } else {
-      btn.style.background = CATEGORY_META[currentCat].color;
-    }
-    btn.style.color = "white";
-
-    render(currentCat, searchInput.value);
+  document.getElementById("search-close").addEventListener("click", () => {
+    searchInput.value = "";
+    runSearch("");
   });
-
-  searchInput.addEventListener("input", () => {
-    render(currentCat, searchInput.value);
-  });
-
-  render("all", "");
 }
 
 document.addEventListener("DOMContentLoaded", init);

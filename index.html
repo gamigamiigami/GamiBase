@@ -8,27 +8,35 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <div class="title-wrap">
-      <h1 class="site-title">GamiBase</h1>
+  <div class="stage">
+    <header>
+      <div class="title-wrap">
+        <h1 class="site-title">GamiBase</h1>
+      </div>
+      <p class="subtitle"><span class="sparkle">🌟</span> つくったもの、ぜんぶここに集まる <span class="sparkle">🌟</span></p>
+    </header>
+
+    <div class="search-wrap">
+      <input type="text" id="search-input" placeholder="🔍 キーワードでさがす…">
     </div>
-    <p class="subtitle"><span class="sparkle">🌟</span> つくったもの、ぜんぶここに集まる <span class="sparkle">🌟</span></p>
-  </header>
 
-  <nav class="tabs" id="tabs"></nav>
-
-  <div class="search-wrap">
-    <input type="text" id="search-input" placeholder="🔍 キーワードでさがす…">
+    <main id="folder-grid"></main>
   </div>
 
-  <main id="main-content"></main>
+  <div id="search-results" class="search-results" hidden>
+    <button class="close-btn" id="search-close">✕ とじる</button>
+    <div id="search-results-content"></div>
+  </div>
 
-  <footer>
-    made with 💖 by GamiBase &mdash; <span id="year"></span>
-  </footer>
+  <div id="modal-overlay" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <button class="close-btn" id="modal-close">✕ とじる</button>
+      <h2 id="modal-title" class="modal-title"></h2>
+      <div id="modal-content" class="modal-content"></div>
+    </div>
+  </div>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>
