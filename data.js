@@ -221,22 +221,34 @@ const SITE_DATA = [
     url: "https://gamigamiigami.github.io/gamedata/ver2/",
     emoji: "🗂️",
   },
+  // ==== その他ゲーム ====
   {
-    category: "game",
-    group: "other-games",
-    groupMeta: { label: "その他のゲーム", emoji: "🎲", color: "#B48CFF" },
-    title: "Toy World",
-    description: "おもちゃの世界で遊べるゲーム。",
-    url: "https://gamigamiigami.github.io/Workspace/projects/toy-story-modoki-web/",
-    emoji: "🎯",
-  },
-  {
-    category: "game",
-    group: "other-games",
+    category: "othergame",
     title: "オシキング",
     description: "オシキングで遊べるゲーム。",
     url: "https://gamigamiigami.github.io/Workspace/projects/oshiking/",
     emoji: "👑",
+  },
+  {
+    category: "othergame",
+    title: "io games",
+    description: "ブラウザで遊べるioゲーム。",
+    url: "https://iogames91531.netlify.app",
+    emoji: "🕹️",
+  },
+  {
+    category: "othergame",
+    title: "Toy Mania",
+    description: "おもちゃがテーマのWebゲーム。",
+    url: "https://gamigamiigami.github.io/toy-mania-web/",
+    emoji: "🧸",
+  },
+  {
+    category: "othergame",
+    title: "AAA-",
+    description: "ブラウザで遊べるゲーム。",
+    url: "https://gamigamiigami.github.io/AAA-/",
+    emoji: "🎮",
   },
 
   // ==== 便利ツール ====
@@ -259,9 +271,10 @@ const SITE_DATA = [
 ];
 
 const CATEGORY_META = {
-  game:   { label: "教育ゲーム", emoji: "🎮", color: "#FF6FA5" },
-  tool:   { label: "教育ツール", emoji: "📚", color: "#5EC8FF" },
-  useful: { label: "便利ツール", emoji: "🛠️", color: "#7CE38B" },
+  game:      { label: "教育ゲーム", emoji: "🎮", color: "#FF6FA5" },
+  othergame: { label: "その他ゲーム", emoji: "🎲", color: "#B48CFF" },
+  tool:      { label: "教育ツール", emoji: "📚", color: "#5EC8FF" },
+  useful:    { label: "便利ツール", emoji: "🛠️", color: "#7CE38B" },
   event:  { label: "イベント",   emoji: "🎉", color: "#FFC24B" },
   other:  { label: "その他",     emoji: "✨", color: "#C79CFF" },
 };
