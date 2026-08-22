@@ -52,20 +52,90 @@ function renderFolders() {
 
 function openFolder(catKey) {
   const meta = CATEGORY_META[catKey];
-  const items = SITE_DATA.filter((d) => d.category === catKey);
+  const allItems = SITE_DATA.filter((d) => d.category === catKey);
+  const standalone = allItems.filter((d) => !d.group);
+  const groups = {};
+  allItems.forEach((d) => {
+    if (!d.group) return;
+    if (!groups[d.group]) groups[d.group] = { meta: d.groupMeta, items: [] };
+    groups[d.group].items.push(d);
+  });
 
   document.getElementById("modal-title").innerHTML = `${meta.emoji} ${meta.label}`;
   const content = document.getElementById("modal-content");
 
-  if (items.length === 0) {
+  if (allItems.length === 0) {
     content.innerHTML = `<div class="empty-msg">まだ何もないよ、これから増やそう！</div>`;
   } else {
-    content.innerHTML = `<div class="card-grid">${items.map((i) => cardHTML(i, meta)).join("")}</div>`;
+    let html = "";
+    const groupKeys = Object.keys(groups);
+    if (groupKeys.length > 0) {
+      html += `<div class="folder-grid-inline">`;
+      groupKeys.forEach((gKey) => {
+        const g = groups[gKey];
+        const gMeta = g.meta || { label: gKey, emoji: "📁", color: meta.color };
+        html += `
+          <button class="folder folder-sub" style="--folder-color:${gMeta.color}" data-group="${gKey}">
+            <span class="folder-icon">${gMeta.emoji}</span>
+            <span class="folder-label">${gMeta.label}</span>
+            <span class="folder-count">${g.items.length}件</span>
+          </button>
+        `;
+      });
+      html += `</div>`;
+    }
+    if (standalone.length > 0) {
+      html += `<div class="card-grid">${standalone.map((i) => cardHTML(i, meta)).join("")}</div>`;
+    }
+    content.innerHTML = html;
+
+    content.querySelectorAll(".folder-sub").forEach((btn) => {
+      btn.addEventListener("click", () => openGroup(catKey, btn.dataset.group));
+    });
   }
 
   const overlay = document.getElementById("modal-overlay");
   overlay.hidden = false;
   requestAnimationFrame(() => overlay.classList.add("open"));
+}
+
+function openGroup(catKey, groupKey) {
+  const meta = CATEGORY_META[catKey];
+  const items = SITE_DATA.filter((d) => d.category === catKey && d.group === groupKey);
+  const gMeta = items[0]?.groupMeta || { label: groupKey, emoji: "📁", color: meta.color };
+
+  document.getElementById("modal-title").innerHTML = `
+    <button class="back-btn" id="group-back-btn">← ${meta.label}</button>
+    ${gMeta.emoji} ${gMeta.label}
+  `;
+  const content = document.getElementById("modal-content");
+
+  const sections = {};
+  const noSection = [];
+  items.forEach((i) => {
+    if (i.section) {
+      if (!sections[i.section]) sections[i.section] = [];
+      sections[i.section].push(i);
+    } else {
+      noSection.push(i);
+    }
+  });
+
+  let html = "";
+  if (noSection.length > 0) {
+    html += `<div class="card-grid">${noSection.map((i) => cardHTML(i, meta)).join("")}</div>`;
+  }
+  Object.entries(sections).forEach(([sectionName, sItems]) => {
+    html += `
+      <section class="sub-section">
+        <h3 class="sub-heading">${sectionName}</h3>
+        <div class="card-grid">${sItems.map((i) => cardHTML(i, meta)).join("")}</div>
+      </section>
+    `;
+  });
+  content.innerHTML = html;
+
+  document.getElementById("group-back-btn").addEventListener("click", () => openFolder(catKey));
 }
 
 function closeModal() {

@@ -423,6 +423,49 @@ footer {
   font-size: 1.05rem;
 }
 
+/* ===== モーダル内のサブフォルダ ===== */
+.folder-grid-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4rem;
+  margin-bottom: 1.6rem;
+  padding-bottom: 1.6rem;
+  border-bottom: 2px dashed #f0dff0;
+}
+.folder-sub .folder-icon {
+  width: clamp(3.6rem, 9vw, 5.2rem);
+  height: clamp(3.6rem, 9vw, 5.2rem);
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.sub-section {
+  margin: 0 0 2rem;
+}
+.sub-heading {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #8b5fbf;
+  margin: 0 0 0.8rem;
+  padding-left: 0.2rem;
+  border-left: 5px solid var(--pink);
+  padding-left: 0.6rem;
+}
+
+.back-btn {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: none;
+  background: #f3e9ff;
+  color: #8b5fbf;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-right: 0.8rem;
+  vertical-align: middle;
+}
+.back-btn:hover { filter: brightness(0.97); }
+
 /* 画面が低い/狭いときはステージ内をスクロール可能に */
 @media (max-height: 560px), (max-width: 420px) {
   html, body { overflow-y: auto; height: auto; min-height: 100vh; }
