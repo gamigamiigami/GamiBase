@@ -183,6 +183,79 @@ const SITE_DATA = [
       label: "一式ZIPをダウンロード",
     },
   },
+  // ==== 教育ゲーム ====
+  {
+    category: "game",
+    title: "品詞パニック",
+    description: "品詞を見分けるスピード勝負のゲーム。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/hinshi-panic/",
+    emoji: "🧩",
+  },
+  {
+    category: "game",
+    title: "返り点クエスト（配布用）",
+    description: "返り点の読み方を冒険形式で学べるクエスト。生徒配布はこちら。",
+    url: "https://gamigamiigami.github.io/Workspace/kaeriten-quest/",
+    emoji: "↩️",
+    tags: ["旧URL・生徒配布用"],
+  },
+  {
+    category: "game",
+    title: "返り点クエスト（新URL）",
+    description: "返り点クエストの新しい設置先。今後はこちらに統一予定。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/kaeriten-quest/",
+    emoji: "↩️",
+    tags: ["新URL"],
+  },
+  {
+    category: "game",
+    title: "計算クエスト",
+    description: "計算問題を解きながら進むクエスト形式のゲーム。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/keisan-quest/",
+    emoji: "🔢",
+  },
+  {
+    category: "game",
+    title: "gamedata ver2",
+    description: "ゲーム用データまわりのページ。",
+    url: "https://gamigamiigami.github.io/gamedata/ver2/",
+    emoji: "🗂️",
+  },
+  {
+    category: "game",
+    group: "other-games",
+    groupMeta: { label: "その他のゲーム", emoji: "🎲", color: "#B48CFF" },
+    title: "Toy World",
+    description: "おもちゃの世界で遊べるゲーム。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/toy-story-modoki-web/",
+    emoji: "🎯",
+  },
+  {
+    category: "game",
+    group: "other-games",
+    title: "オシキング",
+    description: "オシキングで遊べるゲーム。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/oshiking/",
+    emoji: "👑",
+  },
+
+  // ==== 便利ツール ====
+  {
+    category: "useful",
+    title: "クロスワードサポーター",
+    description: "クロスワード作りをサポートしてくれるツール。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/crossword/",
+    emoji: "🔡",
+  },
+
+  // ==== イベント ====
+  {
+    category: "event",
+    title: "Rough（ボドゲ会）",
+    description: "ボードゲーム会「Rough」の案内ページ。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/rough/",
+    emoji: "🎲",
+  },
 ];
 
 const CATEGORY_META = {
