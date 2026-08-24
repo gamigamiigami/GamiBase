@@ -259,6 +259,20 @@ const SITE_DATA = [
     url: "https://gamigamiigami.github.io/Workspace/projects/crossword/",
     emoji: "🔡",
   },
+  {
+    category: "useful",
+    title: "文字替え",
+    description: "文字を入れ替えて使う言葉まわりのツール。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/moji-kae/",
+    emoji: "🔤",
+  },
+  {
+    category: "useful",
+    title: "文字ずらし",
+    description: "文字をずらして使う言葉まわりのツール。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/moji-zurashi/",
+    emoji: "🔠",
+  },
 
   // ==== イベント ====
   {
