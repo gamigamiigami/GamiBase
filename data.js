@@ -258,6 +258,16 @@ const SITE_DATA = [
     emoji: "🎮",
   },
 
+  // ==== 教育ツール ====
+  {
+    category: "tool",
+    title: "せきかえツール",
+    description: "席替え・班分け・座席表印刷までできる先生向けツール。使い方ガイド付き。",
+    url: "./tools/sekigae/index.html",
+    emoji: "📋",
+    zip: { url: "./tools/sekigae/tool.html", label: "ツール本体をダウンロード" },
+  },
+
   // ==== 便利ツール ====
   {
     category: "useful",
