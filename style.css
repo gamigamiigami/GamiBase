@@ -354,6 +354,13 @@ footer {
   pointer-events: none;
 }
 
+.card-link-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: pointer;
+}
+
 .card:hover {
   transform: translateY(-5px) rotate(-0.6deg) scale(1.02);
   box-shadow: 0 12px 0 var(--shadow), 0 16px 28px rgba(150, 100, 150, 0.18);
@@ -401,6 +408,8 @@ footer {
 }
 
 .zip-btn {
+  position: relative;
+  z-index: 2;
   margin-top: 0.1rem;
   align-self: flex-start;
   font-family: inherit;

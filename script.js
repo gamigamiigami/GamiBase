@@ -17,17 +17,18 @@ function spawnFloaties() {
 function cardHTML(item, meta) {
   const tags = (item.tags || []).map((t) => `<span class="tag">#${t}</span>`).join("");
   const zip = item.zip
-    ? `<a class="zip-btn" href="${item.zip.url}" download onclick="event.stopPropagation()">📦 ${item.zip.label || "ダウンロード"}</a>`
+    ? `<a class="zip-btn" href="${item.zip.url}" download>📦 ${item.zip.label || "ダウンロード"}</a>`
     : "";
   return `
-    <a class="card" href="${item.url}" target="_blank" rel="noopener noreferrer">
+    <div class="card">
+      <a class="card-link-overlay" href="${item.url}" target="_blank" rel="noopener noreferrer" aria-label="${item.title}"></a>
       <div class="emoji">${item.emoji || meta.emoji}</div>
       <h3>${item.title}</h3>
       <p class="desc">${item.description || ""}</p>
       <div class="tag-row">${tags}</div>
       <span class="visit" style="color:${meta.color}">サイトへ行く →</span>
       ${zip}
-    </a>
+    </div>
   `;
 }
 
