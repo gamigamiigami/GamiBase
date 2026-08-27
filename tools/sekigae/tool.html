@@ -101,6 +101,18 @@
     }
     .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .hint { font-size: 13px; color: #667; }
+    .check-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .check-label input[type="checkbox"] {
+      width: 22px; height: 22px;
+      flex-shrink: 0;
+    }
 
     /* ===== 座席グリッド ===== */
     .board-label {
@@ -148,10 +160,46 @@
     .desk .orient-mark { font-size: 10px; color: #999; line-height: 1; }
     .desk .seat-name { font-weight: bold; line-height: 1.2; }
     .desk .seat-icons { position: absolute; top: 0; right: 2px; font-size: 11px; }
+
+    /* 班のしるし：机の右下に班名ラベル。
+       背景色＝男女 ／ 太いわく＋ラベル＝班 に分けたので、両方が同時に見える */
+    .desk .group-tag {
+      position: absolute;
+      right: 0; bottom: 0;
+      font-size: 10px;
+      line-height: 1.4;
+      padding: 0 4px;
+      border-radius: 5px 0 4px 0;
+      color: #fff;
+      font-weight: bold;
+      max-width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    /* 男女のしるし：机の左上の●。背景色だけだと見分けづらいので印も出す */
+    .desk .gender-dot {
+      position: absolute;
+      left: 1px; top: 1px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 1px solid #fff;
+      font-size: 10px;
+      line-height: 14px;
+      text-align: center;
+      color: #fff;
+      font-weight: bold;
+    }
+    /* 班がついた机はわくを太くする（男女の背景色と同時に見える） */
+    .desk.has-group { border-width: 4px; }
+    .seat.orient-front .desk.has-group      { border-top-width: 8px; }
+    .seat.orient-side-left .desk.has-group  { border-left-width: 8px; }
+    .seat.orient-side-right .desk.has-group { border-right-width: 8px; }
+
+    /* 通路：コの字などの「形」が見えるよう、うすく目立たない表示にする */
     .seat.disabled .desk {
-      background: #eef1f3;
-      border: 2px dashed #c5ccd2;
-      color: #aab;
+      background: transparent;
+      border: 1px dashed #dde3e8;
+      color: #c3cad0;
       width: 92%; height: 70%;
     }
     .seat.ng-marked .desk { border-color: var(--danger); background: #fdecea; }
@@ -163,6 +211,18 @@
     .seat.vacant .desk { background: #f1f3f5; color: #99a; }
     /* グループタブ：えらび中の班の行 */
     .item-list li.selected-group { background: #eaf2f8; border-radius: 8px; }
+
+    /* ===== 色の見かた（凡例） ===== */
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 13px; }
+    .legend .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend .swatch {
+      width: 20px; height: 20px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    /* 班の凡例は「太いわく」で表す（座席表の見た目とそろえる） */
+    .legend .swatch.group-swatch { background: #fff; border-width: 4px; border-style: solid; }
 
     /* 操作モードボタン（選択中をはっきり見せる） */
     .tool-btn.active {
@@ -265,6 +325,22 @@
     }
     .roster-card h3 { margin-top: 0; }
     .roster-card ul { list-style: none; font-size: 14px; }
+    /* 全員名簿：名前 → 班 の一覧。用紙を節約するため段組みにする */
+    .roster-all {
+      list-style: none;
+      columns: 3 200px;
+      column-gap: 24px;
+      font-size: 14px;
+    }
+    .roster-all li {
+      break-inside: avoid;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+      border-bottom: 1px dotted var(--border);
+    }
+    .roster-all .rname { flex: 1; }
 
     /* ===== モーダル ===== */
     .modal-overlay {
@@ -315,7 +391,7 @@
 </head>
 <body>
 
-  <!-- ===== ヘッダー：教室の選択・新規作成・バックアップ ===== -->
+  <!-- ===== ヘッダー：年度・クラスの選択・作成・バックアップ ===== -->
   <header>
     <span class="app-title">📋 席替えツール</span>
     <select id="classroomSelect" aria-label="クラスの選択"></select>
@@ -363,6 +439,8 @@
         <button id="btnPresetFront">⬜ ぜんぶ前向きにする</button>
         <button id="btnPresetU">🔄 コの字にする</button>
       </div>
+      <p class="hint">コの字＝左右の机は教室の中を向き、いちばん後ろの机は黒板を向き、まん中と黒板側があく形です。
+      人数が入りきらないときは、左右・後ろを自動で2列にします。</p>
       <h3>1つずつ変えたいとき</h3>
       <div class="row no-print">
         <button id="toolOrient" class="tool-btn active">🔄 向きをかえる</button>
@@ -386,7 +464,7 @@
         <input type="text" id="inputStudentName" placeholder="名前を書いて「追加」をおす" style="flex:1;min-width:160px">
         <button id="btnAddStudent" class="primary">追加</button>
       </div>
-      <p class="hint">性別は、追加したあとに一覧の「男/女」ボタンでかえられます（席の色分けに使います）</p>
+      <p class="hint">性別は、追加したあとに一覧の「男/女」ボタンでかえられます（席の色分け・市松模様に使います）</p>
       <h3>まとめていれたいとき（1行に1人ずつ）</h3>
       <div class="row">
         <textarea id="csvText" rows="3" placeholder="田中太郎,男&#10;鈴木花子,女&#10;佐藤次郎　←性別はなくてもOK" style="flex:1;min-width:200px"></textarea>
@@ -398,6 +476,7 @@
     </div>
     <div class="card">
       <h2>生徒一覧（<span id="studentCount">0</span>名）</h2>
+      <p class="hint" id="genderCount"></p>
       <ul id="studentList" class="item-list"></ul>
       <div class="next-step no-print">
         <button id="btnNextToShuffle" class="primary">つぎへ：③席替えをする →</button>
@@ -413,7 +492,13 @@
       <h2>🎲 席替えをする</h2>
       <p class="hint">ボタンをおすと、固定席・NG設定をまもったランダムな席ができます。<br>
       気に入らなければ何度でもおしてOK！決まったら「💾この席を記録する」をおしましょう。</p>
-      <div class="row">
+      <label class="check-label">
+        <input type="checkbox" id="chkChecker">
+        ♟ 男女が交互（市松模様）になるようにする
+      </label>
+      <p class="hint">チェックを入れると、となり合う席が 男・女・男・女… とジグザグ（市松模様）に交互になるよう席替えします。
+      「②生徒」タブで男女の登録が必要です。</p>
+      <div class="row" style="margin-top:8px">
         <button id="btnRunShuffle" class="primary" style="font-size:18px">🎲 席替え実行</button>
         <button id="btnSaveHistory">💾 この席を記録する</button>
         <button id="btnPrintSeats">🖨 印刷</button>
@@ -421,7 +506,10 @@
     </div>
     <div class="card">
       <h2>座席表</h2>
-      <p class="hint no-print">色の見かた：🟦うすい青＝男子／うすいピンク＝女子／わくの色＝班</p>
+      <div class="no-print" style="margin-bottom:10px">
+        <p class="hint" style="margin-bottom:4px">色の見かた</p>
+        <div id="shuffleLegend" class="legend"></div>
+      </div>
       <div class="board-label">黒　板</div>
       <div class="seat-grid-wrap"><div id="shuffleGrid" class="seat-grid"></div></div>
     </div>
@@ -442,7 +530,7 @@
       <div class="row" style="margin-top:8px">
         <button id="btnAddGroup" class="primary">＋班を追加</button>
       </div>
-      <p class="hint">●をタップ＝色がかわる／班の名前は直接書きかえられます</p>
+      <p class="hint">●をタップ＝色がかわる（となり合う番号の班は、にた色にならないようにしてあります）／班の名前は直接書きかえられます</p>
     </div>
     <div class="card">
       <h2>座席表（タップして色をぬる）</h2>
@@ -488,6 +576,10 @@
       <div id="rosterCards" class="roster-cards"></div>
     </div>
     <div class="card">
+      <h2>全員名簿（名前と班の一覧）</h2>
+      <ul id="rosterAll" class="roster-all"></ul>
+    </div>
+    <div class="card">
       <h2>座席表</h2>
       <div class="board-label">黒　板</div>
       <div class="seat-grid-wrap"><div id="rosterGrid" class="seat-grid"></div></div>
@@ -526,14 +618,49 @@
     // 定数
     // =====================================================
     const STORAGE_KEY = 'seat_tool_v1';
+
+    // 班の色：ひと目で区別できるよう色相を大きく離してある。
+    // 「となり合う番号（A班とB班など）が似た色にならない」ことを最優先に並べている。
     const GROUP_COLORS = [
-      '#e74c3c', '#e67e22', '#f1c40f', '#27ae60', '#16a085',
-      '#2980b9', '#8e44ad', '#e84393', '#795548', '#7f8c8d'
+      '#e6194b', // 赤
+      '#3cb44b', // 緑
+      '#4363d8', // 青
+      '#f58231', // オレンジ
+      '#911eb4', // むらさき
+      '#00a19a', // 青緑
+      '#f032e6', // ピンク
+      '#9a6324', // 茶
+      '#000075', // こんいろ
+      '#7f8c8d'  // はいいろ
     ];
+    const GROUP_COLOR_NAMES = [
+      '赤', '緑', '青', 'オレンジ', 'むらさき',
+      '青緑', 'ピンク', '茶', 'こんいろ', 'はいいろ'
+    ];
+
+    // 班の色の上に置く文字の色を、背景の明るさに合わせて自動で選ぶ。
+    // （オレンジや緑のような明るい色に白文字だと読みにくいため）
+    const DARK_TEXT = '#1a1a1a';
+    const DARK_TEXT_LUM = 0.0103; // #1a1a1a の相対輝度
+    function textColorFor(hex) {
+      const v = i => parseInt(hex.slice(i, i + 2), 16) / 255;
+      const lin = x => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
+      const lum = 0.2126 * lin(v(1)) + 0.7152 * lin(v(3)) + 0.0722 * lin(v(5));
+      // 白文字と黒文字で、読みやすいほう（コントラスト比が大きいほう）を選ぶ
+      const withWhite = 1.05 / (lum + 0.05);
+      const withDark = (lum + 0.05) / (DARK_TEXT_LUM + 0.05);
+      return withDark > withWhite ? DARK_TEXT : '#ffffff';
+    }
+    // 班のラベル用のスタイル文字列（背景＝班の色、文字＝読みやすい色）
+    function groupTagStyle(color) {
+      return 'background:' + color + ';color:' + textColorFor(color);
+    }
+
     const ORIENT_MARKS = { 'front': '↑', 'side-left': '←', 'side-right': '→' };
     const MAX_RESTART = 300; // 席替えアルゴリズムの最大リスタート回数
     const GENDER_LABELS = { m: '男', f: '女' };
-    const GENDER_COLORS = { m: '#dbeafe', f: '#fde4ec' }; // 席の背景色（男子＝うすい青／女子＝うすいピンク）
+    const GENDER_COLORS = { m: '#dbeafe', f: '#fde4ec' };      // 机の背景色（うすい青／うすいピンク）
+    const GENDER_MARK_COLORS = { m: '#2f6fd0', f: '#d5407e' }; // 左上の●印（はっきりした色）
 
     // =====================================================
     // 状態管理（localStorage との読み書き）
@@ -576,10 +703,11 @@
         cols: cols,
         students: [],
         groups: [],
-        deskMeta: {},      // "行-列" → { orient, disabled, fixedStudentId, ngStudentIds }
+        deskMeta: {},        // "行-列" → { orient, disabled, vacant, fixedStudentId, ngStudentIds, groupId }
         ngPairs: [],
         history: [],
-        currentSeats: null // 直近の席替え結果（席キー → 生徒ID）
+        currentSeats: null,  // 直近の席替え結果（席キー → 生徒ID）
+        checkerGender: false // 男女を市松模様（交互）に並べるか
       };
     }
 
@@ -679,6 +807,12 @@
       return (r + 1) + '行' + (c + 1) + '列';
     }
 
+    // 市松模様の判定：席キーの (行+列) が偶数か奇数か
+    function seatParity(key) {
+      const [r, c] = key.split('-').map(Number);
+      return (r + c) % 2;
+    }
+
     // =====================================================
     // 共通モーダル
     // =====================================================
@@ -731,6 +865,28 @@
       return true;
     }
 
+    // 市松模様のための「その生徒が座ってほしい席」の集合を作る。
+    // (行+列) が偶数の席グループと奇数の席グループに分け、男子・女子をそれぞれに割りあてる。
+    // → となり合う席は必ず parity が変わるので、男・女・男・女… のジグザグになる。
+    function buildCheckerPreference(cr, seats, active) {
+      const seatsEven = seats.filter(k => seatParity(k) === 0);
+      const seatsOdd  = seats.filter(k => seatParity(k) === 1);
+      const males   = active.filter(s => s.gender === 'm');
+      const females = active.filter(s => s.gender === 'f');
+      if (males.length === 0 || females.length === 0) return null; // 片方しかいなければ市松にできない
+
+      // 男子を偶数側／奇数側どちらに置くほうが人数のズレが小さいかで決める
+      const costEven = Math.abs(seatsEven.length - males.length) + Math.abs(seatsOdd.length - females.length);
+      const costOdd  = Math.abs(seatsOdd.length - males.length) + Math.abs(seatsEven.length - females.length);
+      const maleSeats   = new Set(costEven <= costOdd ? seatsEven : seatsOdd);
+      const femaleSeats = new Set(costEven <= costOdd ? seatsOdd : seatsEven);
+
+      const prefer = {};
+      for (const s of males)   prefer[s.id] = maleSeats;
+      for (const s of females) prefer[s.id] = femaleSeats;
+      return prefer; // 性別なしの生徒は希望なし＝どこでもよい
+    }
+
     // 席替え本体：制約付きランダム配置（リスタート方式）
     function runSeatingAlgorithm(cr) {
       const seats = getEnabledSeats(cr);
@@ -740,6 +896,14 @@
       }
       if (active.length > seats.length) {
         return { error: '生徒数（' + active.length + '名）が席数（' + seats.length + '席）を超えています。レイアウトを見直してください。' };
+      }
+
+      // 市松模様がONなら、男女それぞれの「座ってほしい席」を用意する
+      let prefer = null;
+      let checkerRequested = false;
+      if (cr.checkerGender) {
+        checkerRequested = true;
+        prefer = buildCheckerPreference(cr, seats, active);
       }
 
       // 固定席の生徒を先に配置する
@@ -758,15 +922,26 @@
       const movable = active.filter(s => !fixedIds.has(s.id));
       const freeSeats = seats.filter(k => !baseAssignment[k]);
 
-      // リスタートループ：シャッフル → 貪欲配置 を最大300回試す
+      // リスタートループ：シャッフル → 貪欲配置 を最大300回試す。
+      // 市松模様ONのときは、前半は「希望の席のみ」で厳しく試し、後半は妥協も許す。
       let result = null;
+      const strictLimit = Math.floor(MAX_RESTART * 2 / 3);
       for (let t = 0; t < MAX_RESTART; t++) {
+        const strict = !!prefer && t < strictLimit;
         const a = Object.assign({}, baseAssignment);
         const shuffledStudents = shuffle(movable);
         const shuffledSeats = shuffle(freeSeats);
         let ok = true;
         for (const st of shuffledStudents) {
-          const seat = shuffledSeats.find(k => !a[k] && hardConstraintOk(cr, st, k, a));
+          const pref = prefer ? prefer[st.id] : null;
+          let seat = null;
+          if (pref) {
+            seat = shuffledSeats.find(k => !a[k] && pref.has(k) && hardConstraintOk(cr, st, k, a));
+          }
+          // 希望の席が取れないとき：厳しいモードなら失敗扱い、そうでなければどこでもよい
+          if (!seat && !(strict && pref)) {
+            seat = shuffledSeats.find(k => !a[k] && hardConstraintOk(cr, st, k, a));
+          }
           if (!seat) { ok = false; break; }
           a[seat] = st.id;
         }
@@ -779,7 +954,10 @@
         relaxed = true;
         const a = Object.assign({}, baseAssignment);
         for (const st of shuffle(movable)) {
-          let seat = freeSeats.find(k => !a[k] && seatNgOk(cr, st, k));
+          const pref = prefer ? prefer[st.id] : null;
+          let seat = null;
+          if (pref) seat = freeSeats.find(k => !a[k] && pref.has(k) && seatNgOk(cr, st, k));
+          if (!seat) seat = freeSeats.find(k => !a[k] && seatNgOk(cr, st, k));
           if (!seat) seat = freeSeats.find(k => !a[k]);
           if (seat) a[seat] = st.id;
         }
@@ -790,7 +968,25 @@
       for (const key of seats) {
         if (!(key in result)) result[key] = null;
       }
-      return { assignment: result, relaxed: relaxed };
+
+      // 市松模様がどれだけ守れたかを数える（固定席は先生が決めた席なので除外）
+      let checkerMisses = 0;
+      if (prefer) {
+        for (const key of Object.keys(result)) {
+          const sid = result[key];
+          if (!sid || fixedIds.has(sid)) continue;
+          const pref = prefer[sid];
+          if (pref && !pref.has(key)) checkerMisses++;
+        }
+      }
+
+      return {
+        assignment: result,
+        relaxed: relaxed,
+        checkerRequested: checkerRequested,
+        checkerAvailable: !!prefer,
+        checkerMisses: checkerMisses
+      };
     }
 
     // =====================================================
@@ -820,7 +1016,7 @@
       for (const key of Object.keys(assignment)) {
         if (assignment[key]) seatOf[assignment[key]] = key;
       }
-      const currentPairs = []; // [idA, idB]（idA < idB）
+      const currentPairs = []; // [idA, idB]
       const pairSeen = new Set();
       for (const key of Object.keys(assignment)) {
         const sid = assignment[key];
@@ -838,7 +1034,6 @@
 
       // --- 隣履歴チェック：過去に隣だったペアが再び隣か ---
       for (const h of cr.history) {
-        // この履歴での隣接ペア集合を作る
         const histAdjacent = new Set();
         for (const key of Object.keys(h.seats)) {
           const sid = h.seats[key];
@@ -864,7 +1059,7 @@
 
       // --- 同班履歴チェック：今回同じ班のペアが過去にも同じ班だったか ---
       // 班は「席」につくので、同じ班の席に座った生徒同士がペアになる
-      const sameGroupPairs = []; // 今回同じ班のペア
+      const sameGroupPairs = [];
       const byGroup = {}; // groupId → [{sid, gname}]
       for (const key of Object.keys(assignment)) {
         const sid = assignment[key];
@@ -902,8 +1097,8 @@
 
     // =====================================================
     // 座席グリッド描画（全タブ共通）
-    // mode: 'layout' | 'ng' | 'seating' | 'preview'
-    // extra: { seats, warnings, ngStudentId, onTap }
+    // mode: 'layout' | 'group' | 'ng' | 'seating' | 'preview'
+    // extra: { seats, warnings, ngStudentId, groupSnapshot, onTap }
     // =====================================================
     function renderGrid(containerId, cr, mode, extra) {
       extra = extra || {};
@@ -937,8 +1132,9 @@
           desk.className = 'desk';
 
           if (meta.disabled) {
+            // 通路。教室タブ以外では文字を出さず、隊形（コの字など）の形が見えるようにする
             cell.classList.add('disabled');
-            desk.innerHTML = '<span class="hint">通路</span>';
+            desk.innerHTML = (mode === 'layout') ? '<span class="hint">通路</span>' : '';
           } else if (meta.vacant) {
             // 空席：机はあるが誰も座らせない
             cell.classList.add('vacant');
@@ -950,6 +1146,7 @@
             const orientMark = ORIENT_MARKS[meta.orient] || '↑';
             let nameHtml = '';
             let icons = '';
+            let extras = ''; // 男女の●印・班のラベル
 
             if (mode === 'layout') {
               // 教室タブ：固定生徒名があれば参考表示
@@ -960,7 +1157,8 @@
               // グループ色ぬり：席の班を表示
               const g = getSeatGroup(cr, key);
               if (g) {
-                desk.style.background = g.color + '55';
+                desk.classList.add('has-group');
+                desk.style.background = g.color + '33';
                 desk.style.borderColor = g.color;
                 nameHtml = '<span class="seat-name">' + escapeHtml(g.name) + '</span>';
               } else {
@@ -989,16 +1187,22 @@
                 group = cr.groups.find(g => g.id === extra.groupSnapshot[sid]) || null;
               }
               if (!group) group = getSeatGroup(cr, key);
+
+              // 【班】＝太いわく＋右下のラベル。【男女】＝背景色＋左上の●印。
+              // 役割を分けてあるので、どちらの色も同時に見える。
               if (group) {
-                desk.style.background = group.color + '22';
-                desk.style.borderColor = group.color; // 班＝わくの色
+                desk.classList.add('has-group');
+                desk.style.borderColor = group.color;
+                extras += '<span class="group-tag" style="' + groupTagStyle(group.color) + '">' +
+                          escapeHtml(group.name) + '</span>';
               }
 
               if (st) {
                 nameHtml = '<span class="seat-name">' + escapeHtml(st.name) + '</span>';
-                // 男女＝背景色（班のわく色と両立できる）
                 if (st.gender && GENDER_COLORS[st.gender]) {
                   desk.style.background = GENDER_COLORS[st.gender];
+                  extras += '<span class="gender-dot" style="background:' + GENDER_MARK_COLORS[st.gender] + '">' +
+                            GENDER_LABELS[st.gender] + '</span>';
                 }
                 if (meta.fixedStudentId === sid) icons += '🔒';
                 if (seatLevel[key] === 'warn' || seatLevel[key] === 'error') icons += '⚠️';
@@ -1011,6 +1215,7 @@
             }
 
             desk.innerHTML =
+              extras +
               '<span class="seat-icons">' + icons + '</span>' +
               '<span class="orient-mark">' + orientMark + '</span>' +
               nameHtml;
@@ -1023,6 +1228,25 @@
           container.appendChild(cell);
         }
       }
+    }
+
+    // 色の見かた（凡例）を描く。「どの色が何を表すか」がわからない問題への対策。
+    function renderLegend(containerId, cr) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      let html = '';
+      html += '<span class="legend-item"><span class="swatch" style="background:' + GENDER_COLORS.m +
+              ';border-color:' + GENDER_MARK_COLORS.m + '"></span>机の色がうすい青＝男子（左上に「男」）</span>';
+      html += '<span class="legend-item"><span class="swatch" style="background:' + GENDER_COLORS.f +
+              ';border-color:' + GENDER_MARK_COLORS.f + '"></span>机の色がうすいピンク＝女子（左上に「女」）</span>';
+      for (const g of cr.groups) {
+        html += '<span class="legend-item"><span class="swatch group-swatch" style="border-color:' + g.color +
+                '"></span>太いわく＝' + escapeHtml(g.name) + '（右下にも班名）</span>';
+      }
+      if (cr.groups.length === 0) {
+        html += '<span class="legend-item hint">班はまだありません（「🎨グループ」タブで作れます）</span>';
+      }
+      el.innerHTML = html;
     }
 
     // =====================================================
@@ -1117,42 +1341,87 @@
       renderLayoutTab();
     });
 
-    // プリセット：コの字（左列＝右向き・右列＝左向き・最後列＝前向き・まんなか＝通路）
+    // =====================================================
+    // コの字（U字）の隊形
+    //
+    // 正しいコの字＝
+    //   ・左右の机は「教室の中（内側）」を向く   … コの字のたての線
+    //   ・いちばん後ろの机は「黒板（前）」を向く … コの字の横の線
+    //   ・まん中はあける（通路）
+    //   ・黒板側があいている（＝コの字の開いている方が黒板を向く）
+    // 角の机は「後ろの列」のあつかいにして前向きにすると、コの字の形がきれいに出る。
+    //
+    // armCols  … 左右それぞれ何列を机にするか（1＝一重、2＝二重コの字）
+    // backRows … いちばん後ろの何行を机にするか
+    // =====================================================
+    function uShapeSeatCount(rows, cols, armCols, backRows) {
+      return cols * backRows + (rows - backRows) * armCols * 2;
+    }
+
+    function applyUShape(cr, armCols, backRows) {
+      for (let r = 0; r < cr.rows; r++) {
+        for (let c = 0; c < cr.cols; c++) {
+          const meta = getDeskMeta(cr, r, c);
+          meta.vacant = false;
+          if (r >= cr.rows - backRows) {
+            // いちばん後ろの列（角もふくむ）＝黒板を向く
+            meta.disabled = false;
+            meta.orient = 'front';
+          } else if (c < armCols) {
+            // 左のうで＝教室の中（右）を向く
+            meta.disabled = false;
+            meta.orient = 'side-right';
+          } else if (c >= cr.cols - armCols) {
+            // 右のうで＝教室の中（左）を向く
+            meta.disabled = false;
+            meta.orient = 'side-left';
+          } else {
+            // まん中＋黒板側はあける
+            meta.disabled = true;
+            meta.fixedStudentId = null;
+          }
+        }
+      }
+    }
+
     document.getElementById('btnPresetU').addEventListener('click', () => {
       const cr = getActiveClassroom();
       if (cr.cols < 3 || cr.rows < 2) {
         alert('コの字には「横3つ × たて2つ」以上の大きさが必要です。上で大きさを変えてください');
         return;
       }
-      if (!confirm('コの字の隊形にします。まんなかの机は通路になります。よろしいですか？')) return;
-      for (let r = 0; r < cr.rows; r++) {
-        for (let c = 0; c < cr.cols; c++) {
-          const meta = getDeskMeta(cr, r, c);
-          if (c === 0) {
-            // 左の列：教室の中央（右）を向く
-            meta.disabled = false;
-            meta.vacant = false;
-            meta.orient = 'side-right';
-          } else if (c === cr.cols - 1) {
-            // 右の列：教室の中央（左）を向く
-            meta.disabled = false;
-            meta.vacant = false;
-            meta.orient = 'side-left';
-          } else if (r === cr.rows - 1) {
-            // いちばん後ろの列：黒板（前）を向く
-            meta.disabled = false;
-            meta.vacant = false;
-            meta.orient = 'front';
-          } else {
-            // まんなかは通路にする
-            meta.disabled = true;
-            meta.vacant = false;
-            meta.fixedStudentId = null;
-          }
+      const need = cr.students.filter(s => !s.inactive).length;
+
+      // 一重コの字から順に試し、人数が入りきる形をえらぶ（入らなければ一番多く座れる形）
+      const options = [[1, 1], [2, 1], [2, 2]].filter(
+        ([arm, back]) => arm * 2 < cr.cols && back < cr.rows
+      );
+      let chosen = options[0] || [1, 1];
+      for (const opt of options) {
+        chosen = opt;
+        if (uShapeSeatCount(cr.rows, cr.cols, opt[0], opt[1]) >= need) break;
+      }
+      const [armCols, backRows] = chosen;
+      const seatCount = uShapeSeatCount(cr.rows, cr.cols, armCols, backRows);
+      const shapeName = (armCols >= 2 || backRows >= 2) ? '二重コの字' : 'コの字';
+
+      let msg = shapeName + 'にします。\n' +
+        '・左右の机は教室の中を向きます\n' +
+        '・いちばん後ろの机は黒板を向きます\n' +
+        '・まん中と黒板側はあきます（通路）\n' +
+        '座れる数：' + seatCount + '席';
+      if (need > 0) {
+        msg += '（生徒 ' + need + '名）';
+        if (seatCount < need) {
+          msg += '\n\n⚠️ このままだと席がたりません。教室の大きさ（横・たて）を大きくしてください。';
         }
       }
+      msg += '\n\nよろしいですか？';
+      if (!confirm(msg)) return;
+
+      applyUShape(cr, armCols, backRows);
       saveState();
-      renderLayoutTab();
+      renderAll();
     });
 
     // 「つぎへ」ボタン（ステップ誘導）
@@ -1232,8 +1501,16 @@
 
     function renderStudentsTab() {
       const cr = getActiveClassroom();
-      document.getElementById('studentCount').textContent =
-        cr.students.filter(s => !s.inactive).length;
+      const activeStudents = cr.students.filter(s => !s.inactive);
+      document.getElementById('studentCount').textContent = activeStudents.length;
+
+      // 市松模様を使うときに男女の人数バランスが大事なので、内訳を表示する
+      const males = activeStudents.filter(s => s.gender === 'm').length;
+      const females = activeStudents.filter(s => s.gender === 'f').length;
+      const none = activeStudents.length - males - females;
+      document.getElementById('genderCount').textContent =
+        '男子 ' + males + '名 ／ 女子 ' + females + '名' + (none ? ' ／ 未登録 ' + none + '名' : '');
+
       const ul = document.getElementById('studentList');
       ul.innerHTML = '';
       for (const st of cr.students) {
@@ -1246,17 +1523,17 @@
         }
         li.innerHTML =
           '<span class="grow">' + escapeHtml(st.name) +
-          (st.gender === 'm' ? ' <span class="badge" style="background:#5b8def">男</span>' : '') +
-          (st.gender === 'f' ? ' <span class="badge" style="background:#e8709a">女</span>' : '') +
+          (st.gender === 'm' ? ' <span class="badge" style="background:' + GENDER_MARK_COLORS.m + '">男</span>' : '') +
+          (st.gender === 'f' ? ' <span class="badge" style="background:' + GENDER_MARK_COLORS.f + '">女</span>' : '') +
           (st.inactive ? ' <span class="badge gray">除外中</span>' : '') +
-          (group ? ' <span class="badge" style="background:' + group.color + '">' + escapeHtml(group.name) + '</span>' : '') +
+          (group ? ' <span class="badge" style="' + groupTagStyle(group.color) + '">' + escapeHtml(group.name) + '</span>' : '') +
           (fixedKey ? ' <span class="badge gray">🔒' + seatLabel(fixedKey) + '</span>' : '') +
           '</span>';
 
         // 性別ボタン：タップで 男→女→なし と切り替わる
         const btnGender = document.createElement('button');
         btnGender.textContent = st.gender ? GENDER_LABELS[st.gender] : '男/女';
-        btnGender.title = 'タップで性別を切り替え（席の色分けに使います）';
+        btnGender.title = 'タップで性別を切り替え（席の色分け・市松模様に使います）';
         btnGender.addEventListener('click', () => {
           st.gender = (st.gender === 'm') ? 'f' : (st.gender === 'f') ? null : 'm';
           saveState();
@@ -1335,7 +1612,7 @@
 
       openModal('生徒の編集',
         '<label>名前</label><input type="text" id="editStudentName" value="' + escapeHtml(st.name) + '">' +
-        '<label>性別（席の色分けに使います）</label><select id="editStudentGender">' + genderOptions + '</select>' +
+        '<label>性別（席の色分け・市松模様に使います）</label><select id="editStudentGender">' + genderOptions + '</select>' +
         '<label>固定席（移動禁止）</label><select id="editStudentSeat">' + seatOptions + '</select>',
         () => {
           const newName = document.getElementById('editStudentName').value.trim();
@@ -1362,6 +1639,7 @@
     // =====================================================
     document.getElementById('btnAddGroup').addEventListener('click', () => {
       const cr = getActiveClassroom();
+      // GROUP_COLORS は「となりの番号どうしが似た色にならない」順に並べてある
       const color = GROUP_COLORS[cr.groups.length % GROUP_COLORS.length];
       // 班名は A班・B班… と自動でつく（あとから変更できる）
       const letter = cr.groups.length < 26
@@ -1410,6 +1688,12 @@
           renderAll();
         });
 
+        // 色の名前を文字でも出す（色だけだと見分けにくい人がいるため）
+        const colorName = document.createElement('span');
+        colorName.className = 'hint';
+        const ci = GROUP_COLORS.indexOf(g.color);
+        colorName.textContent = ci >= 0 ? GROUP_COLOR_NAMES[ci] : '';
+
         const btnSelect = document.createElement('button');
         btnSelect.textContent = (g.id === paintGroupId) ? '✓ えらび中' : 'この色をぬる';
         if (g.id === paintGroupId) btnSelect.className = 'primary';
@@ -1434,6 +1718,7 @@
 
         li.appendChild(dot);
         li.appendChild(nameInput);
+        li.appendChild(colorName);
         li.appendChild(btnSelect);
         li.appendChild(btnDel);
         ul.appendChild(li);
@@ -1558,6 +1843,14 @@
     // =====================================================
     // 🎲 席替えタブ
     // =====================================================
+
+    // 市松模様のチェックボックス
+    document.getElementById('chkChecker').addEventListener('change', (e) => {
+      const cr = getActiveClassroom();
+      cr.checkerGender = e.target.checked;
+      saveState();
+    });
+
     document.getElementById('btnRunShuffle').addEventListener('click', () => {
       const cr = getActiveClassroom();
       const result = runSeatingAlgorithm(cr);
@@ -1567,6 +1860,30 @@
       }
       cr.currentSeats = result.assignment;
       lastWarnings = checkSoftConstraints(cr, result.assignment);
+
+      // 市松模様の結果を先頭に知らせる
+      if (result.checkerRequested) {
+        if (!result.checkerAvailable) {
+          lastWarnings.unshift({
+            level: 'warn',
+            text: '⚠️ 男女の登録がかたよっているため市松模様にできませんでした。「②生徒」タブで男女を登録してください。',
+            seats: []
+          });
+        } else if (result.checkerMisses > 0) {
+          lastWarnings.unshift({
+            level: 'info',
+            text: 'ℹ️ 市松模様にしましたが、' + result.checkerMisses +
+                  '名は交互になりませんでした（男女の人数と席数のバランス上、完全な市松にできません）。',
+            seats: []
+          });
+        } else {
+          lastWarnings.unshift({
+            level: 'info',
+            text: '✅ 男女が交互（市松模様）にならびました',
+            seats: []
+          });
+        }
+      }
       if (result.relaxed) {
         lastWarnings.unshift({
           level: 'error',
@@ -1581,6 +1898,7 @@
 
     function renderShuffleTab() {
       const cr = getActiveClassroom();
+      document.getElementById('chkChecker').checked = !!cr.checkerGender;
 
       // 準備ができていないときの案内（生徒0名・席不足）
       const guide = document.getElementById('shuffleGuide');
@@ -1611,6 +1929,7 @@
         seats: cr.currentSeats || {},
         warnings: lastWarnings
       });
+      renderLegend('shuffleLegend', cr);
 
       // 警告パネル
       const ul = document.getElementById('warningList');
@@ -1690,54 +2009,74 @@
       document.getElementById('rosterTitle').textContent = cr.name + '　班別名簿';
       document.getElementById('printHeader').textContent = cr.name + '　' + todayString() + ' 作成';
       const container = document.getElementById('rosterCards');
+      const allList = document.getElementById('rosterAll');
       container.innerHTML = '';
+      allList.innerHTML = '';
 
-      // 班名簿は「席についた班 × 席替えの結果」から作る
       if (!cr.currentSeats) {
         container.innerHTML = '<p class="hint">「③席替え」を実行すると、班別名簿がここにできます</p>';
-      } else {
-        // groupId → [{st, key}] と班なしの生徒を集計
-        const memberOf = {};
-        const noGroup = [];
-        for (const key of Object.keys(cr.currentSeats)) {
-          const sid = cr.currentSeats[key];
-          if (!sid) continue;
-          const st = getStudent(cr, sid);
-          if (!st || st.inactive) continue;
-          const g = getSeatGroup(cr, key);
-          if (g) (memberOf[g.id] = memberOf[g.id] || []).push({ st: st, key: key });
-          else noGroup.push({ st: st, key: key });
-        }
-
-        const memberLi = (m) =>
-          '<li>' + escapeHtml(m.st.name) +
-          (m.st.gender ? '（' + GENDER_LABELS[m.st.gender] + '）' : '') +
-          ' <span class="hint">（' + seatLabel(m.key) + '）</span></li>';
-
-        for (const g of cr.groups) {
-          const members = memberOf[g.id] || [];
-          const card = document.createElement('div');
-          card.className = 'roster-card';
-          card.style.borderColor = g.color;
-          card.innerHTML =
-            '<h3><span class="badge" style="background:' + g.color + '">' + escapeHtml(g.name) + '</span>（' + members.length + '名）</h3>' +
-            '<ul>' + (members.length ? members.map(memberLi).join('') : '<li class="hint">（この班の席に誰もいません）</li>') + '</ul>';
-          container.appendChild(card);
-        }
-
-        if (noGroup.length > 0) {
-          const card = document.createElement('div');
-          card.className = 'roster-card';
-          card.innerHTML = '<h3>班なし（' + noGroup.length + '名）</h3><ul>' +
-            noGroup.map(memberLi).join('') + '</ul>';
-          container.appendChild(card);
-        }
-        if (cr.groups.length === 0 && noGroup.length === 0) {
-          container.innerHTML = '<p class="hint">生徒が登録されていません</p>';
-        }
+        allList.innerHTML = '<li class="hint">「③席替え」を実行すると、全員の名前と班の一覧がここにできます</li>';
+        renderGrid('rosterGrid', cr, 'seating', { seats: {} });
+        return;
       }
 
-      renderGrid('rosterGrid', cr, 'seating', { seats: cr.currentSeats || {} });
+      // --- 班別名簿：groupId → 生徒 ---
+      // 席の位置（何行何列）は先生の要望により表示しない
+      const memberOf = {};
+      const noGroup = [];
+      for (const key of Object.keys(cr.currentSeats)) {
+        const sid = cr.currentSeats[key];
+        if (!sid) continue;
+        const st = getStudent(cr, sid);
+        if (!st || st.inactive) continue;
+        const g = getSeatGroup(cr, key);
+        if (g) (memberOf[g.id] = memberOf[g.id] || []).push(st);
+        else noGroup.push(st);
+      }
+
+      const memberLi = (st) =>
+        '<li>' + escapeHtml(st.name) +
+        (st.gender ? '（' + GENDER_LABELS[st.gender] + '）' : '') + '</li>';
+
+      for (const g of cr.groups) {
+        const members = memberOf[g.id] || [];
+        const card = document.createElement('div');
+        card.className = 'roster-card';
+        card.style.borderColor = g.color;
+        card.innerHTML =
+          '<h3><span class="badge" style="' + groupTagStyle(g.color) + '">' + escapeHtml(g.name) + '</span>（' + members.length + '名）</h3>' +
+          '<ul>' + (members.length ? members.map(memberLi).join('') : '<li class="hint">（この班の席に誰もいません）</li>') + '</ul>';
+        container.appendChild(card);
+      }
+
+      if (noGroup.length > 0) {
+        const card = document.createElement('div');
+        card.className = 'roster-card';
+        card.innerHTML = '<h3>班なし（' + noGroup.length + '名）</h3><ul>' +
+          noGroup.map(memberLi).join('') + '</ul>';
+        container.appendChild(card);
+      }
+      if (cr.groups.length === 0 && noGroup.length === 0) {
+        container.innerHTML = '<p class="hint">生徒が登録されていません</p>';
+      }
+
+      // --- 全員名簿：「Aさん ○班」のように名前と班を一覧にする ---
+      // ならび順は「②生徒」タブに登録した順（名簿順）
+      let allHtml = '';
+      for (const st of cr.students) {
+        if (st.inactive) continue;
+        const g = getGroupOf(cr, st.id);
+        allHtml +=
+          '<li><span class="rname">' + escapeHtml(st.name) +
+          (st.gender ? '（' + GENDER_LABELS[st.gender] + '）' : '') + '</span>' +
+          (g
+            ? '<span class="badge" style="' + groupTagStyle(g.color) + '">' + escapeHtml(g.name) + '</span>'
+            : '<span class="badge gray">班なし</span>') +
+          '</li>';
+      }
+      allList.innerHTML = allHtml || '<li class="hint">生徒が登録されていません</li>';
+
+      renderGrid('rosterGrid', cr, 'seating', { seats: cr.currentSeats });
     }
 
     // =====================================================
@@ -1787,7 +2126,7 @@
         ul.appendChild(li);
       }
       if (cr.history.length === 0) {
-        ul.innerHTML = '<li><span class="hint">履歴はまだありません。席替え後に「💾 履歴に保存」で記録できます。</span></li>';
+        ul.innerHTML = '<li><span class="hint">履歴はまだありません。席替え後に「💾 この席を記録する」で記録できます。</span></li>';
       }
     }
 
@@ -1805,7 +2144,7 @@
     }
 
     // =====================================================
-    // ヘッダー：教室の管理・JSONバックアップ
+    // ヘッダー：年度・クラスの管理・JSONバックアップ
     // =====================================================
     function renderClassroomSelect() {
       const sel = document.getElementById('classroomSelect');
@@ -1820,9 +2159,8 @@
     }
     document.getElementById('classroomSelect').addEventListener('change', (e) => {
       state.activeId = e.target.value;
-      lastWarnings = getActiveClassroom().currentSeats
-        ? checkSoftConstraints(getActiveClassroom(), getActiveClassroom().currentSeats)
-        : [];
+      const cr = getActiveClassroom();
+      lastWarnings = cr.currentSeats ? checkSoftConstraints(cr, cr.currentSeats) : [];
       saveState();
       renderAll();
     });
@@ -1888,7 +2226,7 @@
           saveState();
           renderAll();
         }, '保存');
-      // モーダル内の削除ボタン（モーダルの仕組み上、OKボタンとは別に直接バインドする）
+      // モーダル内の削除ボタン（OKボタンとは別に直接バインドする）
       const delBtn = document.getElementById('btnDeleteClassroom');
       if (delBtn) {
         delBtn.addEventListener('click', () => {
@@ -1986,7 +2324,7 @@
       renderHistoryTab();
     }
 
-    // 旧バージョンのデータを新形式に移行する（性別・席ベースの班）
+    // 旧バージョンのデータを新形式に移行する
     function migrateState() {
       for (const cr of state.classrooms) {
         // 旧データ：年度・クラス名フィールドがなければ教室名から推測する
@@ -1995,6 +2333,7 @@
           if (m) { cr.year = m[1]; cr.className = m[2]; }
           else { cr.year = ''; cr.className = cr.name || ''; }
         }
+        if (cr.checkerGender === undefined) cr.checkerGender = false;
         for (const st of cr.students) {
           if (st.gender === undefined) st.gender = null;
         }

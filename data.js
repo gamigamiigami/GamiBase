@@ -271,6 +271,17 @@ const SITE_DATA = [
   // ==== 便利ツール ====
   {
     category: "useful",
+    title: "ToDo丸（とどまる）",
+    description: "Windows用の付箋風TODOアプリ。期限が来ると画面最前面でお知らせ。",
+    url: "./tools/todomaru/index.html",
+    emoji: "🦉",
+    zip: {
+      url: "https://github.com/gamigamiigami/claude/raw/claude/laughing-faraday-l7fao4/fusen-todo/download/ToDoMaru-v11.zip",
+      label: "ToDo丸をダウンロード（約95MB）",
+    },
+  },
+  {
+    category: "useful",
     title: "クロスワードサポーター",
     description: "クロスワード作りをサポートしてくれるツール。",
     url: "https://gamigamiigami.github.io/Workspace/projects/crossword/",
