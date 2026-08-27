@@ -262,10 +262,10 @@ const SITE_DATA = [
   {
     category: "tool",
     title: "せきかえツール",
-    description: "席替え・班分け・座席表印刷までできる先生向けツール。使い方ガイド付き。",
+    description: "席替え・班分け・座席表印刷までできる先生向けツール。個人情報を扱うためダウンロード推奨。",
     url: "./tools/sekigae/index.html",
     emoji: "📋",
-    zip: { url: "./tools/sekigae/tool.html", label: "ツール本体をダウンロード" },
+    zip: { url: "./tools/sekigae/tool.html", label: "ツール本体をダウンロード（推奨）" },
   },
 
   // ==== 便利ツール ====

@@ -119,6 +119,33 @@ h1 {
   color: var(--text-soft);
 }
 
+.warn-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-align: left;
+  background: #fff4e5;
+  border: 2px solid #ffcf8f;
+  border-radius: 16px;
+  padding: 0.9rem 1.2rem;
+  margin: 0 0 1.6rem;
+  font-size: 0.92rem;
+  color: #8a5a00;
+}
+.warn-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+
+.notice-panel {
+  background: #fffaf0;
+  border-color: #ffdca6;
+}
+.notice-panel .num {
+  background: linear-gradient(135deg, #ff9f43, #ffcf8f);
+}
+.notice-panel .tips-list li {
+  background: #fff;
+  border-color: #ffdca6;
+}
+
 /* ===== 本文セクション ===== */
 main {
   max-width: 880px;
