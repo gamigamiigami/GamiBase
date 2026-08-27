@@ -228,6 +228,13 @@ const SITE_DATA = [
     url: "https://aiue-sugoroku.netlify.app/",
     emoji: "🎲",
   },
+  {
+    category: "game",
+    title: "io games",
+    description: "ブラウザで遊べるioゲーム。",
+    url: "https://iogames91531.netlify.app",
+    emoji: "🕹️",
+  },
   // ==== その他ゲーム ====
   {
     category: "othergame",
@@ -238,13 +245,6 @@ const SITE_DATA = [
   },
   {
     category: "othergame",
-    title: "io games",
-    description: "ブラウザで遊べるioゲーム。",
-    url: "https://iogames91531.netlify.app",
-    emoji: "🕹️",
-  },
-  {
-    category: "othergame",
     title: "Toy Mania",
     description: "おもちゃがテーマのWebゲーム。",
     url: "https://gamigamiigami.github.io/toy-mania-web/",
@@ -252,7 +252,7 @@ const SITE_DATA = [
   },
   {
     category: "othergame",
-    title: "AAA-",
+    title: "瞬間Gamiげぇむ",
     description: "ブラウザで遊べるゲーム。",
     url: "https://gamigamiigami.github.io/AAA-/",
     emoji: "🎮",
