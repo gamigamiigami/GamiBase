@@ -193,19 +193,10 @@ const SITE_DATA = [
   },
   {
     category: "game",
-    title: "返り点クエスト（配布用）",
-    description: "返り点の読み方を冒険形式で学べるクエスト。生徒配布はこちら。",
-    url: "https://gamigamiigami.github.io/Workspace/kaeriten-quest/",
-    emoji: "↩️",
-    tags: ["旧URL・生徒配布用"],
-  },
-  {
-    category: "game",
-    title: "返り点クエスト（新URL）",
-    description: "返り点クエストの新しい設置先。今後はこちらに統一予定。",
+    title: "返り点クエスト",
+    description: "返り点の読み方を冒険形式で学べるクエスト。",
     url: "https://gamigamiigami.github.io/Workspace/projects/kaeriten-quest/",
     emoji: "↩️",
-    tags: ["新URL"],
   },
   {
     category: "game",
