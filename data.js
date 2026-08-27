@@ -221,6 +221,13 @@ const SITE_DATA = [
     url: "https://gamigamiigami.github.io/gamedata/ver2/",
     emoji: "🗂️",
   },
+  {
+    category: "game",
+    title: "あいうえおすごろく",
+    description: "あいうえおを楽しく学べるすごろくゲーム。",
+    url: "https://aiue-sugoroku.netlify.app/",
+    emoji: "🎲",
+  },
   // ==== その他ゲーム ====
   {
     category: "othergame",
@@ -272,6 +279,13 @@ const SITE_DATA = [
     description: "文字をずらして使う言葉まわりのツール。",
     url: "https://gamigamiigami.github.io/Workspace/projects/moji-zurashi/",
     emoji: "🔠",
+  },
+  {
+    category: "useful",
+    title: "PDFリンくん",
+    description: "PDFにリンクをつけるための説明書ツール。",
+    url: "https://pdf-linkun.netlify.app/",
+    emoji: "📄",
   },
 
   // ==== イベント ====
