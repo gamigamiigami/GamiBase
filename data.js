@@ -259,7 +259,7 @@ const SITE_DATA = [
     zip: { url: "./tools/sekigae/tool.html", label: "ツール本体をダウンロード（推奨）" },
   },
   {
-    category: "tool",
+    category: "useful",
     title: "迷路謎メーカー",
     description: "オリジナルの迷路謎を作れる先生向けツール。",
     url: "https://gamigamiigami.github.io/Workspace/projects/meiro-nazo-maker/",
