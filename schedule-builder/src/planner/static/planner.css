@@ -309,19 +309,22 @@ a {
 
 .timetable thead th {
   background: #f4f4f4;
-  padding: 1mm 0.5mm;
+  padding: 1.4mm 0.5mm;
   text-align: center;
 }
 
 .timetable thead th .wd {
-  font-size: 9.5pt;
+  font-size: 10pt;
   font-weight: bold;
 }
 
+/* 日付は週ページで最もよく見る情報なので、曜日と同じ大きさで濃く出す */
 .timetable thead th .dt {
-  font-size: 7.5pt;
-  color: var(--muted);
-  font-weight: normal;
+  font-size: 11pt;
+  font-weight: bold;
+  color: #111;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
 }
 
 .timetable th.period {
@@ -372,11 +375,13 @@ a {
 }
 
 .daylist th {
-  width: 15mm;
+  width: 17mm;
   background: #fafafa;
   text-align: left;
   vertical-align: top;
-  font-weight: normal;
+  font-weight: bold;
+  font-size: 9.5pt;
+  font-variant-numeric: tabular-nums;
 }
 
 .daylist tr.closed th,
@@ -422,13 +427,14 @@ a {
 
 .plan td {
   border: 0.35mm solid var(--line);
-  height: 4.6mm;
+  /* 手書きで書き込む欄。1行に文字が収まる高さを確保する。 */
+  height: 8mm;
 }
 
 .memo {
   flex: 0 0 auto;
   border: 0.35mm solid var(--line);
-  height: 22mm;
+  height: 16mm;
 }
 
 /* ------------------------------------------------------------------ */
