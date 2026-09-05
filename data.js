@@ -305,6 +305,16 @@ const SITE_DATA = [
   {
     category: "useful",
     group: "pdf-linkun",
+    section: "ツール本体",
+    title: "週案スケジュール帳（販売フロー・画面デモ）",
+    description: "時間割と行事予定からリンク付きPDFを自動生成する新方式。購入〜入力〜受け取りの画面を試せます。",
+    url: "./tools/shuan-planner/",
+    emoji: "📘",
+    tags: ["自動生成", "GoodNotes", "デモ"],
+  },
+  {
+    category: "useful",
+    group: "pdf-linkun",
     section: "説明書",
     title: "使い方説明書",
     description: "エクセルからPDF作成〜自動リンク付与〜iPad取り込みまでの手順書。",
