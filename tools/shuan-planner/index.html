@@ -649,21 +649,23 @@ PYTHONPATH=src python3 -m planner serve</pre>
   const PERIODS = ["1", "2", "3", "4", "5", "6"];
 
   let nextLessonId = 1;
-  const palette = [
-    ["２年５組", "red"], ["２年６組", "red"], ["２年１組", "red"], ["２年２組", "red"],
-    ["２年３組", "red"], ["２年４組", "red"], ["３年１組", "blue"], ["３年２組", "blue"],
-    ["３年３組", "blue"], ["３年４組", "blue"], ["３年５組", "blue"], ["３年６組", "blue"],
-    ["特別支援", "green"], ["外国人", "yellow"]
-  ].map(([name, color]) => ({ id: nextLessonId++, name, color }));
+  // 初期設定は「学年+組　教科」。1〜3年生 × 1〜3組、学年ごとに色を分けておく。
+  const GRADE_COLOR = { 1: "yellow", 2: "red", 3: "blue" };
+  const palette = [];
+  for (let grade = 1; grade <= 3; grade++) {
+    for (let cls = 1; cls <= 3; cls++) {
+      palette.push({ id: nextLessonId++, name: `${grade}年${cls}組　国語`, color: GRADE_COLOR[grade] });
+    }
+  }
 
   // 時間割の初期状態（授業リストの id で指定）。
   const byName = (name) => palette.find((p) => p.name === name).id;
   const PLAN = {
-    1: [byName("２年５組"), byName("３年１組"), "", byName("３年５組"), ""],
-    2: ["", byName("２年１組"), byName("２年３組"), byName("２年４組"), byName("３年４組")],
-    3: [byName("２年６組"), byName("２年２組"), byName("３年２組"), byName("特別支援"), byName("３年６組")],
-    4: ["", "", "", "", byName("３年３組")],
-    5: [byName("特別支援"), byName("外国人"), byName("外国人"), "", ""],
+    1: [byName("1年1組　国語"), byName("2年1組　国語"), "", byName("3年1組　国語"), ""],
+    2: ["", byName("1年2組　国語"), byName("2年2組　国語"), byName("3年2組　国語"), byName("1年3組　国語")],
+    3: [byName("2年3組　国語"), byName("3年3組　国語"), byName("1年1組　国語"), byName("2年1組　国語"), byName("3年1組　国語")],
+    4: ["", "", "", "", byName("1年2組　国語")],
+    5: [byName("2年2組　国語"), byName("3年2組　国語"), byName("1年3組　国語"), "", ""],
     6: ["", "", "", "", ""]
   };
 
