@@ -1,0 +1,23 @@
+# Render.com へのデプロイ設定。
+# リポジトリを連携して「Blueprint」から読み込むと、この通りに作られる。
+services:
+  - type: web
+    name: schedule-builder
+    runtime: docker
+    dockerfilePath: ./schedule-builder/Dockerfile
+    dockerContext: ./schedule-builder
+    plan: starter          # free プランだとメモリ不足でChromiumが落ちることがある
+    healthCheckPath: /
+    envVars:
+      - key: PLANNER_SECRET
+        generateValue: true   # Render が安全な値を自動生成する
+      - key: PLANNER_DB
+        value: /data/orders.db
+      - key: PLANNER_OUTPUT_DIR
+        value: /data/generated
+      - key: PLANNER_TEST_MODE
+        value: "1"            # 決済をつなぐまでは 1（テストモード）のままにする
+    disk:
+      name: data
+      mountPath: /data        # 注文台帳と生成PDFを再起動後も残す
+      sizeGB: 1

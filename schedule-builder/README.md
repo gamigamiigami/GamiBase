@@ -85,6 +85,14 @@ PYTHONPATH=src python3 -m planner serve
 決済は `/checkout` の1か所に閉じ込めてある。本番では、ここを Stripe などの
 決済完了Webhookに置き換えて `store.create_order(...)` を呼ぶだけでよい。
 
+## インターネットに公開する
+
+`Dockerfile` と `render.yaml` を同梱している。Render に Blueprint として読み込ませると
+Chromium と日本語フォントごと構築される。手順と他の方法（Fly.io / 一時公開）は
+[DEPLOY.md](DEPLOY.md) を参照。
+
+GitHub Pages は静的ファイルしか置けないため、このアプリは動かない。
+
 ## 販売運用（1注文1生成）
 
 ```bash
@@ -123,7 +131,7 @@ PYTHONPATH=src python3 -m planner link -i 既存.pdf -o リンク付き.pdf
 python3 -m pytest
 ```
 
-祝日計算・週の割付・PDFのリンク・受注台帳・行事取り込みを検証する（68件）。
+祝日計算・週の割付・PDFのリンク・受注台帳・行事取り込み・購入フローを検証する（82件）。
 PDF生成テストは Chromium が無い環境では自動的に skip される。
 
 ## ファイル構成
@@ -140,8 +148,11 @@ src/planner/
   events_import.py  行事予定表の取り込み
   orders.py         受注・ライセンス台帳（SQLite）
   cli.py            コマンドライン
+  webapp.py         購入フローのWeb画面（Flask）
+  wsgi.py           本番サーバー用のエントリポイント
 docs/
   INPUT_SPEC.md     入力仕様（購入者向け説明の元ネタにもなる）
   ARCHITECTURE.md   設計と、旧Excelとの対応
+DEPLOY.md           公開手順（Render / Fly.io / 一時公開）
 HANDOFF.md          あなたが決める・用意することの一覧
 ```
