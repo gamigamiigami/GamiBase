@@ -188,6 +188,34 @@ class OrderStore:
 
     # -- ダウンロードトークン -----------------------------------------------
 
+    def issue_setup_token(self, order_id: str, *, ttl_hours: int = 24 * 14) -> str:
+        """入力フォーム用のトークン。購入直後に購入者へ渡す。
+
+        ダウンロード用と混同できないよう先頭に用途を入れる（形式が違うので取り違えは弾かれる）。
+        """
+        self.get(order_id)  # 存在確認
+        expires = int(
+            (_dt.datetime.now(_dt.timezone.utc) + _dt.timedelta(hours=ttl_hours)).timestamp()
+        )
+        payload = f"setup:{order_id}:{expires}"
+        return f"{payload}:{self._sign(payload)}"
+
+    def verify_setup_token(self, token: str) -> Order:
+        """入力フォーム用トークンを検証する。回数は消費しない。"""
+        parts = token.split(":")
+        if len(parts) != 4 or parts[0] != "setup":
+            raise TokenError("入力フォームのURLが正しくありません")
+        _purpose, order_id, expires_raw, signature = parts
+        if not hmac.compare_digest(self._sign(f"setup:{order_id}:{expires_raw}"), signature):
+            raise TokenError("入力フォームのURLが正しくありません")
+        try:
+            expires = int(expires_raw)
+        except ValueError as exc:
+            raise TokenError("入力フォームURLの有効期限が読めません") from exc
+        if _dt.datetime.now(_dt.timezone.utc).timestamp() > expires:
+            raise TokenError("入力フォームURLの有効期限が切れています。再発行をご依頼ください")
+        return self.get(order_id)
+
     def issue_download_token(self, order_id: str, *, ttl_hours: int = 72) -> str:
         """期限つきの署名トークンを発行する。URL に載せて渡す。"""
         order = self.get(order_id)

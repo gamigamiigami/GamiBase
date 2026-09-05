@@ -4,3 +4,6 @@ playwright>=1.40
 pypdf>=4.0
 pdfminer.six>=20221105
 openpyxl>=3.1
+
+# 購入フロー（python3 -m planner serve）を使う場合のみ
+flask>=3.0

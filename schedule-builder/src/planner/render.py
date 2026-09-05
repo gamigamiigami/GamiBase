@@ -68,7 +68,38 @@ def render_html(data: PlannerInput) -> str:
         cal=cal,
         css=(_STATIC / "planner.css").read_text(encoding="utf-8"),
         watermark=data.license.watermark_text,
+        legend=_legend(data),
     )
+
+
+def _legend(data: PlannerInput) -> list[dict[str, str]]:
+    """1ページ目に出す凡例。使われている授業の色と、長期休業を並べる。"""
+    items: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in data.timetable.grid.values():
+        for lesson in row.values():
+            if lesson.color and lesson.color not in seen and lesson.background:
+                seen.add(lesson.color)
+                # 同じ色の授業名をまとめて凡例のラベルにする
+                names = sorted(
+                    {
+                        other.name
+                        for r in data.timetable.grid.values()
+                        for other in r.values()
+                        if other.color == lesson.color and other.name
+                    }
+                )
+                items.append(
+                    {"background": lesson.background, "label": "・".join(names[:6])}
+                )
+    for period in data.breaks:
+        items.append(
+            {
+                "background": "#efe4f5",
+                "label": f"{period.name}（{period.start.month}/{period.start.day}〜{period.end.month}/{period.end.day}）",
+            }
+        )
+    return items
 
 
 def build_pdf(data: PlannerInput, out_path: str | Path) -> Path:

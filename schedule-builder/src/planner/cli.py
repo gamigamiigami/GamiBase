@@ -24,14 +24,41 @@ SAMPLE = {
     "title": "",
     "owner": {"name": "山田 太郎", "school": "○○市立○○中学校"},
     "timetable": {
+        # 授業は "名前" だけでも、色つきの {"name", "color"} でも書ける
         "grid": {
-            "月": {"1": "２年５組", "3": "２年６組", "5": "特別支援"},
-            "火": {"1": "３年１組", "2": "２年１組", "3": "２年２組", "5": "外国人"},
-            "水": {"2": "２年３組", "3": "３年２組", "5": "外国人"},
-            "木": {"1": "３年５組", "2": "２年４組", "3": "特別支援"},
-            "金": {"2": "３年４組", "3": "３年６組", "4": "３年３組"},
+            "月": {
+                "1": {"name": "２年５組", "color": "red"},
+                "3": {"name": "２年６組", "color": "red"},
+                "5": {"name": "特別支援", "color": "green"},
+            },
+            "火": {
+                "1": {"name": "３年１組", "color": "blue"},
+                "2": {"name": "２年１組", "color": "red"},
+                "3": {"name": "２年２組", "color": "red"},
+                "5": {"name": "外国人", "color": "yellow"},
+            },
+            "水": {
+                "2": {"name": "２年３組", "color": "red"},
+                "3": {"name": "３年２組", "color": "blue"},
+                "5": {"name": "外国人", "color": "yellow"},
+            },
+            "木": {
+                "1": {"name": "３年５組", "color": "blue"},
+                "2": {"name": "２年４組", "color": "red"},
+                "3": {"name": "特別支援", "color": "green"},
+            },
+            "金": {
+                "2": {"name": "３年４組", "color": "blue"},
+                "3": {"name": "３年６組", "color": "blue"},
+                "4": {"name": "３年３組", "color": "blue"},
+            },
         }
     },
+    "breaks": [
+        {"name": "夏季休業", "start": "2025-07-21", "end": "2025-08-31"},
+        {"name": "冬季休業", "start": "2025-12-25", "end": "2026-01-07"},
+        {"name": "学年末休業", "start": "2026-03-25", "end": "2026-03-31"},
+    ],
     "events": [
         {"date": "2025-04-07", "title": "始業式"},
         {"date": "2025-04-08", "title": "入学式"},
@@ -258,6 +285,26 @@ def load_input_from_dict(raw: dict):
     return parse_input(raw)
 
 
+def _cmd_serve(args: argparse.Namespace) -> int:
+    try:
+        from .webapp import create_app
+    except ImportError:
+        print("flask がインストールされていません。`pip install flask` を実行してください", file=sys.stderr)
+        return 2
+
+    try:
+        app = create_app(db_path=args.db, output_dir=args.output_dir, test_mode=not args.live)
+    except RuntimeError as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+
+    mode = "本番モード" if args.live else "テストモード（決済なし・無料）"
+    print(f"購入フローを起動します（{mode}）")
+    print(f"  http://{args.host}:{args.port}/ をブラウザで開いてください")
+    app.run(host=args.host, port=args.port, debug=False)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="planner",
@@ -318,6 +365,18 @@ def build_parser() -> argparse.ArgumentParser:
     add_db(p_oregen)
     p_oregen.add_argument("--order-id", required=True, help="注文ID")
     p_oregen.set_defaults(func=_cmd_order_allow_regen)
+
+    p_serve = sub.add_parser("serve", help="購入〜入力〜生成〜DLの流れをWebで動かす")
+    add_db(p_serve)
+    p_serve.add_argument("--host", default="127.0.0.1", help="待ち受けホスト")
+    p_serve.add_argument("--port", type=int, default=5000, help="待ち受けポート")
+    p_serve.add_argument("--output-dir", default="generated", help="生成したPDFの保存先")
+    p_serve.add_argument(
+        "--live",
+        action="store_true",
+        help="テストモードの表示を外す（決済連携を自分で実装した場合のみ使う）",
+    )
+    p_serve.set_defaults(func=_cmd_serve)
 
     return parser
 

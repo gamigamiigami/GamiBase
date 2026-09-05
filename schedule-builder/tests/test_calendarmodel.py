@@ -102,9 +102,55 @@ def test_lessons_skip_closed_days():
     data = make(2025, timetable={"grid": {"月": {"1": "２年１組"}}})
     cal = PlannerCalendar(data)
     monday = cal.day(dt.date(2025, 4, 7))  # 平日
-    holiday_monday = cal.day(dt.date(2025, 4, 29))  # 昭和の日（火）
-    assert cal.lessons_for(monday, "1") == "２年１組"
-    assert cal.lessons_for(holiday_monday, "1") == ""
+    holiday = cal.day(dt.date(2025, 4, 29))  # 昭和の日
+    assert cal.lessons_for(monday, "1").name == "２年１組"
+    assert cal.lessons_for(holiday, "1").name == ""
+
+
+def test_lesson_colors():
+    data = make(
+        2025,
+        timetable={"grid": {"月": {"1": {"name": "２年１組", "color": "赤"}, "2": "３年１組"}}},
+    )
+    cal = PlannerCalendar(data)
+    monday = cal.day(dt.date(2025, 4, 7))
+    colored = cal.lessons_for(monday, "1")
+    assert colored.color == "red"
+    assert colored.background
+    assert cal.lessons_for(monday, "2").background == ""
+
+
+def test_invalid_color_rejected():
+    with pytest.raises(InputError, match="色"):
+        make(2025, timetable={"grid": {"月": {"1": {"name": "x", "color": "紫紺"}}}})
+
+
+def test_school_break_marks_days_closed():
+    data = make(
+        2025,
+        timetable={"grid": {"月": {"1": "２年１組"}}},
+        breaks=[{"name": "夏季休業", "start": "2025-07-19", "end": "2025-08-31"}],
+    )
+    cal = PlannerCalendar(data)
+    in_break = cal.day(dt.date(2025, 8, 4))  # 月曜だが夏休み
+    assert in_break.is_break
+    assert in_break.is_closed
+    assert in_break.closed_label == "夏季休業"
+    assert cal.lessons_for(in_break, "1").name == "", "休業中は授業を出さない"
+
+    normal = cal.day(dt.date(2025, 9, 1))
+    assert not normal.is_break
+    assert cal.lessons_for(normal, "1").name == "２年１組"
+
+
+def test_break_outside_school_year_rejected():
+    with pytest.raises(InputError, match="年度の範囲"):
+        make(2025, breaks=[{"name": "夏季休業", "start": "2024-07-19", "end": "2024-08-31"}])
+
+
+def test_break_with_reversed_dates_rejected():
+    with pytest.raises(InputError, match="より前"):
+        make(2025, breaks=[{"name": "夏季休業", "start": "2025-08-31", "end": "2025-07-19"}])
 
 
 def test_event_out_of_year_is_rejected():

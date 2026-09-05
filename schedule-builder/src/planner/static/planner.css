@@ -473,3 +473,49 @@ a {
 .foot .wm {
   letter-spacing: 0.03em;
 }
+
+/* ------------------------------------------------------------------ */
+/* 凡例（授業の色分け・長期休業）                                       */
+/* ------------------------------------------------------------------ */
+
+.legend {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1mm 4mm;
+  margin-bottom: 1.5mm;
+  font-size: 7.5pt;
+  color: #333;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.2mm;
+}
+
+.legend-item i {
+  display: inline-block;
+  width: 3.4mm;
+  height: 3.4mm;
+  border: 0.25mm solid #999;
+  border-radius: 0.6mm;
+}
+
+/* 長期休業の日は、土日祝とは別の色にして区別できるようにする */
+.month td.brk,
+.events-table td.brk {
+  background: #efe4f5;
+}
+
+/* 週ページの曜日見出しに出す「夏季休業」などの理由 */
+.timetable thead th .cl {
+  font-size: 6.5pt;
+  color: #7a5a90;
+  font-weight: normal;
+  line-height: 1.1;
+}
+
+.timetable thead th.closed {
+  background: var(--closed);
+}

@@ -39,6 +39,13 @@
         </div>
         {{ nav_home(1) }}
       </div>
+      {%- if legend %}
+      <div class="legend">
+        {%- for item in legend %}
+        <span class="legend-item"><i style="background: {{ item.background }}"></i>{{ item.label }}</span>
+        {%- endfor %}
+      </div>
+      {%- endif %}
       <div class="year-grid">
         {%- for month in cal.months %}
         <div class="month">
@@ -62,8 +69,8 @@
                 <td class="empty"></td>
                 {%- else %}
                 {%- set page = cal.week_page_for(day.date) %}
-                <td class="{{ 'closed ' if day.is_closed }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}{{ 'has-event' if day.events }}"
-                    title="{{ day.md_with_weekday }}{% if day.holiday %} {{ day.holiday }}{% endif %}{% if day.event_text %} {{ day.event_text }}{% endif %}">
+                <td class="{{ 'closed ' if day.is_closed }}{{ 'brk ' if day.is_break }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}{{ 'has-event' if day.events }}"
+                    title="{{ day.md_with_weekday }}{% if day.closed_label %} {{ day.closed_label }}{% endif %}{% if day.event_text %} {{ day.event_text }}{% endif %}">
                   {%- if page %}<a href="#p{{ page }}">{{ day.date.day }}</a>
                   {%- else %}<span>{{ day.date.day }}</span>{% endif %}
                 </td>
@@ -103,11 +110,11 @@
             <td class="empty"></td>
             {%- else %}
             {%- set page = cal.week_page_for(day.date) %}
-            <td class="{{ 'closed ' if day.is_closed }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}">
+            <td class="{{ 'closed ' if day.is_closed }}{{ 'brk ' if day.is_break }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}">
               {%- if page %}<a href="#p{{ page }}">
               {%- else %}<span>{% endif %}
                 <span class="d">{{ day.date.day }}{{ day.weekday_ja }}</span>
-                <span class="t">{% if day.holiday %}{{ day.holiday }}{% if day.event_text %} / {% endif %}{% endif %}{{ day.event_text }}</span>
+                <span class="t">{% if day.closed_label %}{{ day.closed_label }}{% if day.event_text %} / {% endif %}{% endif %}{{ day.event_text }}</span>
               {%- if page %}</a>{% else %}</span>{% endif %}
             </td>
             {%- endif %}
@@ -144,9 +151,12 @@
             <tr>
               <th class="period"></th>
               {%- for day in week.weekdays %}
-              <th>
+              <th class="{{ 'closed' if day.is_closed }}">
                 <div class="wd">{{ day.weekday_ja }}</div>
                 <div class="dt">{{ day.md }}</div>
+                {%- if day.closed_label %}
+                <div class="cl">{{ day.closed_label }}</div>
+                {%- endif %}
               </th>
               {%- endfor %}
             </tr>
@@ -156,8 +166,10 @@
             <tr class="{{ 'break' if period in ['昼'] }}">
               <th class="period">{{ period }}</th>
               {%- for day in week.weekdays %}
-              <td class="{{ 'closed' if day.is_closed }}">
-                <span class="lesson">{{ cal.lessons_for(day, period) }}</span>
+              {%- set lesson = cal.lessons_for(day, period) %}
+              <td class="{{ 'closed' if day.is_closed }}"
+                  {%- if lesson.background %} style="background: {{ lesson.background }}"{% endif %}>
+                <span class="lesson">{{ lesson.name }}</span>
               </td>
               {%- endfor %}
             </tr>
@@ -171,7 +183,7 @@
             <tr class="{{ 'closed' if day.is_closed }}">
               <th>{{ day.md_with_weekday }}</th>
               <td>
-                {%- if day.holiday %}<span class="hol">{{ day.holiday }}</span> {% endif -%}
+                {%- if day.closed_label %}<span class="hol">{{ day.closed_label }}</span> {% endif -%}
                 <span class="ev">{{ day.event_text }}</span>
               </td>
             </tr>
@@ -179,14 +191,14 @@
             <tr class="closed">
               <th class="sat">{{ week.saturday.md_with_weekday }}</th>
               <td>
-                {%- if week.saturday.holiday %}<span class="hol">{{ week.saturday.holiday }}</span> {% endif -%}
+                {%- if week.saturday.closed_label %}<span class="hol">{{ week.saturday.closed_label }}</span> {% endif -%}
                 <span class="ev">{{ week.saturday.event_text }}</span>
               </td>
             </tr>
             <tr class="closed">
               <th class="sun">{{ week.sunday.md_with_weekday }}</th>
               <td>
-                {%- if week.sunday.holiday %}<span class="hol">{{ week.sunday.holiday }}</span> {% endif -%}
+                {%- if week.sunday.closed_label %}<span class="hol">{{ week.sunday.closed_label }}</span> {% endif -%}
                 <span class="ev">{{ week.sunday.event_text }}</span>
               </td>
             </tr>

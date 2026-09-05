@@ -15,12 +15,15 @@ from typing import Any
 __all__ = [
     "PlannerInput",
     "Timetable",
+    "Lesson",
+    "SchoolBreak",
     "Event",
     "Owner",
     "License",
     "InputError",
     "WEEKDAYS",
     "DEFAULT_PERIODS",
+    "LESSON_COLORS",
 ]
 
 # 週ページの列（授業のある曜日）
@@ -31,6 +34,28 @@ DEFAULT_PERIODS = ["朝", "1", "2", "3", "4", "昼", "5", "6", "業後"]
 
 # 授業を割り当てられる行（時間割グリッドのキーになる）
 LESSON_PERIODS = ["1", "2", "3", "4", "5", "6"]
+
+# 授業の色分け。現行 Excel の「①授業リスト」の色（赤・青・緑・黄・灰）に合わせている。
+# 値は CSS の色。薄い背景色にして、上からペンで書き込んでも読めるようにする。
+LESSON_COLORS: dict[str, str] = {
+    "": "",
+    "red": "#fde0e0",
+    "blue": "#dce8fb",
+    "green": "#dff2e0",
+    "yellow": "#fdf3d0",
+    "gray": "#e8e8e8",
+}
+
+# 日本語での指定も受け付ける
+_COLOR_ALIASES = {
+    "赤": "red",
+    "青": "blue",
+    "緑": "green",
+    "黄": "yellow",
+    "灰": "gray",
+    "なし": "",
+    "白": "",
+}
 
 
 class InputError(ValueError):
@@ -74,14 +99,45 @@ class Event:
 
 
 @dataclass(frozen=True)
-class Timetable:
-    """週の基本時間割。grid[曜日][時限] = 授業名。"""
+class Lesson:
+    """時間割の1コマ。名前と色を持つ。"""
 
-    grid: dict[str, dict[str, str]] = field(default_factory=dict)
+    name: str = ""
+    color: str = ""
+
+    @property
+    def background(self) -> str:
+        """CSS の背景色。色指定が無ければ空文字。"""
+        return LESSON_COLORS.get(self.color, "")
+
+    def __bool__(self) -> bool:
+        return bool(self.name)
+
+
+EMPTY_LESSON = Lesson()
+
+
+@dataclass(frozen=True)
+class SchoolBreak:
+    """長期休業（夏季休業・冬季休業など）。期間で指定する。"""
+
+    name: str
+    start: _dt.date
+    end: _dt.date
+
+    def covers(self, date: _dt.date) -> bool:
+        return self.start <= date <= self.end
+
+
+@dataclass(frozen=True)
+class Timetable:
+    """週の基本時間割。grid[曜日][時限] = Lesson。"""
+
+    grid: dict[str, dict[str, Lesson]] = field(default_factory=dict)
     periods: list[str] = field(default_factory=lambda: list(DEFAULT_PERIODS))
 
-    def lesson(self, weekday: str, period: str) -> str:
-        return self.grid.get(weekday, {}).get(period, "")
+    def lesson(self, weekday: str, period: str) -> Lesson:
+        return self.grid.get(weekday, {}).get(period, EMPTY_LESSON)
 
 
 @dataclass(frozen=True)
@@ -91,6 +147,7 @@ class PlannerInput:
     school_year: int
     timetable: Timetable = field(default_factory=Timetable)
     events: tuple[Event, ...] = ()
+    breaks: tuple[SchoolBreak, ...] = ()
     owner: Owner = field(default_factory=Owner)
     license: License = field(default_factory=License)
     free_pages: int = 30
@@ -122,6 +179,13 @@ class PlannerInput:
 
     def events_on(self, date: _dt.date) -> list[Event]:
         return [e for e in self.events if e.date == date]
+
+    def break_on(self, date: _dt.date) -> SchoolBreak | None:
+        """その日を含む長期休業。無ければ None。"""
+        for period in self.breaks:
+            if period.covers(date):
+                return period
+        return None
 
 
 # --------------------------------------------------------------------------
@@ -157,7 +221,7 @@ def _parse_timetable(raw: Any) -> Timetable:
     if not isinstance(grid_raw, dict):
         raise InputError("timetable.grid: {曜日: {時限: 授業名}} の形で指定してください")
 
-    grid: dict[str, dict[str, str]] = {}
+    grid: dict[str, dict[str, Lesson]] = {}
     for weekday, lessons in grid_raw.items():
         if weekday not in WEEKDAYS:
             raise InputError(
@@ -165,8 +229,60 @@ def _parse_timetable(raw: Any) -> Timetable:
             )
         if not isinstance(lessons, dict):
             raise InputError(f"timetable.grid.{weekday}: {{時限: 授業名}} の形で指定してください")
-        grid[weekday] = {str(period): str(name) for period, name in lessons.items() if name}
+
+        row: dict[str, Lesson] = {}
+        for period, value in lessons.items():
+            where = f"timetable.grid.{weekday}.{period}"
+            lesson = _parse_lesson(value, where)
+            if lesson.name:
+                row[str(period)] = lesson
+        grid[weekday] = row
     return Timetable(grid=grid, periods=list(periods))
+
+
+def _parse_lesson(value: Any, where: str) -> Lesson:
+    """1コマ分。文字列（授業名のみ）と {name, color} の両方を受け付ける。"""
+    if value is None or value == "":
+        return EMPTY_LESSON
+    if isinstance(value, str):
+        return Lesson(name=value.strip())
+    if isinstance(value, dict):
+        name = str(value.get("name") or value.get("title") or "").strip()
+        color = str(value.get("color") or "").strip().lower()
+        color = _COLOR_ALIASES.get(color, color)
+        if color and color not in LESSON_COLORS:
+            allowed = "・".join(c for c in LESSON_COLORS if c)
+            raise InputError(f"{where}: 色 '{color}' は使えません。{allowed} のいずれかにしてください")
+        return Lesson(name=name, color=color)
+    raise InputError(f"{where}: 授業は文字列か {{'name': ..., 'color': ...}} で指定してください")
+
+
+def _parse_breaks(raw: Any, start: _dt.date, end: _dt.date) -> tuple[SchoolBreak, ...]:
+    """長期休業の期間。"""
+    if raw is None:
+        return ()
+    if not isinstance(raw, list):
+        raise InputError("breaks: 配列で指定してください")
+
+    periods: list[SchoolBreak] = []
+    for i, item in enumerate(raw, start=1):
+        where = f"breaks[{i}]"
+        if not isinstance(item, dict):
+            raise InputError(f"{where}: {{'name': ..., 'start': ..., 'end': ...}} の形で指定してください")
+        name = str(item.get("name") or "").strip()
+        if not name:
+            raise InputError(f"{where}: name（休業の名称）が空です。例: 夏季休業")
+        begin = _parse_date(item.get("start"), f"{where}.start")
+        finish = _parse_date(item.get("end"), f"{where}.end")
+        if finish < begin:
+            raise InputError(f"{where}: end（{finish}）が start（{begin}）より前になっています")
+        if finish < start or begin > end:
+            raise InputError(
+                f"{where}: 期間（{begin} 〜 {finish}）が年度の範囲（{start} 〜 {end}）から外れています"
+            )
+        periods.append(SchoolBreak(name=name, start=begin, end=finish))
+    periods.sort(key=lambda b: b.start)
+    return tuple(periods)
 
 
 def _parse_events(raw: Any, start: _dt.date, end: _dt.date) -> tuple[Event, ...]:
@@ -249,10 +365,12 @@ def parse_input(raw: dict[str, Any]) -> PlannerInput:
         extra_weeks=extra_weeks,
     )
     events = _parse_events(raw.get("events"), parsed.start_date, parsed.end_date)
+    breaks = _parse_breaks(raw.get("breaks"), parsed.start_date, parsed.end_date)
     return PlannerInput(
         school_year=parsed.school_year,
         timetable=parsed.timetable,
         events=events,
+        breaks=breaks,
         owner=parsed.owner,
         license=parsed.license,
         free_pages=parsed.free_pages,

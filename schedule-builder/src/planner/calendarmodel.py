@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from functools import cached_property
 
 from .holidays import holiday_name
-from .models import WEEKDAYS, Event, PlannerInput
+from .models import EMPTY_LESSON, WEEKDAYS, Event, PlannerInput
 
 __all__ = ["Day", "Week", "MonthGrid", "PlannerCalendar", "PAGE_YEAR_CALENDAR", "PAGE_EVENT_LIST"]
 
@@ -36,6 +36,7 @@ class Day:
     date: _dt.date
     events: tuple[Event, ...] = ()
     holiday: str | None = None
+    school_break: str | None = None  # 長期休業の名称（夏季休業など）
 
     @property
     def weekday_ja(self) -> str:
@@ -58,9 +59,19 @@ class Day:
         return self.holiday is not None
 
     @property
+    def is_break(self) -> bool:
+        """長期休業中の日。"""
+        return self.school_break is not None
+
+    @property
     def is_closed(self) -> bool:
-        """学校が休みの日（土日・祝日）。週ページでグレー表示する。"""
-        return self.is_weekend or self.is_holiday
+        """授業が無い日（土日・祝日・長期休業）。週ページでグレー表示する。"""
+        return self.is_weekend or self.is_holiday or self.is_break
+
+    @property
+    def closed_label(self) -> str:
+        """休みの理由。祝日名や休業名を表示するために使う。"""
+        return self.holiday or self.school_break or ""
 
     @property
     def md(self) -> str:
@@ -141,10 +152,12 @@ class PlannerCalendar:
     # -- 基本 ---------------------------------------------------------------
 
     def day(self, date: _dt.date) -> Day:
+        period = self.data.break_on(date)
         return Day(
             date=date,
             events=tuple(self._events_by_date.get(date, ())),
             holiday=holiday_name(date),
+            school_break=period.name if period else None,
         )
 
     @cached_property
@@ -241,11 +254,11 @@ class PlannerCalendar:
 
     # -- 週ページの授業 -----------------------------------------------------
 
-    def lessons_for(self, day: Day, period: str) -> str:
-        """その日・その時限の授業名。休業日は空。"""
+    def lessons_for(self, day: Day, period: str):
+        """その日・その時限の Lesson。休業日は空の Lesson。"""
         if day.is_closed:
-            return ""
+            return EMPTY_LESSON
         weekday = day.weekday_ja
         if weekday not in WEEKDAYS:
-            return ""
+            return EMPTY_LESSON
         return self.data.timetable.lesson(weekday, period)
