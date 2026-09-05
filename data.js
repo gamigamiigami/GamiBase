@@ -252,7 +252,7 @@ const SITE_DATA = [
   // ==== 教育ツール ====
   {
     category: "tool",
-    title: "せきかえツール",
+    title: "席替え屋さん",
     description: "席替え・班分け・座席表印刷までできる先生向けツール。個人情報を扱うためダウンロード推奨。",
     url: "./tools/sekigae/index.html",
     emoji: "📋",
