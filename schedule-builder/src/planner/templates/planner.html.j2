@@ -1,0 +1,233 @@
+{#- スケジュール帳全体。1 .page = PDF 1ページ。
+    ページ内リンクは <a href="#pN"> で書き、Chromium が PDF のリンク注釈に変換する。 -#}
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ data.display_title }}</title>
+    <style>
+{{ css }}
+    </style>
+  </head>
+  <body>
+    {%- macro foot(page_no) -%}
+    <div class="foot">
+      <span class="wm">{% if data.license.watermark and watermark %}{{ watermark }}{% endif %}</span>
+      <span>{{ data.display_title }}</span>
+      <span>{{ page_no }} / {{ cal.total_pages }}</span>
+    </div>
+    {%- endmacro -%}
+
+    {%- macro nav_home(current) -%}
+    <div class="nav">
+      <a href="#p1"{% if current == 1 %} class="is-disabled"{% endif %}>年間カレンダー</a>
+      <a href="#p2"{% if current == 2 %} class="is-disabled"{% endif %}>年間行事予定</a>
+      {%- if cal.free_pages %}
+      <a class="nav-free" href="#p{{ cal.free_page_start }}">自由ページ</a>
+      {%- endif %}
+    </div>
+    {%- endmacro -%}
+
+    {#- ============ 1ページ目: 年間カレンダー ============ -#}
+    <section class="page" id="p1">
+      <div class="page-head">
+        <div class="page-title">年間カレンダー</div>
+        <div class="page-subtitle">
+          令和{{ data.reiwa_year }}年度（{{ data.school_year }}年4月 〜 {{ data.school_year + 1 }}年3月）
+          {%- if data.owner.school %} ／ {{ data.owner.school }}{% endif %}
+          {%- if data.owner.name %} ／ {{ data.owner.name }}{% endif %}
+        </div>
+        {{ nav_home(1) }}
+      </div>
+      <div class="year-grid">
+        {%- for month in cal.months %}
+        <div class="month">
+          <div class="month-head">
+            <span class="m">{{ month.label }}</span>
+            <span class="en">{{ month.label_en }}</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                {%- for wd in ["日", "月", "火", "水", "木", "金", "土"] %}
+                <th>{{ wd }}</th>
+                {%- endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {%- for row in month.rows %}
+              <tr>
+                {%- for day in row %}
+                {%- if day is none %}
+                <td class="empty"></td>
+                {%- else %}
+                {%- set page = cal.week_page_for(day.date) %}
+                <td class="{{ 'closed ' if day.is_closed }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}{{ 'has-event' if day.events }}"
+                    title="{{ day.md_with_weekday }}{% if day.holiday %} {{ day.holiday }}{% endif %}{% if day.event_text %} {{ day.event_text }}{% endif %}">
+                  {%- if page %}<a href="#p{{ page }}">{{ day.date.day }}</a>
+                  {%- else %}<span>{{ day.date.day }}</span>{% endif %}
+                </td>
+                {%- endif %}
+                {%- endfor %}
+              </tr>
+              {%- endfor %}
+            </tbody>
+          </table>
+        </div>
+        {%- endfor %}
+      </div>
+      {{ foot(1) }}
+    </section>
+
+    {#- ============ 2ページ目: 年間行事予定 ============ -#}
+    <section class="page" id="p2">
+      <div class="page-head">
+        <div class="page-title">年間行事予定</div>
+        <div class="page-subtitle">日付をタップするとその週のページに移動します</div>
+        {{ nav_home(2) }}
+      </div>
+      <table class="events-table">
+        <thead>
+          <tr>
+            {%- for label, _days in cal.event_columns %}
+            <th>{{ label }}</th>
+            {%- endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {%- for row_index in range(31) %}
+          <tr>
+            {%- for _label, days in cal.event_columns %}
+            {%- set day = days[row_index] %}
+            {%- if day is none %}
+            <td class="empty"></td>
+            {%- else %}
+            {%- set page = cal.week_page_for(day.date) %}
+            <td class="{{ 'closed ' if day.is_closed }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}">
+              {%- if page %}<a href="#p{{ page }}">
+              {%- else %}<span>{% endif %}
+                <span class="d">{{ day.date.day }}{{ day.weekday_ja }}</span>
+                <span class="t">{% if day.holiday %}{{ day.holiday }}{% if day.event_text %} / {% endif %}{% endif %}{{ day.event_text }}</span>
+              {%- if page %}</a>{% else %}</span>{% endif %}
+            </td>
+            {%- endif %}
+            {%- endfor %}
+          </tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+      {{ foot(2) }}
+    </section>
+
+    {#- ============ 週ページ ============ -#}
+    {%- for week in cal.weeks %}
+    <section class="page" id="p{{ week.page }}">
+      <div class="page-head">
+        <div class="page-title">{{ week.label }}</div>
+        <div class="page-subtitle">{{ week.range_text }}</div>
+        <div class="nav">
+          <a class="nav-arrow" href="#p{{ week.page - 1 if week.index > 1 else week.page }}"
+             {%- if week.index == 1 %} class="nav-arrow is-disabled"{% endif %}>◀</a>
+          <a href="#p1">年間カレンダー</a>
+          <a href="#p2">年間行事予定</a>
+          {%- if cal.free_pages %}
+          <a class="nav-free" href="#p{{ cal.free_page_start }}">自由</a>
+          {%- endif %}
+          <a class="nav-arrow{{ ' is-disabled' if week.index == cal.week_count }}"
+             href="#p{{ week.page + 1 if week.index < cal.week_count else week.page }}">▶</a>
+        </div>
+      </div>
+
+      <div class="week-body">
+        <table class="timetable">
+          <thead>
+            <tr>
+              <th class="period"></th>
+              {%- for day in week.weekdays %}
+              <th>
+                <div class="wd">{{ day.weekday_ja }}</div>
+                <div class="dt">{{ day.md }}</div>
+              </th>
+              {%- endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {%- for period in data.timetable.periods %}
+            <tr class="{{ 'break' if period in ['昼'] }}">
+              <th class="period">{{ period }}</th>
+              {%- for day in week.weekdays %}
+              <td class="{{ 'closed' if day.is_closed }}">
+                <span class="lesson">{{ cal.lessons_for(day, period) }}</span>
+              </td>
+              {%- endfor %}
+            </tr>
+            {%- endfor %}
+          </tbody>
+        </table>
+
+        <div class="side">
+          <table class="daylist">
+            {%- for day in week.weekdays %}
+            <tr class="{{ 'closed' if day.is_closed }}">
+              <th>{{ day.md_with_weekday }}</th>
+              <td>
+                {%- if day.holiday %}<span class="hol">{{ day.holiday }}</span> {% endif -%}
+                <span class="ev">{{ day.event_text }}</span>
+              </td>
+            </tr>
+            {%- endfor %}
+            <tr class="closed">
+              <th class="sat">{{ week.saturday.md_with_weekday }}</th>
+              <td>
+                {%- if week.saturday.holiday %}<span class="hol">{{ week.saturday.holiday }}</span> {% endif -%}
+                <span class="ev">{{ week.saturday.event_text }}</span>
+              </td>
+            </tr>
+            <tr class="closed">
+              <th class="sun">{{ week.sunday.md_with_weekday }}</th>
+              <td>
+                {%- if week.sunday.holiday %}<span class="hol">{{ week.sunday.holiday }}</span> {% endif -%}
+                <span class="ev">{{ week.sunday.event_text }}</span>
+              </td>
+            </tr>
+          </table>
+
+          <div class="plan">
+            <div class="plan-head">指導計画</div>
+            <table>
+              {%- for _ in range(5) %}
+              <tr>
+                <td style="width: 22%"></td>
+                <td></td>
+              </tr>
+              {%- endfor %}
+            </table>
+          </div>
+
+          <div class="memo"></div>
+        </div>
+      </div>
+      {{ foot(week.page) }}
+    </section>
+    {%- endfor %}
+
+    {#- ============ 自由ページ ============ -#}
+    {%- for page_no in cal.free_pages %}
+    <section class="page" id="p{{ page_no }}">
+      <div class="page-head">
+        <span class="free-label">自由 {{ loop.index }}</span>
+        <div class="nav">
+          <a class="nav-arrow{{ ' is-disabled' if loop.first }}"
+             href="#p{{ page_no - 1 if not loop.first else page_no }}">◀</a>
+          <a href="#p1">年間カレンダー</a>
+          <a href="#p2">年間行事予定</a>
+          <a class="nav-arrow{{ ' is-disabled' if loop.last }}"
+             href="#p{{ page_no + 1 if not loop.last else page_no }}">▶</a>
+        </div>
+      </div>
+      <div class="free-body"></div>
+      {{ foot(page_no) }}
+    </section>
+    {%- endfor %}
+  </body>
+</html>

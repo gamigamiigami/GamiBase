@@ -1,0 +1,475 @@
+/* スケジュール帳のレイアウト（A4横）。
+   Chromium のヘッドレス印刷でPDF化する前提。1 .page = 1 PDFページ。 */
+
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
+:root {
+  --line: #222;
+  --line-thin: #999;
+  --closed: #e6e6e6;      /* 土日祝の背景 */
+  --sunday: #d03030;
+  --saturday: #2a5fd0;
+  --accent: #f5c342;      /* 自由ページ見出し */
+  --muted: #666;
+  --page-pad: 6mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #111;
+  font-family: "IPAGothic", "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-size: 9pt;
+  line-height: 1.25;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  position: relative;
+  width: 297mm;
+  height: 210mm;
+  padding: var(--page-pad);
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  display: flex;
+  flex-direction: column;
+}
+
+.page:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* リンクは見た目上は無色。PDF上のタップ領域としてだけ働かせる。 */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* 共通ヘッダ                                                          */
+/* ------------------------------------------------------------------ */
+
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin-bottom: 2.5mm;
+  flex: 0 0 auto;
+}
+
+.page-title {
+  font-size: 13pt;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+}
+
+.page-subtitle {
+  font-size: 9pt;
+  color: var(--muted);
+}
+
+.nav {
+  margin-left: auto;
+  display: flex;
+  gap: 2mm;
+  align-items: center;
+}
+
+/* 目次・前後週へのジャンプボタン。指でタップできる大きさを確保する。 */
+.nav a {
+  display: inline-block;
+  min-width: 22mm;
+  padding: 1.6mm 3mm;
+  border: 0.4mm solid var(--line-thin);
+  border-radius: 1.2mm;
+  background: #f4f4f4;
+  font-size: 8.5pt;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.nav a.nav-free {
+  background: var(--accent);
+  border-color: #c9a02c;
+}
+
+.nav a.nav-arrow {
+  min-width: 10mm;
+}
+
+.nav a.is-disabled {
+  visibility: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* 年間カレンダー（1ページ目）                                          */
+/* ------------------------------------------------------------------ */
+
+.year-grid {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2mm;
+  min-height: 0;
+}
+
+.month {
+  display: flex;
+  flex-direction: column;
+  border: 0.4mm solid var(--line);
+  min-height: 0;
+}
+
+.month-head {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5mm;
+  padding: 0.8mm 1.5mm;
+  border-bottom: 0.4mm solid var(--line);
+  background: #f4f4f4;
+}
+
+.month-head .m {
+  font-size: 10pt;
+  font-weight: bold;
+}
+
+.month-head .en {
+  font-size: 7pt;
+  color: var(--muted);
+}
+
+.month table {
+  flex: 1 1 auto;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.month th {
+  font-size: 7pt;
+  font-weight: normal;
+  border-bottom: 0.3mm solid var(--line-thin);
+  padding: 0.4mm 0.6mm;
+  text-align: left;
+}
+
+.month td {
+  border: 0.2mm solid #ccc;
+  padding: 0;
+  /* GoodNotes でペン書き込みをする前提。日付は左上に寄せ、
+     セルの中央から右下は空けておく。 */
+  text-align: left;
+  vertical-align: top;
+  font-size: 7.5pt;
+}
+
+/* 日セル全体をリンクにして、GoodNotes でタップしやすくする */
+.month td a,
+.month td span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0.3mm 0.6mm;
+  line-height: 1;
+}
+
+.month td.closed {
+  background: var(--closed);
+}
+
+.month td.sun {
+  color: var(--sunday);
+}
+
+.month td.sat {
+  color: var(--saturday);
+}
+
+.month td.empty {
+  background: #fafafa;
+  border-color: #eee;
+}
+
+.month td.has-event {
+  font-weight: bold;
+  box-shadow: inset 0 -0.8mm 0 rgba(240, 170, 40, 0.55);
+}
+
+/* ------------------------------------------------------------------ */
+/* 年間行事予定（2ページ目）                                            */
+/* ------------------------------------------------------------------ */
+
+.events-table {
+  flex: 1 1 auto;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 6.4pt;
+}
+
+.events-table th {
+  border: 0.3mm solid var(--line);
+  background: #f4f4f4;
+  font-size: 8pt;
+  padding: 0.6mm 0;
+}
+
+.events-table td {
+  border: 0.2mm solid #bbb;
+  padding: 0;
+  height: 4.6mm;
+  vertical-align: middle;
+}
+
+.events-table td a,
+.events-table td span {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8mm;
+  width: 100%;
+  height: 100%;
+  padding: 0 0.6mm;
+  overflow: hidden;
+}
+
+.events-table .d {
+  flex: 0 0 auto;
+  width: 7mm;
+  color: var(--muted);
+  font-size: 6pt;
+  white-space: nowrap;
+}
+
+.events-table .t {
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.events-table td.closed {
+  background: var(--closed);
+}
+
+.events-table td.sun .d {
+  color: var(--sunday);
+}
+
+.events-table td.sat .d {
+  color: var(--saturday);
+}
+
+.events-table td.empty {
+  background: #f0f0f0;
+  border-color: #e0e0e0;
+}
+
+/* ------------------------------------------------------------------ */
+/* 週ページ                                                            */
+/* ------------------------------------------------------------------ */
+
+.week-body {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 3mm;
+  min-height: 0;
+}
+
+.timetable {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.timetable th,
+.timetable td {
+  border: 0.35mm solid var(--line);
+  /* 授業名は左上。セルの大部分は手書きのために空けておく。 */
+  text-align: left;
+  vertical-align: top;
+  padding: 0.6mm 1mm;
+  font-size: 8.5pt;
+}
+
+.timetable thead th {
+  background: #f4f4f4;
+  padding: 1mm 0.5mm;
+  text-align: center;
+}
+
+.timetable thead th .wd {
+  font-size: 9.5pt;
+  font-weight: bold;
+}
+
+.timetable thead th .dt {
+  font-size: 7.5pt;
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.timetable th.period {
+  width: 8mm;
+  background: #fafafa;
+  font-size: 8pt;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.timetable tr.break td,
+.timetable tr.break th {
+  height: 4mm;
+  background: #fafafa;
+  font-size: 7.5pt;
+}
+
+.timetable td.closed {
+  background: var(--closed);
+}
+
+.timetable td .lesson {
+  font-size: 8pt;
+  color: #333;
+  line-height: 1;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 2mm;
+  min-height: 0;
+}
+
+.daylist {
+  flex: 1 1 auto;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.daylist th,
+.daylist td {
+  border: 0.35mm solid var(--line);
+  font-size: 8pt;
+  padding: 0.8mm 1.2mm;
+  vertical-align: top;
+}
+
+.daylist th {
+  width: 15mm;
+  background: #fafafa;
+  text-align: left;
+  vertical-align: top;
+  font-weight: normal;
+}
+
+.daylist tr.closed th,
+.daylist tr.closed td {
+  background: var(--closed);
+}
+
+.daylist th.sun {
+  color: var(--sunday);
+}
+
+.daylist th.sat {
+  color: var(--saturday);
+}
+
+.daylist .ev {
+  font-size: 8pt;
+}
+
+.daylist .hol {
+  color: var(--muted);
+  font-size: 7pt;
+}
+
+.plan {
+  flex: 0 0 auto;
+}
+
+.plan-head {
+  border: 0.35mm solid var(--line);
+  border-bottom: none;
+  background: #f4f4f4;
+  text-align: center;
+  font-size: 8.5pt;
+  padding: 0.8mm;
+}
+
+.plan table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.plan td {
+  border: 0.35mm solid var(--line);
+  height: 4.6mm;
+}
+
+.memo {
+  flex: 0 0 auto;
+  border: 0.35mm solid var(--line);
+  height: 22mm;
+}
+
+/* ------------------------------------------------------------------ */
+/* 自由ページ                                                          */
+/* ------------------------------------------------------------------ */
+
+.free-body {
+  flex: 1 1 auto;
+  border: 0.35mm solid var(--line);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 7.9mm,
+    #d8d8d8 7.9mm,
+    #d8d8d8 8mm
+  );
+}
+
+.free-label {
+  display: inline-block;
+  padding: 1mm 4mm;
+  background: var(--accent);
+  border-radius: 1mm;
+  font-weight: bold;
+  font-size: 11pt;
+}
+
+/* ------------------------------------------------------------------ */
+/* フッタ（透かし）                                                     */
+/* ------------------------------------------------------------------ */
+
+.foot {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.2mm;
+  font-size: 6.5pt;
+  color: #b0b0b0;
+}
+
+.foot .wm {
+  letter-spacing: 0.03em;
+}
