@@ -305,6 +305,16 @@ const SITE_DATA = [
   {
     category: "useful",
     group: "pdf-linkun",
+    section: "ツール本体",
+    title: "週案スケジュール帳メーカー",
+    description: "年度と時間割を入れると、リンク付きの週案PDF（86ページ）がその場で作れます。祝日は自動、入力データは送信されません。",
+    url: "./tools/shuan-planner/",
+    emoji: "📘",
+    tags: ["自動生成", "GoodNotes", "無料"],
+  },
+  {
+    category: "useful",
+    group: "pdf-linkun",
     section: "説明書",
     title: "使い方説明書",
     description: "エクセルからPDF作成〜自動リンク付与〜iPad取り込みまでの手順書。",

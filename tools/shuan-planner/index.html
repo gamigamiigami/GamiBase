@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📘</text></svg>">
+<meta name="description" content="時間割と行事予定からリンク付きの週案PDFを自動生成するツールの、購入から受け取りまでの画面デモ。">
+<title>週案スケジュール帳 販売フロー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  /* 週案簿の紙面から取った配色。藍のインク、朱は日曜と祝日にだけ使う。 */
+  :root {
+    --paper: #eef1f5;
+    --surface: #ffffff;
+    --surface-sunk: #f6f8fa;
+    --rule: #d3dae2;
+    --rule-strong: #aab6c3;
+    --ink: #16202b;
+    --ink-soft: #56646f;
+    --ink-faint: #8695a3;
+    --ai: #27548a;          /* 藍 — 主役の一色 */
+    --ai-soft: #e4ecf5;
+    --shu: #b3453c;         /* 朱 — 日曜・祝日のみ */
+    --ai-quiet: #f2f6fa;
+    --ok: #2f7a55;
+    --ok-soft: #e5f2eb;
+    --warn-soft: #fdf3d8;
+    --warn-rule: #d9b45e;
+    --warn-ink: #7a5a12;
+    /* 授業の色分け（PDF と同じ値） */
+    --c-red: #fde0e0;
+    --c-blue: #dce8fb;
+    --c-green: #dff2e0;
+    --c-yellow: #fdf3d0;
+    --c-gray: #e8e8e8;
+    --shadow: 0 1px 2px rgba(22, 32, 43, .06), 0 8px 24px -12px rgba(22, 32, 43, .18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #12171d;
+      --surface: #1a2129;
+      --surface-sunk: #151b22;
+      --rule: #2c3742;
+      --rule-strong: #3e4b58;
+      --ink: #e7edf3;
+      --ink-soft: #a5b2bf;
+      --ink-faint: #7b8896;
+      --ai: #7fb0e0;
+      --ai-soft: #24313f;
+      --shu: #e08a80;
+      --ai-quiet: #1d262f;
+      --ok: #7cc79c;
+      --ok-soft: #1c2b23;
+      --warn-soft: #2c2618;
+      --warn-rule: #6b5a2c;
+      --warn-ink: #d9be7a;
+      --c-red: #5c3a3a;
+      --c-blue: #2f4260;
+      --c-green: #33503a;
+      --c-yellow: #5a4d2a;
+      --c-gray: #3a4148;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #12171d;
+    --surface: #1a2129;
+    --surface-sunk: #151b22;
+    --rule: #2c3742;
+    --rule-strong: #3e4b58;
+    --ink: #e7edf3;
+    --ink-soft: #a5b2bf;
+    --ink-faint: #7b8896;
+    --ai: #7fb0e0;
+    --ai-soft: #24313f;
+    --shu: #e08a80;
+    --ai-quiet: #1d262f;
+    --ok: #7cc79c;
+    --ok-soft: #1c2b23;
+    --warn-soft: #2c2618;
+    --warn-rule: #6b5a2c;
+    --warn-ink: #d9be7a;
+    --c-red: #5c3a3a;
+    --c-blue: #2f4260;
+    --c-green: #33503a;
+    --c-yellow: #5a4d2a;
+    --c-gray: #3a4148;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell { max-width: 1120px; margin: 0 auto; padding: 32px 20px 72px; }
+
+  /* ── 見出し ─────────────────────────────── */
+  header { margin-bottom: 28px; }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: .16em;
+    color: var(--ai);
+    font-weight: 700;
+    margin: 0 0 6px;
+  }
+
+  h1 {
+    font-family: "Shippori Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4.4vw, 42px);
+    line-height: 1.25;
+    margin: 0 0 10px;
+    text-wrap: balance;
+    letter-spacing: .01em;
+  }
+
+  .sub { color: var(--ink-soft); max-width: 62ch; margin: 0; }
+
+  .notice {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: var(--warn-soft);
+    border: 1px solid var(--warn-rule);
+    color: var(--warn-ink);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 20px 0 0;
+    font-size: 13.5px;
+  }
+  .notice b { font-weight: 700; }
+
+  /* ── ステップの帯（実際に順番のある工程なので番号を振る） ── */
+  .rail {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 28px 0 20px;
+  }
+
+  .step {
+    appearance: none;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font: inherit;
+    color: var(--ink-soft);
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    transition: border-color .18s, color .18s, background .18s;
+  }
+  .step:hover { border-color: var(--rule-strong); }
+  .step:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; }
+
+  .step .n {
+    font-family: "Shippori Mincho", serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .step .t { font-weight: 500; font-size: 14px; }
+  .step .d { display: block; font-size: 12px; color: var(--ink-faint); }
+
+  .step[aria-selected="true"] {
+    background: var(--ai-quiet);
+    border-color: var(--ai);
+    color: var(--ink);
+  }
+  .step[aria-selected="true"] .n { color: var(--ai); }
+
+  /* ── 画面パネル ───────────────────────────── */
+  .screen {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .chrome {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--surface-sunk);
+    border-bottom: 1px solid var(--rule);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rule-strong); }
+  .url {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 3px 10px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .body { padding: 26px 28px 30px; }
+  [hidden] { display: none !important; }
+
+  h2 {
+    font-family: "Shippori Mincho", serif;
+    font-size: 21px;
+    margin: 0 0 4px;
+    font-weight: 700;
+  }
+  .lead { color: var(--ink-soft); margin: 0 0 22px; font-size: 14px; }
+
+  h3 {
+    font-size: 13px;
+    letter-spacing: .06em;
+    margin: 26px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+  h3:first-of-type { margin-top: 0; }
+
+  label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 4px; }
+
+  /* 入力の必須・任意はバッジで示す。必須は自由ページ数だけ。 */
+  .badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    vertical-align: 1px;
+  }
+  .badge.req { background: color-mix(in srgb, var(--shu) 14%, var(--surface)); color: var(--shu); border: 1px solid color-mix(in srgb, var(--shu) 40%, var(--surface)); }
+  .badge.opt { background: var(--surface-sunk); color: var(--ink-faint); border: 1px solid var(--rule); }
+
+  .btn-sub {
+    appearance: none;
+    background: var(--surface);
+    color: var(--ink-soft);
+    border: 1px solid var(--rule-strong);
+    border-radius: 7px;
+    padding: 7px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-sub:hover { background: var(--surface-sunk); border-color: var(--ink-faint); }
+  .btn-sub:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; }
+
+  .progress { margin-top: 16px; }
+  .progress .bar {
+    height: 6px;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress .bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--ai);
+    transition: width .25s ease;
+  }
+  .progress p { margin: 6px 0 0; }
+
+  a.btn { text-decoration: none; display: inline-block; }
+
+  .tt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+  }
+  input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--ai);
+    outline-offset: 1px;
+    border-color: var(--ai);
+  }
+  textarea { min-height: 92px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 1.6; }
+
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+
+  .btn {
+    appearance: none;
+    border: 0;
+    background: var(--ai);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 13px 26px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: filter .18s;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .btn[disabled] { background: var(--rule-strong); cursor: not-allowed; filter: none; }
+  .btn-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 24px; }
+  .btn-note { font-size: 12.5px; color: var(--ink-faint); }
+
+  /* ── 時間割グリッド ───────────────────────── */
+  .tt-wrap { overflow-x: auto; }
+  table.tt { width: 100%; min-width: 560px; border-collapse: collapse; }
+  table.tt th, table.tt td { border: 1px solid var(--rule); padding: 5px; }
+  table.tt thead th { background: var(--surface-sunk); font-size: 13px; font-weight: 700; text-align: center; }
+  table.tt tbody th {
+    background: var(--surface-sunk);
+    width: 52px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  table.tt td { padding: 4px; }
+  table.tt input { border-radius: 5px; padding: 6px 8px; font-size: 13px; margin-bottom: 3px; }
+  table.tt select { border-radius: 5px; padding: 3px 6px; font-size: 11.5px; }
+
+  td.c-red input { background: var(--c-red); }
+  td.c-blue input { background: var(--c-blue); }
+  td.c-green input { background: var(--c-green); }
+  td.c-yellow input { background: var(--c-yellow); }
+  td.c-gray input { background: var(--c-gray); }
+
+  .break-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+
+  /* ── 完成画面 ─────────────────────────────── */
+  .done-card {
+    background: var(--ok-soft);
+    border: 1px solid var(--ok);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+  .order-no {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 2px 8px;
+  }
+
+  .specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; margin-top: 22px; }
+  .spec { background: var(--surface); padding: 14px 16px; }
+  .spec .v {
+    font-family: "Shippori Mincho", serif;
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+  .spec .k { font-size: 11.5px; color: var(--ink-faint); letter-spacing: .04em; }
+
+  ul.terms { margin: 18px 0 0; padding-left: 1.2em; font-size: 13.5px; color: var(--ink-soft); }
+  ul.terms li { margin-bottom: 4px; }
+
+  /* ── 下部の解説 ───────────────────────────── */
+  .after { margin-top: 34px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 20px 22px; }
+  .panel h4 { margin: 0 0 8px; font-size: 15px; font-family: "Shippori Mincho", serif; }
+  .panel p { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-soft); }
+  pre {
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    margin: 0;
+    color: var(--ink);
+  }
+  footer { margin-top: 30px; font-size: 12.5px; color: var(--ink-faint); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 640px) {
+    .rail { grid-template-columns: 1fr; }
+    .break-row { grid-template-columns: 1fr; }
+    .body { padding: 20px 18px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header>
+    <p class="eyebrow">シゴデキ先生 ／ PDFリンくん</p>
+    <h1>週案スケジュール帳<br>販売フロー</h1>
+    <p class="sub">
+      年度と時間割を入力すると、リンク付きの週案PDF（年間カレンダー・年間行事予定・週ページ54週・自由ページ）が
+      その場で組み上がります。GoodNotes に取り込んで、そのまま手書きで使う前提の設計です。
+      祝日・振替休日は年度から自動で入ります。
+    </p>
+    <div class="notice">
+      <span>🔒</span>
+      <span>
+        <b>このページだけで完結します。</b>
+        PDFはあなたのブラウザの中で作られ、入力した時間割や行事予定が
+        どこかに送信されることはありません。支払いも会員登録も不要です。
+      </span>
+    </div>
+  </header>
+
+  <div class="rail" role="tablist" aria-label="購入の流れ">
+    <button class="step" role="tab" aria-selected="true" aria-controls="panel-1" data-step="1">
+      <span class="n">01</span>
+      <span class="t">購入<span class="d">年度を選ぶ</span></span>
+    </button>
+    <button class="step" role="tab" aria-selected="false" aria-controls="panel-2" data-step="2">
+      <span class="n">02</span>
+      <span class="t">入力<span class="d">時間割・休業・行事</span></span>
+    </button>
+    <button class="step" role="tab" aria-selected="false" aria-controls="panel-3" data-step="3">
+      <span class="n">03</span>
+      <span class="t">受け取り<span class="d">生成とダウンロード</span></span>
+    </button>
+  </div>
+
+  <div class="screen">
+    <div class="chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url" id="url">https://schedule-builder.example.com/</span>
+    </div>
+
+    <!-- 01 購入 -->
+    <div class="body" id="panel-1" role="tabpanel">
+      <h2>先生のスケジュール帳</h2>
+      <p class="lead">
+        時間割と行事予定を入力すると、リンク付きPDFを自動で作ります。GoodNotes に取り込んで、そのまま手書きで使えます。
+      </p>
+      <div class="fields">
+        <div>
+          <label for="year">年度を選ぶ</label>
+          <select id="year">
+            <option value="2025">令和7年度（2025年4月〜2026年3月）</option>
+            <option value="2026" selected>令和8年度（2026年4月〜2027年3月）</option>
+            <option value="2027">令和9年度（2027年4月〜2028年3月）</option>
+          </select>
+        </div>
+        <div>
+          <label for="buyer">お名前</label>
+          <input id="buyer" type="text" value="伊神 太郎">
+        </div>
+        <div>
+          <label for="mail">メールアドレス</label>
+          <input id="mail" type="email" value="teacher@example.com">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" data-go="2">はじめる（無料）</button>
+        <span class="btn-note">支払いはありません。次の画面で内容を入力すると、その場でPDFができます。</span>
+      </div>
+    </div>
+
+    <!-- 02 入力 -->
+    <div class="body" id="panel-2" role="tabpanel" hidden>
+      <h2>スケジュール帳の内容を入力</h2>
+      <p class="lead">
+        <span id="product">令和8年度版</span>／作り直しは何度でもできます。
+      </p>
+
+      <h3>1. 基本情報</h3>
+      <p class="lead" style="margin:-6px 0 14px">
+        入力が必要なのは<strong>自由ページ数</strong>だけです。ほかは空欄のままでも作成できます。
+      </p>
+      <div class="fields">
+        <div>
+          <label for="own">お名前<span class="badge opt">任意</span></label>
+          <input id="own" type="text" value="伊神 太郎" placeholder="表紙に載せる名前（空欄でも可）">
+        </div>
+        <div>
+          <label for="sch">学校名<span class="badge opt">任意</span></label>
+          <input id="sch" type="text" placeholder="○○市立○○中学校（空欄でも可）">
+        </div>
+        <div>
+          <label for="fp">自由ページ数<span class="badge req">必須</span></label>
+          <input id="fp" type="number" value="30" min="0" max="200" required>
+        </div>
+      </div>
+
+      <h3>2. 時間割（授業名と色）<span class="badge opt">任意</span></h3>
+      <div class="tt-head">
+        <p class="lead" style="margin:0">空欄の枠は空きコマになります。</p>
+        <button type="button" class="btn-sub" id="clear-tt">時間割をまっさらにする</button>
+      </div>
+      <div class="tt-wrap">
+        <table class="tt">
+          <thead>
+            <tr><th></th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th></tr>
+          </thead>
+          <tbody id="tt"></tbody>
+        </table>
+      </div>
+
+      <h3>3. 長期休業<span class="badge opt">任意</span></h3>
+      <p class="lead" style="margin-bottom:14px">
+        よくある期間を入れてあります。学校に合わせて直してください。祝日・振替休日は年度から自動計算されるので入力不要です。
+      </p>
+      <div id="breaks"></div>
+
+      <h3>4. 年間行事予定<span class="badge opt">任意</span></h3>
+      <p class="lead" style="margin-bottom:14px">
+        学校の行事予定表（CSV / Excel）をアップロードするか、貼り付けてください。
+        日付は <code>4/8</code>・<code>4月8日</code>・<code>2026-04-08</code> のどれでも読めます。
+      </p>
+      <textarea id="events">4/6,始業式
+4/7,入学式
+5/28,修学旅行（3年）
+10/24,体育大会
+2/27,卒業式予行
+3/5,卒業式</textarea>
+
+      <div class="btn-row">
+        <button class="btn" id="make">この内容でPDFを作る</button>
+        <span class="btn-note" id="make-note">お使いの端末の中で作ります。数秒かかります。</span>
+      </div>
+      <div class="progress" id="progress" hidden>
+        <div class="bar"><span id="bar-fill"></span></div>
+        <p class="btn-note" id="progress-text">準備しています…</p>
+      </div>
+    </div>
+
+    <!-- 03 完成 -->
+    <div class="body" id="panel-3" role="tabpanel" hidden>
+      <h2>できあがりました</h2>
+      <p class="lead">生成が終わると、購入者にはこの画面が表示されます。</p>
+
+      <div class="done-card">
+        <p style="margin:0 0 12px"><strong id="done-for">スケジュール帳</strong> ができました。</p>
+        <a class="btn" id="dl" href="#" download="週案スケジュール帳.pdf">PDFをダウンロード</a>
+        <p class="btn-note" style="margin:12px 0 0">
+          ダウンロードしたPDFを GoodNotes で開くと、カレンダーの日付をタップしてその週へ移動できます。
+        </p>
+      </div>
+
+      <div class="specs">
+        <div class="spec"><div class="v" id="s-pages">—</div><div class="k">ページ</div></div>
+        <div class="spec"><div class="v" id="s-links">—</div><div class="k">リンク</div></div>
+        <div class="spec"><div class="v" id="s-weeks">—</div><div class="k">週ページ</div></div>
+        <div class="spec"><div class="v" id="s-time">—</div><div class="k">生成時間</div></div>
+      </div>
+
+      <h3>使い方</h3>
+      <ul class="terms">
+        <li>iPad の GoodNotes に取り込むと、そのままペンで書き込めます。</li>
+        <li>サイドバーのしおりから、各週のページに直接飛べます。</li>
+        <li>内容を変えたいときは「入力」に戻って、何度でも作り直せます。</li>
+      </ul>
+      <div class="btn-row">
+        <button class="btn-sub" data-go="2">入力に戻ってやり直す</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="after">
+    <div class="panel">
+      <h4>販売用のサーバー版</h4>
+      <p>1注文1生成の制限つきで配布する仕組みは、別途 Python 版として用意しています。</p>
+      <pre>cd schedule-builder
+pip install -r requirements.txt
+export PLANNER_SECRET="$(python3 -c \
+  'import secrets;print(secrets.token_hex(32))')"
+PYTHONPATH=src python3 -m planner serve</pre>
+      <p style="margin:10px 0 0">→ http://127.0.0.1:5000/</p>
+    </div>
+    <div class="panel">
+      <h4>インターネットに公開する</h4>
+      <p>Render に <code>render.yaml</code> を読み込ませると、この通りに構築されます。</p>
+      <pre>Render → New → Blueprint
+  → gamigamiigami/GamiBase を選ぶ
+  → Apply（5〜10分）</pre>
+      <p style="margin:10px 0 0">手順の詳細と他の方法は <code>schedule-builder/DEPLOY.md</code>。</p>
+    </div>
+  </div>
+
+  <footer>
+    決済は <code>/checkout</code> の1か所だけに閉じ込めてあります。本番化はそこを差し替えるだけで、
+    生成・ライセンス・ダウンロードの仕組みは変更不要です。
+  </footer>
+</div>
+
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/fontkit.umd.min.js"></script>
+<script src="planner.js"></script>
+<script>
+  // 時間割のひな形。PDF と同じ5色で、実際に埋まった状態から見せる。
+  const PLAN = {
+    1: [["２年５組", "red"], ["３年１組", "blue"], ["", ""], ["３年５組", "blue"], ["", ""]],
+    2: [["", ""], ["２年１組", "red"], ["２年３組", "red"], ["２年４組", "red"], ["３年４組", "blue"]],
+    3: [["２年６組", "red"], ["２年２組", "red"], ["３年２組", "blue"], ["特別支援", "green"], ["３年６組", "blue"]],
+    4: [["", ""], ["", ""], ["", ""], ["", ""], ["３年３組", "blue"]],
+    5: [["特別支援", "green"], ["外国人", "yellow"], ["外国人", "yellow"], ["", ""], ["", ""]],
+    6: [["", ""], ["", ""], ["", ""], ["", ""], ["", ""]]
+  };
+  const COLORS = [["", "なし"], ["red", "赤"], ["blue", "青"], ["green", "緑"], ["yellow", "黄"], ["gray", "灰"]];
+  const DAYS = ["月", "火", "水", "木", "金"];
+
+  const tbody = document.getElementById("tt");
+  for (const period of Object.keys(PLAN)) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<th>${period}限</th>`;
+    PLAN[period].forEach(([name, color], i) => {
+      const td = document.createElement("td");
+      if (color) td.className = "c-" + color;
+      const options = COLORS.map(([v, l]) =>
+        `<option value="${v}"${v === color ? " selected" : ""}>${l}</option>`).join("");
+      td.innerHTML =
+        `<input type="text" value="${name}" placeholder="授業・クラス" aria-label="${DAYS[i]}曜${period}限の授業">` +
+        `<select aria-label="${DAYS[i]}曜${period}限の色">${options}</select>`;
+      // 色を変えたら、その場でセルの見た目も変える
+      td.querySelector("select").addEventListener("change", (e) => {
+        td.className = e.target.value ? "c-" + e.target.value : "";
+      });
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+
+  // 長期休業。年度に合わせて既定値を作る。
+  const breaksEl = document.getElementById("breaks");
+  function renderBreaks(year) {
+    const rows = [
+      ["夏季休業", `${year}-07-21`, `${year}-08-31`],
+      ["冬季休業", `${year}-12-25`, `${year + 1}-01-07`],
+      ["学年末休業", `${year + 1}-03-25`, `${year + 1}-03-31`]
+    ];
+    breaksEl.innerHTML = rows.map(([name, start, end], i) => `
+      <div class="break-row">
+        <div><label for="bn${i}">名称</label><input id="bn${i}" type="text" value="${name}"></div>
+        <div><label for="bs${i}">開始</label><input id="bs${i}" type="date" value="${start}"></div>
+        <div><label for="be${i}">終了</label><input id="be${i}" type="date" value="${end}"></div>
+      </div>`).join("");
+  }
+
+  const yearEl = document.getElementById("year");
+  function syncYear() {
+    const year = Number(yearEl.value);
+    renderBreaks(year);
+    document.getElementById("product").textContent = `令和${year - 2018}年度版`;
+  }
+  yearEl.addEventListener("change", syncYear);
+  syncYear();
+
+  // 時間割をまとめて空にする。押し間違いで消えないよう一度確認する。
+  document.getElementById("clear-tt").addEventListener("click", () => {
+    const filled = [...tbody.querySelectorAll("input")].filter((i) => i.value.trim() !== "");
+    if (filled.length && !confirm("時間割の入力をすべて消します。よろしいですか？")) return;
+    tbody.querySelectorAll("input").forEach((i) => { i.value = ""; });
+    tbody.querySelectorAll("select").forEach((s) => { s.value = ""; });
+    tbody.querySelectorAll("td").forEach((td) => { td.className = ""; });
+  });
+
+  // 画面の切り替え
+  const steps = [...document.querySelectorAll(".step")];
+  const urls = {
+    1: "https://schedule-builder.example.com/",
+    2: "https://schedule-builder.example.com/setup/setup:ORD-D7EBCC4981EA:…",
+    3: "https://schedule-builder.example.com/done/ORD-D7EBCC4981EA:…"
+  };
+  function show(step) {
+    steps.forEach((s) => s.setAttribute("aria-selected", String(s.dataset.step === String(step))));
+    [1, 2, 3].forEach((n) => { document.getElementById("panel-" + n).hidden = n !== step; });
+    document.getElementById("url").textContent = urls[step];
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  steps.forEach((s) => s.addEventListener("click", () => show(Number(s.dataset.step))));
+
+  document.querySelectorAll("[data-go]").forEach((btn) => {
+    btn.addEventListener("click", () => show(Number(btn.dataset.go)));
+  });
+
+  // ── 入力を集めて PDF を作る ──────────────────────────
+  function collectInput() {
+    const year = Number(yearEl.value);
+
+    const grid = {};
+    tbody.querySelectorAll("tr").forEach((tr, rowIndex) => {
+      const period = String(rowIndex + 1);
+      tr.querySelectorAll("td").forEach((td, i) => {
+        const name = td.querySelector("input").value.trim();
+        if (!name) return;
+        const weekday = DAYS[i];
+        grid[weekday] = grid[weekday] || {};
+        grid[weekday][period] = { name, color: td.querySelector("select").value };
+      });
+    });
+
+    const breaks = [];
+    for (let i = 0; i < 3; i++) {
+      const name = (document.getElementById("bn" + i) || {}).value;
+      const start = (document.getElementById("bs" + i) || {}).value;
+      const end = (document.getElementById("be" + i) || {}).value;
+      if (name && name.trim() && start && end && start <= end) {
+        breaks.push({ name: name.trim(), start, end });
+      }
+    }
+
+    // 「4/8,入学式」形式を読む。1〜3月は翌年とみなす（学校年度の慣習）。
+    const events = [];
+    document.getElementById("events").value.split(/\r?\n/).forEach((line) => {
+      const row = line.trim();
+      if (!row) return;
+      const parts = row.split(/[,、\t]/);
+      if (parts.length < 2) return;
+      const raw = parts[0].trim();
+      const title = parts.slice(1).join(",").trim();
+      if (!title) return;
+      let y = year, m, d;
+      let match = raw.match(/^(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})/);
+      if (match) { y = +match[1]; m = +match[2]; d = +match[3]; }
+      else {
+        match = raw.match(/^(\d{1,2})\s*[\/月.\-]\s*(\d{1,2})/);
+        if (!match) return;
+        m = +match[1]; d = +match[2];
+        y = m <= 3 ? year + 1 : year;
+      }
+      if (m < 1 || m > 12 || d < 1 || d > 31) return;
+      const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      if (iso < `${year}-04-01` || iso > `${year + 1}-03-31`) return;
+      events.push({ date: iso, title });
+    });
+
+    const free = Number(document.getElementById("fp").value);
+    return {
+      schoolYear: year,
+      title: `令和${year - 2018}年度（${year}年度）スケジュール帳`,
+      owner: {
+        name: document.getElementById("own").value.trim(),
+        school: document.getElementById("sch").value.trim()
+      },
+      timetable: { grid },
+      breaks,
+      events,
+      freePages: Number.isFinite(free) ? Math.min(Math.max(free, 0), 200) : 30,
+      license: { issuedTo: document.getElementById("own").value.trim(), orderId: "" }
+    };
+  }
+
+  const makeBtn = document.getElementById("make");
+  const makeNote = document.getElementById("make-note");
+  const progress = document.getElementById("progress");
+  const barFill = document.getElementById("bar-fill");
+  const progressText = document.getElementById("progress-text");
+  let blobUrl = null;
+
+  makeBtn.addEventListener("click", async () => {
+    const input = collectInput();
+    makeBtn.disabled = true;
+    makeNote.hidden = true;
+    progress.hidden = false;
+    const started = performance.now();
+
+    try {
+      const result = await SchedulePlanner.generate(input, {
+        onProgress(message, ratio) {
+          progressText.textContent = message;
+          barFill.style.width = Math.round(ratio * 100) + "%";
+        }
+      });
+
+      const seconds = ((performance.now() - started) / 1000).toFixed(1);
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      blobUrl = URL.createObjectURL(new Blob([result.bytes], { type: "application/pdf" }));
+
+      const link = document.getElementById("dl");
+      link.href = blobUrl;
+      link.download = `${input.title}.pdf`;
+      document.getElementById("done-for").textContent = input.title;
+      document.getElementById("s-pages").textContent = result.pageCount;
+      document.getElementById("s-links").textContent = result.linkCount;
+      document.getElementById("s-weeks").textContent = result.weekCount;
+      document.getElementById("s-time").innerHTML =
+        seconds + '<span style="font-size:14px">秒</span>';
+      show(3);
+    } catch (err) {
+      progressText.textContent = "作成できませんでした: " + (err && err.message ? err.message : err);
+      barFill.style.width = "0";
+    } finally {
+      makeBtn.disabled = false;
+      setTimeout(() => { progress.hidden = true; makeNote.hidden = false; }, 600);
+    }
+  });
+</script>
+
+</body>
+</html>
