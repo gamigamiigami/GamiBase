@@ -165,3 +165,27 @@ def test_watermark_carries_order_id(client, tmp_path):
     pdf_bytes = client.get(f"/download/{token}").get_data()
     reader = PdfReader(io.BytesIO(pdf_bytes))
     assert reader.metadata.get("/OrderID") == order_id
+
+
+def test_only_free_pages_is_required(client):
+    """自由ページ数だけ埋めれば作成できること（他の欄は任意）。"""
+    setup_url = _checkout(client)
+    res = client.post(
+        setup_url,
+        data={"year": "2025", "free_pages": "1"},  # 名前・学校・時間割・休業・行事すべて空
+    )
+    assert res.status_code == 302, res.get_data(as_text=True)[:600]
+
+    token = res.headers["Location"].rsplit("/", 1)[-1]
+    pdf = client.get(f"/download/{token}")
+    assert pdf.status_code == 200
+    assert pdf.get_data()[:4] == b"%PDF"
+
+
+def test_form_marks_optional_and_required(client):
+    setup_url = _checkout(client)
+    body = client.get(setup_url).get_data(as_text=True)
+    assert "空欄でも可" in body
+    assert 'class="badge req">必須' in body
+    assert body.count('class="badge opt">任意') >= 4  # 名前・学校・時間割・休業・行事
+    assert "時間割をまっさらにする" in body

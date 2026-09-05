@@ -72,6 +72,15 @@ table.tt select { padding: 4px 6px; font-size: 12px; }
 .ok { background: #e8f6ec; border: 1px solid #8fca a0; border-radius: 8px; padding: 14px; }
 code { background: #f0f2f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; word-break: break-all; }
 .meta { font-size: 13px; color: #5b6472; }
+.badge { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+         font-size: 11px; font-weight: 700; vertical-align: 1px; }
+.badge.req { background: #fde8e8; color: #a12626; border: 1px solid #e9a3a3; }
+.badge.opt { background: #eef1f5; color: #6b7684; border: 1px solid #d7dde4; }
+.btn-sub { background: #fff; color: #40495a; border: 1px solid #ccd2da; border-radius: 7px;
+           padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-sub:hover { background: #f2f4f7; border-color: #aab3bf; }
+.tt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+           flex-wrap: wrap; margin-bottom: 8px; }
 .swatch-red { background: #fde0e0; } .swatch-blue { background: #dce8fb; }
 .swatch-green { background: #dff2e0; } .swatch-yellow { background: #fdf3d0; }
 .swatch-gray { background: #e8e8e8; }
@@ -346,24 +355,38 @@ def _setup_form(token: str, order, year: int, *, error: str) -> str:
     <input type="hidden" name="year" value="{year}">
 
     <h2>1. 基本情報</h2>
+    <p class="meta" style="margin-top:-4px">
+      入力が必要なのは<strong>自由ページ数</strong>だけです。ほかは空欄のままでも作成できます。</p>
     <div class="row">
-      <div><label>お名前</label><input type="text" name="owner_name" value="{order.issued_to}"></div>
-      <div><label>学校名</label><input type="text" name="owner_school" placeholder="○○市立○○中学校"></div>
-      <div><label>自由ページ数</label><input type="number" name="free_pages" value="30" min="0" max="200"></div>
+      <div>
+        <label>お名前<span class="badge opt">任意</span></label>
+        <input type="text" name="owner_name" value="{order.issued_to}" placeholder="表紙に載せる名前（空欄でも可）">
+      </div>
+      <div>
+        <label>学校名<span class="badge opt">任意</span></label>
+        <input type="text" name="owner_school" placeholder="○○市立○○中学校（空欄でも可）">
+      </div>
+      <div>
+        <label>自由ページ数<span class="badge req">必須</span></label>
+        <input type="number" name="free_pages" value="30" min="0" max="200" required>
+      </div>
     </div>
 
-    <h2>2. 時間割</h2>
-    <p class="meta">授業・クラス名と、色を選んでください。空欄の枠は空きコマになります。</p>
+    <h2>2. 時間割<span class="badge opt">任意</span></h2>
+    <div class="tt-head">
+      <p class="meta" style="margin:0">授業・クラス名と、色を選んでください。空欄の枠は空きコマになります。</p>
+      <button type="button" class="btn-sub" id="clear-tt">時間割をまっさらにする</button>
+    </div>
     <table class="tt">
       <thead><tr><th></th>{head}</tr></thead>
       <tbody>{"".join(rows)}</tbody>
     </table>
 
-    <h2>3. 長期休業</h2>
+    <h2>3. 長期休業<span class="badge opt">任意</span></h2>
     <p class="meta">よくある期間を入れてあります。学校に合わせて直してください。不要な行は名称を空にすると無視されます。</p>
     {"".join(break_rows)}
 
-    <h2>4. 年間行事予定</h2>
+    <h2>4. 年間行事予定<span class="badge opt">任意</span></h2>
     <p class="meta">学校の行事予定表（CSV / Excel）をアップロードするか、下に貼り付けてください。<br>
        書式:「日付,行事名」を1行ずつ（例: <code>4/8,入学式</code>）。日付は <code>4/8</code>・<code>4月8日</code>・<code>2025-04-08</code> のいずれでも読めます。</p>
     <div class="row">
@@ -376,7 +399,19 @@ def _setup_form(token: str, order, year: int, *, error: str) -> str:
       <button class="btn big" type="submit">この内容で作成する（1回限り）</button>
     </p>
   </form>
-</div>"""
+</div>
+<script>
+  // 時間割をまとめて空にする。押し間違いで消えないよう一度確認する。
+  document.getElementById("clear-tt").addEventListener("click", function () {{
+    var table = document.querySelector("table.tt");
+    var filled = [].slice.call(table.querySelectorAll("input")).filter(function (i) {{
+      return i.value.trim() !== "";
+    }});
+    if (filled.length && !confirm("時間割の入力をすべて消します。よろしいですか？")) return;
+    [].forEach.call(table.querySelectorAll("input"), function (i) {{ i.value = ""; }});
+    [].forEach.call(table.querySelectorAll("select"), function (s) {{ s.value = ""; }});
+  }});
+</script>"""
 
 
 def _form_to_input(form, uploaded, order) -> dict:
