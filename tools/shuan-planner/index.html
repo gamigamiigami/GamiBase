@@ -270,6 +270,25 @@
   .btn-sub:hover { background: var(--surface-sunk); border-color: var(--ink-faint); }
   .btn-sub:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; }
 
+  .progress { margin-top: 16px; }
+  .progress .bar {
+    height: 6px;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress .bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--ai);
+    transition: width .25s ease;
+  }
+  .progress p { margin: 6px 0 0; }
+
+  a.btn { text-decoration: none; display: inline-block; }
+
   .tt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 
   input, select, textarea {
@@ -401,14 +420,15 @@
     <h1>週案スケジュール帳<br>販売フロー</h1>
     <p class="sub">
       年度と時間割を入力すると、リンク付きの週案PDF（年間カレンダー・年間行事予定・週ページ54週・自由ページ）が
-      自動で組み上がります。GoodNotes に取り込んで、そのまま手書きで使う前提の設計です。
+      その場で組み上がります。GoodNotes に取り込んで、そのまま手書きで使う前提の設計です。
+      祝日・振替休日は年度から自動で入ります。
     </p>
     <div class="notice">
-      <span>🖥️</span>
+      <span>🔒</span>
       <span>
-        <b>これは画面デモです。</b>
-        実際のPDF生成には Python と Chromium が動くサーバーが必要なため、このページでは
-        入力画面の操作感だけを確認できます。動く本体の立ち上げ方は下に書いてあります。
+        <b>このページだけで完結します。</b>
+        PDFはあなたのブラウザの中で作られ、入力した時間割や行事予定が
+        どこかに送信されることはありません。支払いも会員登録も不要です。
       </span>
     </div>
   </header>
@@ -459,8 +479,8 @@
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn" data-go="2">テスト購入する（無料）</button>
-        <span class="btn-note">本番ではここが決済ボタンになります。決済後、同じ入力フォームに進みます。</span>
+        <button class="btn" data-go="2">はじめる（無料）</button>
+        <span class="btn-note">支払いはありません。次の画面で内容を入力すると、その場でPDFができます。</span>
       </div>
     </div>
 
@@ -468,8 +488,7 @@
     <div class="body" id="panel-2" role="tabpanel" hidden>
       <h2>スケジュール帳の内容を入力</h2>
       <p class="lead">
-        注文番号 <span class="order-no">ORD-D7EBCC4981EA</span> ／ <span id="product">令和8年度版</span><br>
-        <strong>作成できるのは1回だけ</strong>です。内容をよく確認してから作成してください。
+        <span id="product">令和8年度版</span>／作り直しは何度でもできます。
       </p>
 
       <h3>1. 基本情報</h3>
@@ -524,8 +543,12 @@
 3/5,卒業式</textarea>
 
       <div class="btn-row">
-        <button class="btn" data-go="3" id="make">この内容で作成する（1回限り）</button>
-        <span class="btn-note" id="make-note">生成はおよそ4秒で終わります。</span>
+        <button class="btn" id="make">この内容でPDFを作る</button>
+        <span class="btn-note" id="make-note">お使いの端末の中で作ります。数秒かかります。</span>
+      </div>
+      <div class="progress" id="progress" hidden>
+        <div class="bar"><span id="bar-fill"></span></div>
+        <p class="btn-note" id="progress-text">準備しています…</p>
       </div>
     </div>
 
@@ -535,35 +558,36 @@
       <p class="lead">生成が終わると、購入者にはこの画面が表示されます。</p>
 
       <div class="done-card">
-        <p style="margin:0 0 10px">
-          <strong>伊神 太郎 様</strong>／注文番号 <span class="order-no">ORD-D7EBCC4981EA</span>
-        </p>
-        <button class="btn" disabled>PDFをダウンロード</button>
-        <p class="btn-note" style="margin:10px 0 0">
-          このデモではファイルを用意していません。実物のPDFはチャットに添付したものと同じです。
+        <p style="margin:0 0 12px"><strong id="done-for">スケジュール帳</strong> ができました。</p>
+        <a class="btn" id="dl" href="#" download="週案スケジュール帳.pdf">PDFをダウンロード</a>
+        <p class="btn-note" style="margin:12px 0 0">
+          ダウンロードしたPDFを GoodNotes で開くと、カレンダーの日付をタップしてその週へ移動できます。
         </p>
       </div>
 
       <div class="specs">
-        <div class="spec"><div class="v">86</div><div class="k">ページ</div></div>
-        <div class="spec"><div class="v">1121</div><div class="k">リンク</div></div>
-        <div class="spec"><div class="v">54</div><div class="k">週ページ</div></div>
-        <div class="spec"><div class="v">4<span style="font-size:14px">秒</span></div><div class="k">生成時間</div></div>
+        <div class="spec"><div class="v" id="s-pages">—</div><div class="k">ページ</div></div>
+        <div class="spec"><div class="v" id="s-links">—</div><div class="k">リンク</div></div>
+        <div class="spec"><div class="v" id="s-weeks">—</div><div class="k">週ページ</div></div>
+        <div class="spec"><div class="v" id="s-time">—</div><div class="k">生成時間</div></div>
       </div>
 
-      <h3>購入者への案内文</h3>
+      <h3>使い方</h3>
       <ul class="terms">
-        <li>ダウンロードURLは<strong>72時間有効</strong>・<strong>3回まで</strong>です。</li>
-        <li>PDFのフッタには購入者名と注文番号が薄く入っています。再配布はご遠慮ください。</li>
-        <li>入力し直しての作り直しは、お問い合わせください（管理者が1回だけ許可できます）。</li>
+        <li>iPad の GoodNotes に取り込むと、そのままペンで書き込めます。</li>
+        <li>サイドバーのしおりから、各週のページに直接飛べます。</li>
+        <li>内容を変えたいときは「入力」に戻って、何度でも作り直せます。</li>
       </ul>
+      <div class="btn-row">
+        <button class="btn-sub" data-go="2">入力に戻ってやり直す</button>
+      </div>
     </div>
   </div>
 
   <div class="after">
     <div class="panel">
-      <h4>手元で動かす</h4>
-      <p>PDF生成まで含めた本物が、この3画面で動きます。</p>
+      <h4>販売用のサーバー版</h4>
+      <p>1注文1生成の制限つきで配布する仕組みは、別途 Python 版として用意しています。</p>
       <pre>cd schedule-builder
 pip install -r requirements.txt
 export PLANNER_SECRET="$(python3 -c \
@@ -587,6 +611,9 @@ PYTHONPATH=src python3 -m planner serve</pre>
   </footer>
 </div>
 
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/fontkit.umd.min.js"></script>
+<script src="planner.js"></script>
 <script>
   // 時間割のひな形。PDF と同じ5色で、実際に埋まった状態から見せる。
   const PLAN = {
@@ -671,24 +698,119 @@ PYTHONPATH=src python3 -m planner serve</pre>
   steps.forEach((s) => s.addEventListener("click", () => show(Number(s.dataset.step))));
 
   document.querySelectorAll("[data-go]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = Number(btn.dataset.go);
-      if (target === 3) {
-        // 生成に数秒かかることが伝わるように、待ちを見せる
-        const note = document.getElementById("make-note");
-        btn.disabled = true;
-        btn.textContent = "作成しています…";
-        note.textContent = "週54ページ分を組み立て、リンクを貼っています。";
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.textContent = "この内容で作成する（1回限り）";
-          note.textContent = "生成はおよそ4秒で終わります。";
-          show(3);
-        }, 1400);
-        return;
-      }
-      show(target);
+    btn.addEventListener("click", () => show(Number(btn.dataset.go)));
+  });
+
+  // ── 入力を集めて PDF を作る ──────────────────────────
+  function collectInput() {
+    const year = Number(yearEl.value);
+
+    const grid = {};
+    tbody.querySelectorAll("tr").forEach((tr, rowIndex) => {
+      const period = String(rowIndex + 1);
+      tr.querySelectorAll("td").forEach((td, i) => {
+        const name = td.querySelector("input").value.trim();
+        if (!name) return;
+        const weekday = DAYS[i];
+        grid[weekday] = grid[weekday] || {};
+        grid[weekday][period] = { name, color: td.querySelector("select").value };
+      });
     });
+
+    const breaks = [];
+    for (let i = 0; i < 3; i++) {
+      const name = (document.getElementById("bn" + i) || {}).value;
+      const start = (document.getElementById("bs" + i) || {}).value;
+      const end = (document.getElementById("be" + i) || {}).value;
+      if (name && name.trim() && start && end && start <= end) {
+        breaks.push({ name: name.trim(), start, end });
+      }
+    }
+
+    // 「4/8,入学式」形式を読む。1〜3月は翌年とみなす（学校年度の慣習）。
+    const events = [];
+    document.getElementById("events").value.split(/\r?\n/).forEach((line) => {
+      const row = line.trim();
+      if (!row) return;
+      const parts = row.split(/[,、\t]/);
+      if (parts.length < 2) return;
+      const raw = parts[0].trim();
+      const title = parts.slice(1).join(",").trim();
+      if (!title) return;
+      let y = year, m, d;
+      let match = raw.match(/^(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})/);
+      if (match) { y = +match[1]; m = +match[2]; d = +match[3]; }
+      else {
+        match = raw.match(/^(\d{1,2})\s*[\/月.\-]\s*(\d{1,2})/);
+        if (!match) return;
+        m = +match[1]; d = +match[2];
+        y = m <= 3 ? year + 1 : year;
+      }
+      if (m < 1 || m > 12 || d < 1 || d > 31) return;
+      const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      if (iso < `${year}-04-01` || iso > `${year + 1}-03-31`) return;
+      events.push({ date: iso, title });
+    });
+
+    const free = Number(document.getElementById("fp").value);
+    return {
+      schoolYear: year,
+      title: `令和${year - 2018}年度（${year}年度）スケジュール帳`,
+      owner: {
+        name: document.getElementById("own").value.trim(),
+        school: document.getElementById("sch").value.trim()
+      },
+      timetable: { grid },
+      breaks,
+      events,
+      freePages: Number.isFinite(free) ? Math.min(Math.max(free, 0), 200) : 30,
+      license: { issuedTo: document.getElementById("own").value.trim(), orderId: "" }
+    };
+  }
+
+  const makeBtn = document.getElementById("make");
+  const makeNote = document.getElementById("make-note");
+  const progress = document.getElementById("progress");
+  const barFill = document.getElementById("bar-fill");
+  const progressText = document.getElementById("progress-text");
+  let blobUrl = null;
+
+  makeBtn.addEventListener("click", async () => {
+    const input = collectInput();
+    makeBtn.disabled = true;
+    makeNote.hidden = true;
+    progress.hidden = false;
+    const started = performance.now();
+
+    try {
+      const result = await SchedulePlanner.generate(input, {
+        onProgress(message, ratio) {
+          progressText.textContent = message;
+          barFill.style.width = Math.round(ratio * 100) + "%";
+        }
+      });
+
+      const seconds = ((performance.now() - started) / 1000).toFixed(1);
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      blobUrl = URL.createObjectURL(new Blob([result.bytes], { type: "application/pdf" }));
+
+      const link = document.getElementById("dl");
+      link.href = blobUrl;
+      link.download = `${input.title}.pdf`;
+      document.getElementById("done-for").textContent = input.title;
+      document.getElementById("s-pages").textContent = result.pageCount;
+      document.getElementById("s-links").textContent = result.linkCount;
+      document.getElementById("s-weeks").textContent = result.weekCount;
+      document.getElementById("s-time").innerHTML =
+        seconds + '<span style="font-size:14px">秒</span>';
+      show(3);
+    } catch (err) {
+      progressText.textContent = "作成できませんでした: " + (err && err.message ? err.message : err);
+      barFill.style.width = "0";
+    } finally {
+      makeBtn.disabled = false;
+      setTimeout(() => { progress.hidden = true; makeNote.hidden = false; }, 600);
+    }
   });
 </script>
 
