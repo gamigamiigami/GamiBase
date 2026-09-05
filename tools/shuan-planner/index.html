@@ -291,6 +291,25 @@
 
   .tt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 
+  /* 授業リスト（パレット） */
+  #palette { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .palette-row { display: flex; gap: 8px; align-items: center; }
+  .palette-row .p-name { flex: 1 1 auto; }
+  .palette-row .p-color { flex: 0 0 90px; }
+  .palette-row .p-swatch {
+    flex: 0 0 20px; width: 20px; height: 20px; border-radius: 5px;
+    border: 1px solid var(--rule-strong);
+  }
+  .palette-row .p-del {
+    flex: 0 0 auto;
+    appearance: none; border: 1px solid var(--rule-strong); background: var(--surface);
+    color: var(--ink-soft); border-radius: 6px; width: 30px; height: 30px;
+    font-size: 16px; line-height: 1; cursor: pointer;
+  }
+  .palette-row .p-del:hover { background: var(--surface-sunk); color: var(--shu); }
+
+  table.tt select.lesson-select { width: 100%; padding: 6px 6px; font-size: 12.5px; }
+
   input, select, textarea {
     width: 100%;
     padding: 8px 10px;
@@ -510,9 +529,17 @@
         </div>
       </div>
 
-      <h3>2. 時間割（授業名と色）<span class="badge opt">任意</span></h3>
+      <h3>2. 授業リスト<span class="badge opt">任意</span></h3>
+      <p class="lead" style="margin:0 0 12px">
+        先に「授業名＋色」を登録しておくと、下の時間割では選ぶだけで済みます。
+        同じ授業は自動で同じ色になるので、コマごとに色を塗り直す必要はありません。
+      </p>
+      <div id="palette"></div>
+      <button type="button" class="btn-sub" id="add-lesson">＋ 授業を追加</button>
+
+      <h3>3. 時間割<span class="badge opt">任意</span></h3>
       <div class="tt-head">
-        <p class="lead" style="margin:0">空欄の枠は空きコマになります。</p>
+        <p class="lead" style="margin:0">授業リストから選んでください。空欄の枠は空きコマになります。</p>
         <button type="button" class="btn-sub" id="clear-tt">時間割をまっさらにする</button>
       </div>
       <div class="tt-wrap">
@@ -524,13 +551,14 @@
         </table>
       </div>
 
-      <h3>3. 長期休業<span class="badge opt">任意</span></h3>
+      <h3>4. 長期休業<span class="badge opt">任意</span></h3>
       <p class="lead" style="margin-bottom:14px">
         よくある期間を入れてあります。学校に合わせて直してください。祝日・振替休日は年度から自動計算されるので入力不要です。
+        最初の1日だけ休業名が入り、期間中は色だけが付きます。
       </p>
       <div id="breaks"></div>
 
-      <h3>4. 年間行事予定<span class="badge opt">任意</span></h3>
+      <h3>5. 年間行事予定<span class="badge opt">任意</span></h3>
       <p class="lead" style="margin-bottom:14px">
         学校の行事予定表（CSV / Excel）をアップロードするか、貼り付けてください。
         日付は <code>4/8</code>・<code>4月8日</code>・<code>2026-04-08</code> のどれでも読めます。
@@ -615,38 +643,119 @@ PYTHONPATH=src python3 -m planner serve</pre>
 <script src="vendor/fontkit.umd.min.js"></script>
 <script src="planner.js"></script>
 <script>
-  // 時間割のひな形。PDF と同じ5色で、実際に埋まった状態から見せる。
-  const PLAN = {
-    1: [["２年５組", "red"], ["３年１組", "blue"], ["", ""], ["３年５組", "blue"], ["", ""]],
-    2: [["", ""], ["２年１組", "red"], ["２年３組", "red"], ["２年４組", "red"], ["３年４組", "blue"]],
-    3: [["２年６組", "red"], ["２年２組", "red"], ["３年２組", "blue"], ["特別支援", "green"], ["３年６組", "blue"]],
-    4: [["", ""], ["", ""], ["", ""], ["", ""], ["３年３組", "blue"]],
-    5: [["特別支援", "green"], ["外国人", "yellow"], ["外国人", "yellow"], ["", ""], ["", ""]],
-    6: [["", ""], ["", ""], ["", ""], ["", ""], ["", ""]]
-  };
+  // 授業リスト（パレット）。「授業名＋色」を1回登録すれば、時間割では選ぶだけでよい。
   const COLORS = [["", "なし"], ["red", "赤"], ["blue", "青"], ["green", "緑"], ["yellow", "黄"], ["gray", "灰"]];
   const DAYS = ["月", "火", "水", "木", "金"];
+  const PERIODS = ["1", "2", "3", "4", "5", "6"];
 
+  let nextLessonId = 1;
+  const palette = [
+    ["２年５組", "red"], ["２年６組", "red"], ["２年１組", "red"], ["２年２組", "red"],
+    ["２年３組", "red"], ["２年４組", "red"], ["３年１組", "blue"], ["３年２組", "blue"],
+    ["３年３組", "blue"], ["３年４組", "blue"], ["３年５組", "blue"], ["３年６組", "blue"],
+    ["特別支援", "green"], ["外国人", "yellow"]
+  ].map(([name, color]) => ({ id: nextLessonId++, name, color }));
+
+  // 時間割の初期状態（授業リストの id で指定）。
+  const byName = (name) => palette.find((p) => p.name === name).id;
+  const PLAN = {
+    1: [byName("２年５組"), byName("３年１組"), "", byName("３年５組"), ""],
+    2: ["", byName("２年１組"), byName("２年３組"), byName("２年４組"), byName("３年４組")],
+    3: [byName("２年６組"), byName("２年２組"), byName("３年２組"), byName("特別支援"), byName("３年６組")],
+    4: ["", "", "", "", byName("３年３組")],
+    5: [byName("特別支援"), byName("外国人"), byName("外国人"), "", ""],
+    6: ["", "", "", "", ""]
+  };
+
+  const paletteEl = document.getElementById("palette");
   const tbody = document.getElementById("tt");
-  for (const period of Object.keys(PLAN)) {
+
+  function lessonOptionsHtml(selectedId) {
+    let html = '<option value="">－</option>';
+    palette.forEach((item) => {
+      const label = item.name || "（名前未設定）";
+      html += `<option value="${item.id}"${String(item.id) === String(selectedId) ? " selected" : ""}>${label}</option>`;
+    });
+    return html;
+  }
+
+  function applyLessonColor(select) {
+    const td = select.closest("td");
+    const item = palette.find((p) => String(p.id) === select.value);
+    td.className = item && item.color ? "c-" + item.color : "";
+  }
+
+  // 授業リストが変わるたびに、時間割側の選択肢を作り直す（選択済みの id はそのまま保つ）。
+  function syncLessonSelects() {
+    tbody.querySelectorAll("select.lesson-select").forEach((select) => {
+      const current = select.value;
+      select.innerHTML = lessonOptionsHtml(current);
+      if (![...select.options].some((o) => o.value === current)) select.value = "";
+      applyLessonColor(select);
+    });
+  }
+
+  function renderPalette() {
+    paletteEl.innerHTML = "";
+    palette.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "palette-row";
+      const colorOptions = COLORS.filter(([v]) => v).map(([v, l]) =>
+        `<option value="${v}"${v === item.color ? " selected" : ""}>${l}</option>`).join("");
+      row.innerHTML = `
+        <span class="p-swatch" style="background:${item.color ? "var(--c-" + item.color + ")" : "#fff"}"></span>
+        <input type="text" class="p-name" value="${item.name}" placeholder="授業名（例：２－１国語）">
+        <select class="p-color">${colorOptions}</select>
+        <button type="button" class="p-del" aria-label="この授業を削除">×</button>`;
+      const swatch = row.querySelector(".p-swatch");
+      row.querySelector(".p-name").addEventListener("input", (e) => {
+        item.name = e.target.value;
+        syncLessonSelects();
+      });
+      row.querySelector(".p-color").addEventListener("change", (e) => {
+        item.color = e.target.value;
+        swatch.style.background = "var(--c-" + item.color + ")";
+        syncLessonSelects();
+      });
+      row.querySelector(".p-del").addEventListener("click", () => {
+        const index = palette.findIndex((p) => p.id === item.id);
+        palette.splice(index, 1);
+        renderPalette();
+        syncLessonSelects();
+      });
+      paletteEl.appendChild(row);
+    });
+  }
+
+  document.getElementById("add-lesson").addEventListener("click", () => {
+    palette.push({ id: nextLessonId++, name: "", color: "" });
+    renderPalette();
+    syncLessonSelects();
+  });
+
+  // 授業の色見本を CSS 変数からも引けるようにする（.p-swatch のインラインスタイル用）
+  document.documentElement.style.setProperty("--c-red", "#fde0e0");
+  document.documentElement.style.setProperty("--c-blue", "#dce8fb");
+  document.documentElement.style.setProperty("--c-green", "#dff2e0");
+  document.documentElement.style.setProperty("--c-yellow", "#fdf3d0");
+  document.documentElement.style.setProperty("--c-gray", "#e8e8e8");
+
+  PERIODS.forEach((period) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<th>${period}限</th>`;
-    PLAN[period].forEach(([name, color], i) => {
+    (PLAN[period] || ["", "", "", "", ""]).forEach((lessonId, i) => {
       const td = document.createElement("td");
-      if (color) td.className = "c-" + color;
-      const options = COLORS.map(([v, l]) =>
-        `<option value="${v}"${v === color ? " selected" : ""}>${l}</option>`).join("");
-      td.innerHTML =
-        `<input type="text" value="${name}" placeholder="授業・クラス" aria-label="${DAYS[i]}曜${period}限の授業">` +
-        `<select aria-label="${DAYS[i]}曜${period}限の色">${options}</select>`;
-      // 色を変えたら、その場でセルの見た目も変える
-      td.querySelector("select").addEventListener("change", (e) => {
-        td.className = e.target.value ? "c-" + e.target.value : "";
-      });
+      td.innerHTML = `<select class="lesson-select" aria-label="${DAYS[i]}曜${period}限の授業"></select>`;
+      const select = td.querySelector("select");
+      select.innerHTML = lessonOptionsHtml(lessonId);
+      select.addEventListener("change", () => applyLessonColor(select));
+      applyLessonColor(select);
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
-  }
+  });
+
+  renderPalette();
 
   // 長期休業。年度に合わせて既定値を作る。
   const breaksEl = document.getElementById("breaks");
@@ -673,13 +782,14 @@ PYTHONPATH=src python3 -m planner serve</pre>
   yearEl.addEventListener("change", syncYear);
   syncYear();
 
-  // 時間割をまとめて空にする。押し間違いで消えないよう一度確認する。
+  // 時間割の割り当てだけをまとめて空にする（授業リストそのものは残す）。
   document.getElementById("clear-tt").addEventListener("click", () => {
-    const filled = [...tbody.querySelectorAll("input")].filter((i) => i.value.trim() !== "");
-    if (filled.length && !confirm("時間割の入力をすべて消します。よろしいですか？")) return;
-    tbody.querySelectorAll("input").forEach((i) => { i.value = ""; });
-    tbody.querySelectorAll("select").forEach((s) => { s.value = ""; });
-    tbody.querySelectorAll("td").forEach((td) => { td.className = ""; });
+    const filled = [...tbody.querySelectorAll("select.lesson-select")].filter((s) => s.value !== "");
+    if (filled.length && !confirm("時間割の割り当てをすべて消します。よろしいですか？（授業リストは残ります）")) return;
+    tbody.querySelectorAll("select.lesson-select").forEach((select) => {
+      select.value = "";
+      applyLessonColor(select);
+    });
   });
 
   // 画面の切り替え
@@ -709,11 +819,12 @@ PYTHONPATH=src python3 -m planner serve</pre>
     tbody.querySelectorAll("tr").forEach((tr, rowIndex) => {
       const period = String(rowIndex + 1);
       tr.querySelectorAll("td").forEach((td, i) => {
-        const name = td.querySelector("input").value.trim();
-        if (!name) return;
+        const select = td.querySelector("select.lesson-select");
+        const item = palette.find((p) => String(p.id) === select.value);
+        if (!item || !item.name.trim()) return;
         const weekday = DAYS[i];
         grid[weekday] = grid[weekday] || {};
-        grid[weekday][period] = { name, color: td.querySelector("select").value };
+        grid[weekday][period] = { name: item.name.trim(), color: item.color };
       });
     });
 

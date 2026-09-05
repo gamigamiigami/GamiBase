@@ -39,13 +39,6 @@
         </div>
         {{ nav_home(1) }}
       </div>
-      {%- if legend %}
-      <div class="legend">
-        {%- for item in legend %}
-        <span class="legend-item"><i style="background: {{ item.background }}"></i>{{ item.label }}</span>
-        {%- endfor %}
-      </div>
-      {%- endif %}
       <div class="year-grid">
         {%- for month in cal.months %}
         <div class="month">
@@ -69,7 +62,7 @@
                 <td class="empty"></td>
                 {%- else %}
                 {%- set page = cal.week_page_for(day.date) %}
-                <td class="{{ 'closed ' if day.is_closed }}{{ 'brk ' if day.is_break }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}{{ 'has-event' if day.events }}"
+                <td class="{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}"
                     title="{{ day.md_with_weekday }}{% if day.closed_label %} {{ day.closed_label }}{% endif %}{% if day.event_text %} {{ day.event_text }}{% endif %}">
                   {%- if page %}<a href="#p{{ page }}">{{ day.date.day }}</a>
                   {%- else %}<span>{{ day.date.day }}</span>{% endif %}

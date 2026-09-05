@@ -132,15 +132,26 @@ def test_school_break_marks_days_closed():
         breaks=[{"name": "夏季休業", "start": "2025-07-19", "end": "2025-08-31"}],
     )
     cal = PlannerCalendar(data)
-    in_break = cal.day(dt.date(2025, 8, 4))  # 月曜だが夏休み
+    in_break = cal.day(dt.date(2025, 8, 4))  # 月曜だが夏休み（初日ではない）
     assert in_break.is_break
     assert in_break.is_closed
-    assert in_break.closed_label == "夏季休業"
+    assert in_break.closed_label == "", "休業名は初日だけに表示する（毎日書くと紙面が煩雑なため）"
     assert cal.lessons_for(in_break, "1").name == "", "休業中は授業を出さない"
 
-    normal = cal.day(dt.date(2025, 9, 1))
-    assert not normal.is_break
-    assert cal.lessons_for(normal, "1").name == "２年１組"
+    first_day = cal.day(dt.date(2025, 7, 19))  # 休業の初日
+    assert first_day.closed_label == "夏季休業"
+
+
+def test_break_start_overlapping_holiday_shows_both():
+    # 休業の初日がたまたま祝日と重なった場合、片方が消えてはいけない
+    data = make(
+        2025,
+        breaks=[{"name": "夏季休業", "start": "2025-07-21", "end": "2025-08-31"}],  # 7/21=海の日
+    )
+    cal = PlannerCalendar(data)
+    first_day = cal.day(dt.date(2025, 7, 21))
+    assert "海の日" in first_day.closed_label
+    assert "夏季休業" in first_day.closed_label
 
 
 def test_break_outside_school_year_rejected():

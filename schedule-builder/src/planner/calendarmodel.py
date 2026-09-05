@@ -36,7 +36,8 @@ class Day:
     date: _dt.date
     events: tuple[Event, ...] = ()
     holiday: str | None = None
-    school_break: str | None = None  # 長期休業の名称（夏季休業など）
+    school_break: str | None = None  # 長期休業の名称（夏季休業など）。is_closed 判定に使う
+    break_label: str | None = None  # 表示用。休業の初日だけに入る（毎日書くと紙面が煩雑なため）
 
     @property
     def weekday_ja(self) -> str:
@@ -70,8 +71,12 @@ class Day:
 
     @property
     def closed_label(self) -> str:
-        """休みの理由。祝日名や休業名を表示するために使う。"""
-        return self.holiday or self.school_break or ""
+        """休みの理由。祝日名や、休業の初日だけ休業名を表示するために使う。
+
+        休業の初日がたまたま祝日と重なることもあるため、両方あれば併記する
+        （片方だけにすると、もう一方の情報が紙面から消えてしまう）。
+        """
+        return " / ".join(label for label in (self.holiday, self.break_label) if label)
 
     @property
     def md(self) -> str:
@@ -158,6 +163,7 @@ class PlannerCalendar:
             events=tuple(self._events_by_date.get(date, ())),
             holiday=holiday_name(date),
             school_break=period.name if period else None,
+            break_label=period.name if period and period.start == date else None,
         )
 
     @cached_property

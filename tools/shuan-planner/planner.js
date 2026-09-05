@@ -182,7 +182,12 @@
         isWeekend: wd === 0 || wd === 6,
         holiday,
         breakName: brk ? brk.name : null,
-        get closedLabel() { return this.holiday || this.breakName || ""; },
+        // 休業名は開始日だけに表示する（毎日書くと紙面が煩雑になるため）。
+        // 休みであること自体（グレー表示）は breakName を使って全日に適用する。
+        breakLabel: brk && key(brk.start) === key(date) ? brk.name : null,
+        // 休業の初日が祝日と重なることもあるため、両方あれば併記する
+        // （片方だけにすると、もう一方の情報が紙面から消えてしまう）。
+        get closedLabel() { return [this.holiday, this.breakLabel].filter(Boolean).join(" / "); },
         get isClosed() { return this.isWeekend || !!this.holiday || !!this.breakName; },
         events: (eventsByDate.get(key(date)) || []).join(" ")
       };
@@ -335,46 +340,8 @@
 
     y -= mm(9);
 
-    // 凡例（使われている授業の色と長期休業）
-    const legend = [];
-    const seen = new Set();
-    const grid = (model.input.timetable && model.input.timetable.grid) || {};
-    Object.keys(grid).forEach((wd) => {
-      Object.keys(grid[wd]).forEach((period) => {
-        const cell = grid[wd][period];
-        const color = typeof cell === "string" ? "" : (cell.color || "");
-        if (!color || seen.has(color) || !LESSON_BG[color]) return;
-        seen.add(color);
-        const names = new Set();
-        Object.keys(grid).forEach((w2) => Object.keys(grid[w2]).forEach((p2) => {
-          const c2 = grid[w2][p2];
-          const col2 = typeof c2 === "string" ? "" : (c2.color || "");
-          const nm = typeof c2 === "string" ? c2 : c2.name;
-          if (col2 === color && nm) names.add(nm);
-        }));
-        legend.push({ bg: LESSON_BG[color], label: [...names].slice(0, 6).join("・") });
-      });
-    });
-    (model.input.breaks || []).forEach((b) => {
-      const s = new Date(b.start + "T00:00:00Z");
-      const e = new Date(b.end + "T00:00:00Z");
-      legend.push({
-        bg: COLOR.brk,
-        label: `${b.name}（${s.getUTCMonth() + 1}/${s.getUTCDate()}〜${e.getUTCMonth() + 1}/${e.getUTCDate()}）`
-      });
-    });
-
-    if (legend.length) {
-      let lx = PAD;
-      legend.forEach((item) => {
-        const w = p.width(item.label, 7.5);
-        if (lx + mm(4) + w > PAGE_W - PAD) return;
-        p.rect(lx, y, mm(3.2), mm(3.2), { fill: item.bg, border: COLOR.thin, lw: 0.5 });
-        p.text(item.label, lx + mm(4.2), y - mm(0.3), { size: 7.5, color: COLOR.ink });
-        lx += mm(4.2) + w + mm(5);
-      });
-      y -= mm(5.5);
-    }
+    // 年間カレンダーは手書きと週ページへのリンクだけに徹する。
+    // 授業の色や休業の凡例はここには出さない（週ページ側に情報がある）。
 
     const bottom = PAD + mm(6);
     const gap = mm(2);
@@ -416,15 +383,11 @@
         p.rect(cx, cy, colW, rowH, { fill: [0.98, 0.98, 0.98], border: COLOR.faint, lw: 0.4 });
         return;
       }
-      const fill = day.breakName ? COLOR.brk : (day.isClosed ? COLOR.closed : null);
-      p.rect(cx, cy, colW, rowH, { fill, border: COLOR.faint, lw: 0.4 });
+      // 年間カレンダーは無地。曜日の色分け（日曜=朱・土曜=藍）だけを付ける。
+      p.rect(cx, cy, colW, rowH, { border: COLOR.faint, lw: 0.4 });
       const color = day.isSun ? COLOR.sun : (day.isSat ? COLOR.sat : COLOR.ink);
       // 書き込む前提なので、日付は左上に小さく置く
       p.text(String(day.d), cx + mm(0.7), cy - mm(0.5), { size: 7.5, color });
-      if (day.events) {
-        p.rect(cx + mm(0.6), cy - rowH + mm(1.2), colW - mm(1.2), mm(0.7),
-          { fill: [0.96, 0.75, 0.35], border: false });
-      }
       p.link(cx, cy, colW, rowH, model.weekPageFor(day.date));
     });
   }
@@ -549,7 +512,8 @@
     const gap = mm(2);
     const planRows = 5;
     const planH = mm(5) + planRows * mm(8);
-    const memoH = mm(16);
+    // 指導計画の高さは変えず、日別欄を少し詰めてメモ欄を広くとる。
+    const memoH = mm(26);
     const listH = h - planH - memoH - gap * 2;
 
     // 日別の欄（月〜金＋土日）
