@@ -146,19 +146,17 @@ function closeModal() {
 }
 
 function runSearch(q) {
-  const resultsWrap = document.getElementById("search-results");
-  const resultsContent = document.getElementById("search-results-content");
-  const stage = document.querySelector(".stage");
-
+  const grid = document.getElementById("folder-grid");
   const query = q.trim().toLowerCase();
+
   if (!query) {
-    resultsWrap.hidden = true;
-    stage.style.display = "";
+    grid.classList.remove("search-mode");
+    renderFolders();
     return;
   }
 
-  stage.style.display = "none";
-  resultsWrap.hidden = false;
+  closeModal();
+  grid.classList.add("search-mode");
 
   let html = "";
   Object.entries(CATEGORY_META).forEach(([key, meta]) => {
@@ -176,7 +174,7 @@ function runSearch(q) {
     `;
   });
 
-  resultsContent.innerHTML = html || `<div class="empty-msg">🔍 見つからなかったよ…！ 別のキーワードを試してね</div>`;
+  grid.innerHTML = html || `<div class="empty-msg">🔍 見つからなかったよ…！ 別のキーワードを試してね</div>`;
 }
 
 function init() {
@@ -193,11 +191,6 @@ function init() {
 
   const searchInput = document.getElementById("search-input");
   searchInput.addEventListener("input", () => runSearch(searchInput.value));
-
-  document.getElementById("search-close").addEventListener("click", () => {
-    searchInput.value = "";
-    runSearch("");
-  });
 }
 
 document.addEventListener("DOMContentLoaded", init);
