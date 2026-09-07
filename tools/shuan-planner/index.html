@@ -539,7 +539,7 @@
       <div class="price-card">
         <div class="price-row">
           <span class="price-label">シゴデキ先生 週案スケジュール帳（<span id="product-1">令和8年度版</span>・買い切り）</span>
-          <span class="price-value" id="price-base">¥3,980</span>
+          <span class="price-value" id="price-base">¥1,980</span>
         </div>
         <div class="price-row coupon-row">
           <label for="coupon">クーポンコード<span class="badge opt">任意</span></label>
@@ -551,11 +551,11 @@
         </div>
         <div class="price-row discount-row" id="discount-row" hidden>
           <span class="price-label">クーポン割引（<span id="coupon-applied"></span>・定価の100倍オフ）</span>
-          <span class="price-value discount" id="price-discount">−¥398,000</span>
+          <span class="price-value discount" id="price-discount">−¥198,000</span>
         </div>
         <div class="price-row total-row">
           <span class="price-label">お支払い合計</span>
-          <span class="price-value strike" id="price-strike" hidden>¥3,980</span><span class="price-value total" id="price-total">¥3,980</span>
+          <span class="price-value strike" id="price-strike" hidden>¥1,980</span><span class="price-value total" id="price-total">¥1,980</span>
         </div>
       </div>
 
@@ -883,7 +883,7 @@
   // 定価は適当な金額。クーポンはその100倍を割り引くので、必ず0円まで落ちる
   // （遊び心：割引額が定価よりずっと大きいという冗談）。決済は一切行わず、
   // カード欄は見本表示のみで、値は読み取っても保存・送信もしない。
-  const PRICE = 3980;
+  const PRICE = 1980;
   const COUPON_CODE = "SENSEI100";
   const COUPON_MULTIPLIER = 100;
   const yen = (n) => "¥" + n.toLocaleString("ja-JP");
