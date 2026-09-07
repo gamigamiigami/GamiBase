@@ -4,143 +4,251 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📘</text></svg>">
-  <meta name="description" content="教員のためのスケジュール管理ツール「シゴデキ先生.PDF」。年間カレンダーの日付から週予定ページへリンクで移動でき、時間割や行事予定を入力するとその場でPDFが完成します。">
-  <title>シゴデキ先生.PDF - 教員のためのスケジュール管理ツール</title>
+  <meta name="description" content="教員のためのスケジュール管理ツール「シゴデキ先生.PDF」。時間割と行事予定を入力するだけで、日付から週予定ページへ飛べるリンク付きPDF（86ページ）がその場で完成。GoodNotesでそのまま手書きで使えます。">
+  <meta property="og:title" content="シゴデキ先生.PDF ｜ 入力するだけで完成する週案スケジュール帳">
+  <meta property="og:description" content="時間割と行事予定を入力するだけ。日付をタップすればその週へ飛べるリンク付きPDFが、その場で1冊分できあがります。">
+  <meta property="og:type" content="website">
+  <title>シゴデキ先生.PDF ｜ 入力するだけで完成する週案スケジュール帳</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="flow.css">
-  <style>
-    .lightbox {
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .lightbox:hover {
-      transform: scale(1.05);
-    }
-    #lightbox-modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      display: none;
-    }
-    #lightbox-modal img {
-      max-width: 90%;
-      max-height: 90%;
-    }
-    .img-caption {
-      text-align: center;
-      margin-top: 4px;
-      font-size: 0.9rem;
-      color: #555;
-    }
-  </style>
 </head>
 <body>
-  <header>
-    <div class="header-container">
-      <h1 class="logo">シゴデキ先生.PDF</h1>
-      <p class="tagline">～ 教員のためのスマートなスケジュール管理ツール ～</p>
-      <nav>
-        <ul>
-          <li><a href="#overview">概要</a></li>
-          <li><a href="#features">特徴</a></li>
-          <li><a href="#usage">使用イメージ</a></li>
-          <li><a href="#pricing">価格</a></li>
-          <li><a href="#purchase">購入する</a></li>
-          <li><a href="#line">公式LINE</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
 
-  <main>
-    <section id="overview" class="section">
-      <div class="section-container">
-        <h2>シゴデキ先生.PDF のご紹介</h2>
-        <p>
-          「シゴデキ先生.PDF」は、教員専用に開発されたデジタルスケジュール管理ツールです。<br>
-教師用タブレットで手軽にスケジュール管理が可能になり、忙しい先生方の日々の業務を強力にサポートします。
+<header class="site-header">
+  <div class="header-container">
+    <a href="#top" class="logo">シゴデキ先生.PDF<small>教員のためのスケジュール管理ツール</small></a>
+    <nav class="site-nav">
+      <ul>
+        <li class="nav-hide"><a href="#contents">中身</a></li>
+        <li class="nav-hide"><a href="#features">特徴</a></li>
+        <li class="nav-hide"><a href="#usage">使用イメージ</a></li>
+        <li class="nav-hide"><a href="#pricing">価格</a></li>
+        <li><a href="#purchase" class="nav-cta">購入する</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ ヒーロー ============ -->
+  <section class="hero">
+    <div class="hero-container">
+      <div class="hero-text">
+        <span class="hero-badge">令和8年度版・受付中</span>
+        <h2>時間割を入れるだけ。<br><span class="mark">1年分の週案</span>が、<br>その場で1冊になる。</h2>
+        <p class="hero-lead">
+          エクセルをPDFにして、1つずつリンクを貼って、GoodNotesに入れ直す。
+          その毎年の作業を、入力するだけの数分に置き換えました。
+          年間カレンダーの日付をタップすれば、その週のページへ一発で飛べます。
         </p>
-        <div class="overview-images">
-          <div>
-            <img src="assets/year.png" alt="年間カレンダー" class="overview-img lightbox">
-            <div class="img-caption">年間カレンダー</div>
-          </div>
-          <div>
-            <img src="assets/event.png" alt="行事リスト" class="overview-img lightbox">
-            <div class="img-caption">行事リスト</div>
-          </div>
-          <div>
-            <img src="assets/week.png" alt="週間カレンダー" class="overview-img lightbox">
-            <div class="img-caption">週間カレンダー</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="features" class="section">
-      <div class="section-container">
-        <h2>特徴</h2>
-        <ul class="strength-list">
-          <li><strong>年間＆週予定管理：</strong> あなたの予定を、年間カレンダーと週予定ページで管理できます。</li>
-          <li><strong>リンク機能：</strong> 年間カレンダーの日付をクリックするだけで、該当する週予定ページにスムーズに移動可能です。</li>
-          <li><strong>自由ページ：</strong> 教材研究や座席表、提出物管理、指導記録など、必要な情報を自由に追加・編集でき、どのページからもリンクで移動が可能です。</li>
-          <li><strong>オプション：</strong> 週予定ページに時間割表を自動表示するサービスで、授業準備をさらに効率化します。</li>
-        </ul>
-      </div>
-    </section>
-
-    <section id="usage" class="section">
-      <div class="section-container usage-container">
-        <h2>使用イメージ</h2>
-        <div class="usage-content">
-          <div class="video-wrapper">
-            <video controls preload="none" poster="assets/week.png">
-              <source src="assets/movie.mp4" type="video/mp4">
-              お使いのブラウザでは動画が再生できません。
-            </video>
-          </div>
-          <div class="slider-wrapper">
-            <div class="slider">
-              <button class="slider-button" id="prev-button">&#9664;</button>
-              <div>
-                <img src="assets/year.png" alt="画面例" id="slider-image" class="lightbox">
-                <div class="img-caption" id="slider-caption">年間カレンダー</div>
-              </div>
-              <button class="slider-button" id="next-button">&#9654;</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="pricing" class="section">
-      <div class="section-container">
-        <div class="price-banner">
-          <span class="price">1,980円</span>
-          <span class="price-sub">買い切り。1年分まるごと作れます</span>
-        </div>
-        <p class="price-note">※基本パッケージ価格。オプションの詳細は公式LINEでご案内いたします。</p>
-        <div class="price-cta">
+        <div class="hero-actions">
           <a href="#purchase" class="btn">このページで購入する</a>
+          <span class="hero-note">1,980円・買い切り／その場でダウンロード</span>
+        </div>
+        <ul class="hero-points">
+          <li>86ページ・1,100以上のリンク付き</li>
+          <li>祝日・振替休日は自動</li>
+          <li>入力内容はどこにも送信されません</li>
+        </ul>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/shot-year.png" alt="年間カレンダーのページ。日付をタップするとその週のページへ移動できる。" width="1853" height="1310">
+        <img src="assets/shot-week.png" alt="週ページ。時間割・日別欄・指導計画・メモ欄が1画面に収まる。" class="shot-back" width="1853" height="1310">
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 悩み ============ -->
+  <section class="section" id="pain">
+    <div class="section-container">
+      <div class="section-head">
+        <span class="section-label">BEFORE</span>
+        <h2>週案づくり、毎年ここで時間を溶かしていませんか</h2>
+      </div>
+      <div class="pain-grid">
+        <div class="pain-card">
+          <span class="pain-icon">📄</span>
+          エクセルをPDFにして、日付ごとに1つずつリンクを貼るのが大変
+        </div>
+        <div class="pain-card">
+          <span class="pain-icon">😵</span>
+          行事予定の反映を忘れて、その週になってから気づく
+        </div>
+        <div class="pain-card">
+          <span class="pain-icon">🔍</span>
+          GoodNotesで今週のページを探して、毎回スクロールしている
+        </div>
+        <div class="pain-card">
+          <span class="pain-icon">🎨</span>
+          祝日や長期休業の色分けを、毎年ゼロからやり直している
         </div>
       </div>
-    </section>
+      <p class="pain-arrow">▼</p>
+      <p class="pain-answer">その全部を、<span class="mark">入力して数秒待つだけ</span>にしました。</p>
+    </div>
+  </section>
 
-    <section id="purchase" class="section">
-      <div class="section-container">
-        <h2>ご購入</h2>
-        <p class="purchase-lead">
-          このページだけで、入力からお受け取りまで完結します。<br>
-          入力した時間割や行事予定は、どこにも送信されません。
+  <!-- ============ 中身 ============ -->
+  <section class="section section-alt" id="contents">
+    <div class="section-container">
+      <div class="section-head">
+        <span class="section-label">CONTENTS</span>
+        <h2>できあがる1冊の中身</h2>
+        <p class="section-sub">
+          下の画像は、実際にこのページで生成したPDFのページです。タップすると拡大表示します。
         </p>
-        <div class="purchase-inner flow">
+      </div>
+      <div class="gallery">
+        <figure>
+          <img src="assets/shot-year.png" alt="年間カレンダーのページ" class="lightbox" loading="lazy" width="1853" height="1310">
+          <figcaption>
+            <strong>年間カレンダー</strong>
+            <span>1年分を1ページに。日付をタップすると、その週のページへ直接移動できます。</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="assets/shot-event.png" alt="年間行事予定のページ" class="lightbox" loading="lazy" width="1853" height="1310">
+          <figcaption>
+            <strong>年間行事予定</strong>
+            <span>入力した行事を月ごとの一覧に。ここからも各週へ飛べます。</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="assets/shot-week.png" alt="週ページ" class="lightbox" loading="lazy" width="1853" height="1310">
+          <figcaption>
+            <strong>週ページ（54週分）</strong>
+            <span>時間割・日別欄・指導計画・メモ欄が1画面に。授業は色分けされます。</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="assets/shot-free.png" alt="自由ページ" class="lightbox" loading="lazy" width="1853" height="1310">
+          <figcaption>
+            <strong>自由ページ</strong>
+            <span>座席表や指導記録など、好きに使える罫線ページ。枚数は自由に指定できます。</span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 特徴 ============ -->
+  <section class="section" id="features">
+    <div class="section-container">
+      <div class="section-head">
+        <span class="section-label">FEATURES</span>
+        <h2>シゴデキ先生.PDF の特徴</h2>
+      </div>
+      <ul class="strength-list">
+        <li>
+          <span class="s-emoji">🔗</span>
+          <span class="s-title">リンク機能</span>
+          年間カレンダーの日付をタップするだけで、該当する週予定ページへスムーズに移動できます。週ページからも目次や前後の週へ1タップです。
+        </li>
+        <li>
+          <span class="s-emoji">📅</span>
+          <span class="s-title">年間＆週予定管理</span>
+          年間カレンダー・年間行事予定・週予定ページで、1年分の予定をまとめて管理できます。
+        </li>
+        <li>
+          <span class="s-emoji">🎨</span>
+          <span class="s-title">授業の色分け</span>
+          授業名に色を1回登録すれば、時間割は選ぶだけ。同じ授業は自動で同じ色になります。
+        </li>
+        <li>
+          <span class="s-emoji">🏖️</span>
+          <span class="s-title">祝日・長期休業に対応</span>
+          祝日・振替休日は年度から自動計算。夏季・冬季などの長期休業は期間を指定するだけで反映されます。
+        </li>
+        <li>
+          <span class="s-emoji">📝</span>
+          <span class="s-title">自由ページ</span>
+          教材研究や座席表、提出物管理、指導記録など。必要な枚数を指定でき、どのページからもリンクで移動できます。
+        </li>
+        <li>
+          <span class="s-emoji">🔒</span>
+          <span class="s-title">入力内容は送信されません</span>
+          PDFはあなたの端末の中だけで作られます。時間割や行事予定が外部に送られることはありません。
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 使用イメージ ============ -->
+  <section class="section section-alt" id="usage">
+    <div class="section-container">
+      <div class="section-head">
+        <span class="section-label">HOW IT WORKS</span>
+        <h2>使用イメージ</h2>
+        <p class="section-sub">実際にiPadで使っている様子と、できあがるページの例です。</p>
+      </div>
+      <div class="usage-content">
+        <div class="usage-panel video-wrapper">
+          <h3>動画で見る</h3>
+          <video controls preload="none" poster="assets/shot-week.png" playsinline>
+            <source src="assets/movie.mp4" type="video/mp4">
+            お使いのブラウザでは動画が再生できません。
+          </video>
+        </div>
+        <div class="usage-panel">
+          <h3>ページを1枚ずつ見る</h3>
+          <div class="slider">
+            <button class="slider-button" id="prev-button" aria-label="前の画像">&#9664;</button>
+            <div class="slider-figure">
+              <img src="assets/shot-year.png" alt="ページの例" id="slider-image" class="lightbox" width="1853" height="1310">
+            </div>
+            <button class="slider-button" id="next-button" aria-label="次の画像">&#9654;</button>
+          </div>
+          <p class="img-caption" id="slider-caption">年間カレンダー</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 価格 ============ -->
+  <section class="section" id="pricing">
+    <div class="section-container">
+      <div class="section-head">
+        <span class="section-label">PRICE</span>
+        <h2>価格</h2>
+        <p class="section-sub">買い切りです。月額はかかりません。</p>
+      </div>
+      <div class="price-card">
+        <div class="price-head">シゴデキ先生.PDF ／ 令和8年度版</div>
+        <div class="price-body">
+          <div class="price-amount">
+            <span class="num">1,980</span><span class="yen">円</span>
+          </div>
+          <span class="price-tag">買い切り・追加費用なし</span>
+          <ul class="price-includes">
+            <li>年間カレンダー・年間行事予定（各1ページ）</li>
+            <li>週ページ 54週分（時間割・日別欄・指導計画・メモ）</li>
+            <li>自由ページ（枚数はお好みで指定）</li>
+            <li>ページ内リンク 1,100以上／GoodNotes用しおり付き</li>
+            <li>ご購入後すぐダウンロード</li>
+          </ul>
+          <a href="#purchase" class="btn">このページで購入する</a>
+          <p class="price-note">※基本パッケージ価格。オプションの詳細は公式LINEでご案内いたします。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 購入（フロー埋め込み） ============ -->
+  <section class="section" id="purchase">
+    <div class="section-container">
+      <div class="section-head">
+        <span class="section-label">ORDER</span>
+        <h2>ご購入</h2>
+        <p class="section-sub">
+          入力・お支払い・お受け取りまで、このページだけで完結します。<br>
+          入力した時間割や行事予定が外部に送信されることはありません。
+        </p>
+      </div>
+      <div class="purchase-inner flow" id="purchase-flow">
       <div class="rail" role="tablist" aria-label="購入の流れ">
         <button class="step" role="tab" aria-selected="true" aria-controls="panel-1" data-step="1">
           <span class="n">01</span>
@@ -157,10 +265,6 @@
       </div>
 
       <div class="screen">
-        <div class="chrome">
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          <span class="url" id="url">https://schedule-builder.example.com/</span>
-        </div>
 
         <!-- 01 入力 -->
         <div class="body" id="panel-1" role="tabpanel">
@@ -367,31 +471,67 @@
           </div>
         </div>
       </div>
-        </div>
       </div>
-    </section>
+      <p class="purchase-terms">
+        <strong>ご購入にあたって：</strong>
+        PDFはご購入時点の入力内容で作成されます。<strong>ご購入後の時間割・行事予定の修正はできません</strong>ので、購入画面の確認欄で内容をご確認ください。
+        また、完成したPDFの二次配布・再配布はご遠慮いただいています。
+      </p>
+    </div>
+  </section>
 
-    <section id="line" class="section">
-      <div class="section-container">
+  <!-- ============ FAQ ============ -->
+  <section class="section section-alt" id="faq">
+    <div class="section-container">
+      <div class="section-head">
+        <span class="section-label">FAQ</span>
+        <h2>よくある質問</h2>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item" open>
+          <summary>入力した時間割や行事予定は、どこかに送信されますか？</summary>
+          <div class="faq-body">されません。PDFの作成はすべてお使いの端末（ブラウザ）の中で行われます。</div>
+        </details>
+        <details class="faq-item">
+          <summary>購入後に、時間割や行事予定を直せますか？</summary>
+          <div class="faq-body">直せません。購入前の確認画面で内容をよくご確認ください。内容を変えたい場合は、新しく購入し直していただく形になります。</div>
+        </details>
+        <details class="faq-item">
+          <summary>完成したPDFを、他の先生に配ってもいいですか？</summary>
+          <div class="faq-body">二次配布・再配布はご遠慮いただいています。必要な方には、それぞれでご購入をお願いしています。</div>
+        </details>
+        <details class="faq-item">
+          <summary>iPad・GoodNotes以外でも使えますか？</summary>
+          <div class="faq-body">PDFですので、他のPDF閲覧・注釈アプリでもお使いいただけます。ページ内リンクやしおりの動作は、各アプリの対応状況によります。</div>
+        </details>
+        <details class="faq-item">
+          <summary>途中で入力をやり直せますか？</summary>
+          <div class="faq-body">購入手続きに進む前であれば、何度でも入力し直せます。購入画面から「内容を直す」で入力へ戻れます。</div>
+        </details>
+        <details class="faq-item">
+          <summary>支払い方法や、オプションについて知りたい</summary>
+          <div class="faq-body">公式LINEからお問い合わせください。オプション（週予定ページへの時間割自動表示など）についてもご案内しています。</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 公式LINE ============ -->
+  <section class="section" id="line">
+    <div class="section-container">
+      <div class="section-head">
+        <span class="section-label">CONTACT</span>
         <h2>公式LINEで最新情報をGET！</h2>
-        <p>
-          教員向けの最新情報、使い方のヒント、イベント情報を公式LINEでお届け中です。ぜひ「公式Rough」へご登録ください！
-        </p>
-        <div class="line-container">
-          <img src="assets/line.png" alt="公式LINE QRコード" class="qr-img">
-          <a href="https://lin.ee/cTwWhUI" class="btn">公式LINEに登録する</a>
-        </div>
+        <p class="section-sub">お問い合わせはすべて公式LINEから受け付けています。</p>
       </div>
-    </section>
-
-    <section id="contact" class="section">
-      <div class="section-container">
-        <h2>お問い合わせ</h2>
-        <p>
-          お問い合わせはすべて公式LINEから受け付けています。ご質問やご要望は、公式LINEでお気軽にご連絡ください。
-        </p>
-        <div class="contact-info">
-          <img src="assets/line.png" alt="公式LINE QRコード" class="qr-img">
+      <div class="line-card">
+        <img src="assets/line.png" alt="公式LINEのQRコード" class="qr-img" loading="lazy">
+        <div>
+          <p>
+            教員向けの最新情報、使い方のヒント、イベント情報を公式LINEでお届け中です。
+            ご質問・ご要望も、こちらからお気軽にご連絡ください。
+          </p>
+          <a href="https://lin.ee/cTwWhUI" class="btn btn-line">公式LINEに登録する</a>
           <div class="sns-links">
             <a href="https://lin.ee/cTwWhUI" class="sns-link">公式LINE</a>
             <a href="#" class="sns-link">X</a>
@@ -399,57 +539,76 @@
           </div>
         </div>
       </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="container">
-      <p>&copy; 2025 Rough. All rights reserved.</p>
     </div>
-  </footer>
+  </section>
 
-  <div id="lightbox-modal" onclick="this.style.display='none';">
-    <img src="" alt="lightbox image" id="lightbox-image">
-  </div>
+</main>
 
-  <script>
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
-      });
+<footer class="site-footer">
+  <div class="foot-logo">シゴデキ先生.PDF</div>
+  <p>&copy; 2025 Rough. All rights reserved.</p>
+</footer>
+
+<!-- スマホ縦向き用の追従CTA -->
+<div class="sticky-cta">
+  <div class="sc-price">1,980円<small>買い切り・すぐダウンロード</small></div>
+  <a href="#purchase" class="btn">購入する</a>
+</div>
+
+<div id="lightbox-modal">
+  <img src="" alt="拡大画像" id="lightbox-image">
+</div>
+
+<script>
+  // ページ内リンクは、追従ヘッダーの下に隠れないように scroll-margin 付きで移動する。
+  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+    anchor.addEventListener("click", (e) => {
+      const id = anchor.getAttribute("href");
+      const target = id === "#top" ? document.body : document.querySelector(id);
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  });
 
-    const sliderImages = ["assets/year.png", "assets/event.png", "assets/week.png", "assets/other.png"];
-    const sliderCaptions = ["年間カレンダー", "行事リスト", "週間カレンダー", "自由ページ"];
-    let currentIndex = 0;
-    const sliderImage = document.getElementById("slider-image");
-    const sliderCaption = document.getElementById("slider-caption");
-    document.getElementById("prev-button").addEventListener("click", () => {
-      currentIndex = (currentIndex - 1 + sliderImages.length) % sliderImages.length;
-      sliderImage.src = sliderImages[currentIndex];
-      sliderCaption.textContent = sliderCaptions[currentIndex];
-    });
-    document.getElementById("next-button").addEventListener("click", () => {
-      currentIndex = (currentIndex + 1) % sliderImages.length;
-      sliderImage.src = sliderImages[currentIndex];
-      sliderCaption.textContent = sliderCaptions[currentIndex];
-    });
+  // ページ例のスライダー
+  const sliderShots = [
+    ["assets/shot-year.png", "年間カレンダー"],
+    ["assets/shot-event.png", "年間行事予定"],
+    ["assets/shot-week.png", "週ページ"],
+    ["assets/shot-free.png", "自由ページ"]
+  ];
+  let shotIndex = 0;
+  const sliderImage = document.getElementById("slider-image");
+  const sliderCaption = document.getElementById("slider-caption");
+  function showShot(step) {
+    shotIndex = (shotIndex + step + sliderShots.length) % sliderShots.length;
+    sliderImage.src = sliderShots[shotIndex][0];
+    sliderCaption.textContent = sliderShots[shotIndex][1];
+  }
+  document.getElementById("prev-button").addEventListener("click", () => showShot(-1));
+  document.getElementById("next-button").addEventListener("click", () => showShot(1));
 
-    // Lightbox
-    document.querySelectorAll('.lightbox').forEach(img => {
-      img.addEventListener('click', function() {
-        const modal = document.getElementById('lightbox-modal');
-        const modalImg = document.getElementById('lightbox-image');
-        modal.style.display = 'flex';
-        modalImg.src = this.src;
-      });
-    });
-  </script>
+  // 画像の拡大表示
+  const modal = document.getElementById("lightbox-modal");
+  const modalImg = document.getElementById("lightbox-image");
+  document.addEventListener("click", (e) => {
+    const img = e.target.closest("img.lightbox");
+    if (img) {
+      modalImg.src = img.src;
+      modal.classList.add("is-open");
+    } else if (e.target.closest("#lightbox-modal")) {
+      modal.classList.remove("is-open");
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") modal.classList.remove("is-open");
+  });
+</script>
 
-  <script src="vendor/pdf-lib.min.js"></script>
-  <script src="vendor/fontkit.umd.min.js"></script>
-  <script src="planner.js"></script>
-  <script src="flow.js"></script>
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/fontkit.umd.min.js"></script>
+<script src="planner.js"></script>
+<script src="flow.js"></script>
 </body>
 </html>

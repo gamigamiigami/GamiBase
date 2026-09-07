@@ -151,16 +151,17 @@
 
   // 画面の切り替え
   const steps = [...document.querySelectorAll(".step")];
-  const urls = {
-    1: "https://schedule-builder.example.com/",
-    2: "https://schedule-builder.example.com/setup/setup:ORD-D7EBCC4981EA:…",
-    3: "https://schedule-builder.example.com/done/ORD-D7EBCC4981EA:…"
-  };
+  // 画面を切り替えたら、購入フローの先頭に合わせる。
+  // （LPの中に埋め込んでいるので、ページ最上部まで戻すと購入から離れてしまう）
+  const flowTop = document.getElementById("purchase-flow");
   function show(step) {
     steps.forEach((s) => s.setAttribute("aria-selected", String(s.dataset.step === String(step))));
     [1, 2, 3].forEach((n) => { document.getElementById("panel-" + n).hidden = n !== step; });
-    document.getElementById("url").textContent = urls[step];
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (flowTop) {
+      // すでにフローの先頭より上を見ているときは、動かさずそのまま読ませる。
+      const top = flowTop.getBoundingClientRect().top;
+      if (top < 0) flowTop.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
   steps.forEach((s) => s.addEventListener("click", () => show(Number(s.dataset.step))));
 
