@@ -463,6 +463,24 @@
     border-color: color-mix(in srgb, var(--ok) 45%, var(--surface));
   }
 
+  .agree-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+    cursor: pointer;
+  }
+  .agree-row input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    margin: 1px 0 0;
+    flex: 0 0 auto;
+    accent-color: var(--ai);
+  }
+
   #payment.is-waived {
     opacity: .55;
   }
@@ -517,15 +535,15 @@
   <div class="rail" role="tablist" aria-label="購入の流れ">
     <button class="step" role="tab" aria-selected="true" aria-controls="panel-1" data-step="1">
       <span class="n">01</span>
-      <span class="t">購入<span class="d">年度を選ぶ</span></span>
+      <span class="t">入力<span class="d">時間割・休業・行事</span></span>
     </button>
     <button class="step" role="tab" aria-selected="false" aria-controls="panel-2" data-step="2">
       <span class="n">02</span>
-      <span class="t">入力<span class="d">時間割・休業・行事</span></span>
+      <span class="t">購入<span class="d">内容確認・お会計</span></span>
     </button>
     <button class="step" role="tab" aria-selected="false" aria-controls="panel-3" data-step="3">
       <span class="n">03</span>
-      <span class="t">受け取り<span class="d">生成とダウンロード</span></span>
+      <span class="t">受け取り<span class="d">ダウンロード</span></span>
     </button>
   </div>
 
@@ -535,11 +553,16 @@
       <span class="url" id="url">https://schedule-builder.example.com/</span>
     </div>
 
-    <!-- 01 購入 -->
+    <!-- 01 入力 -->
     <div class="body" id="panel-1" role="tabpanel">
-      <h2>先生のスケジュール帳</h2>
+      <h2>スケジュール帳の内容を入力</h2>
       <p class="lead">
-        時間割と行事予定を入力すると、リンク付きPDFを自動で作ります。GoodNotes に取り込んで、そのまま手書きで使えます。
+        <span id="product">令和8年度版</span>／購入手続きに進むまでは、何度でも作り直せます。
+      </p>
+
+      <h3>1. 基本情報</h3>
+      <p class="lead" style="margin:-6px 0 14px">
+        入力が必要なのは<strong>自由ページ数</strong>だけです。ほかは空欄のままでも作成できます。
       </p>
       <div class="fields">
         <div>
@@ -550,77 +573,6 @@
             <option value="2027">令和9年度（2027年4月〜2028年3月）</option>
           </select>
         </div>
-        <div>
-          <label for="buyer">お名前</label>
-          <input id="buyer" type="text" value="伊神 太郎">
-        </div>
-        <div>
-          <label for="mail">メールアドレス<span class="badge req">必須</span></label>
-          <input id="mail" type="email" placeholder="例：teacher@example.com" required>
-        </div>
-      </div>
-
-      <h3>お会計</h3>
-      <div class="price-card">
-        <div class="price-row">
-          <span class="price-label">シゴデキ先生 週案スケジュール帳（<span id="product-1">令和8年度版</span>・買い切り）</span>
-          <span class="price-value" id="price-base">¥1,980</span>
-        </div>
-        <div class="price-row coupon-row">
-          <div class="coupon-card">
-            <div class="coupon-card-head">
-              <span class="coupon-name">先生応援クーポン</span>
-              <span class="coupon-code">SENSEI100</span>
-            </div>
-            <p class="coupon-amount" id="coupon-amount"></p>
-          </div>
-          <button type="button" class="btn-sub" id="toggle-coupon" aria-pressed="false">クーポンを使う</button>
-        </div>
-        <div class="price-row discount-row" id="discount-row" hidden>
-          <span class="price-label">クーポン割引（<span id="coupon-applied">SENSEI100</span>）</span>
-          <span class="price-value discount" id="price-discount">−¥198,000</span>
-        </div>
-        <div class="price-row total-row">
-          <span class="price-label">お支払い合計</span>
-          <span class="price-value strike" id="price-strike" hidden>¥1,980</span><span class="price-value total" id="price-total">¥1,980</span>
-        </div>
-      </div>
-
-      <h3>お支払い方法<span class="payment-badge" id="payment-badge" hidden>0円のため不要</span></h3>
-      <div class="fields" id="payment">
-        <div>
-          <label for="cc-num">カード番号</label>
-          <input id="cc-num" type="text" inputmode="numeric" autocomplete="off" placeholder="4242 4242 4242 4242">
-        </div>
-        <div>
-          <label for="cc-exp">有効期限</label>
-          <input id="cc-exp" type="text" autocomplete="off" placeholder="MM / YY">
-        </div>
-        <div>
-          <label for="cc-cvc">セキュリティコード</label>
-          <input id="cc-cvc" type="text" inputmode="numeric" autocomplete="off" placeholder="CVC">
-        </div>
-      </div>
-      <p class="btn-note" id="payment-note" style="margin-top:6px"></p>
-
-      <div class="btn-row">
-        <button class="btn" id="start-btn" data-go="2">0円で購入する</button>
-        <span class="btn-note">カード情報は送信・保存されません。次の画面で内容を入力すると、その場でPDFができます。</span>
-      </div>
-    </div>
-
-    <!-- 02 入力 -->
-    <div class="body" id="panel-2" role="tabpanel" hidden>
-      <h2>スケジュール帳の内容を入力</h2>
-      <p class="lead">
-        <span id="product">令和8年度版</span>／作り直しは何度でもできます。
-      </p>
-
-      <h3>1. 基本情報</h3>
-      <p class="lead" style="margin:-6px 0 14px">
-        入力が必要なのは<strong>自由ページ数</strong>だけです。ほかは空欄のままでも作成できます。
-      </p>
-      <div class="fields">
         <div>
           <label for="own">お名前<span class="badge opt">任意</span></label>
           <input id="own" type="text" value="伊神 太郎" placeholder="表紙に載せる名前（空欄でも可）">
@@ -677,8 +629,97 @@
 3/5,卒業式</textarea>
 
       <div class="btn-row">
-        <button class="btn" id="make">この内容でPDFを作る</button>
-        <span class="btn-note" id="make-note">お使いの端末の中で作ります。数秒かかります。</span>
+        <button class="btn" id="to-purchase" data-go="2">この内容で確認・購入へ進む</button>
+        <span class="btn-note">まだ購入は確定しません。次の画面で内容を確認してからお会計します。</span>
+      </div>
+    </div>
+
+    <!-- 02 購入 -->
+    <div class="body" id="panel-2" role="tabpanel" hidden>
+      <h2>内容の確認とお会計</h2>
+      <p class="lead">
+        購入すると、この内容でPDFを作成してダウンロードできるようになります。<strong>購入後は時間割・行事予定などの修正はできません。</strong>
+      </p>
+
+      <h3>ご購入内容の確認</h3>
+      <div class="specs" id="confirm-specs">
+        <div class="spec"><div class="v" id="c-year">—</div><div class="k">年度</div></div>
+        <div class="spec"><div class="v" id="c-free">—</div><div class="k">自由ページ</div></div>
+        <div class="spec"><div class="v" id="c-lessons">—</div><div class="k">時間割コマ数</div></div>
+        <div class="spec"><div class="v" id="c-events">—</div><div class="k">行事件数</div></div>
+      </div>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn-sub" data-go="1">内容を直す（入力に戻る）</button>
+      </div>
+
+      <h3>お会計</h3>
+      <div class="price-card">
+        <div class="price-row">
+          <span class="price-label">シゴデキ先生 週案スケジュール帳（<span id="product-1">令和8年度版</span>・買い切り）</span>
+          <span class="price-value" id="price-base">¥1,980</span>
+        </div>
+        <div class="price-row coupon-row">
+          <div class="coupon-card">
+            <div class="coupon-card-head">
+              <span class="coupon-name">先生応援クーポン</span>
+              <span class="coupon-code">SENSEI100</span>
+            </div>
+            <p class="coupon-amount" id="coupon-amount"></p>
+          </div>
+          <button type="button" class="btn-sub" id="toggle-coupon" aria-pressed="false">クーポンを使う</button>
+        </div>
+        <div class="price-row discount-row" id="discount-row" hidden>
+          <span class="price-label">クーポン割引（<span id="coupon-applied">SENSEI100</span>）</span>
+          <span class="price-value discount" id="price-discount">−¥198,000</span>
+        </div>
+        <div class="price-row total-row">
+          <span class="price-label">お支払い合計</span>
+          <span class="price-value strike" id="price-strike" hidden>¥1,980</span><span class="price-value total" id="price-total">¥1,980</span>
+        </div>
+      </div>
+
+      <h3>お支払い方法<span class="payment-badge" id="payment-badge" hidden>0円のため不要</span></h3>
+      <div class="fields" id="payment">
+        <div>
+          <label for="cc-num">カード番号</label>
+          <input id="cc-num" type="text" inputmode="numeric" autocomplete="off" placeholder="4242 4242 4242 4242">
+        </div>
+        <div>
+          <label for="cc-exp">有効期限</label>
+          <input id="cc-exp" type="text" autocomplete="off" placeholder="MM / YY">
+        </div>
+        <div>
+          <label for="cc-cvc">セキュリティコード</label>
+          <input id="cc-cvc" type="text" inputmode="numeric" autocomplete="off" placeholder="CVC">
+        </div>
+      </div>
+      <p class="btn-note" id="payment-note" style="margin-top:6px"></p>
+
+      <h3>メールアドレス</h3>
+      <div class="fields">
+        <div>
+          <label for="mail">メールアドレス（購入確認をお送りします）<span class="badge req">必須</span></label>
+          <input id="mail" type="email" placeholder="例：teacher@example.com" required>
+        </div>
+      </div>
+
+      <h3>ご購入前の確認事項</h3>
+      <label class="agree-row">
+        <input type="checkbox" id="agree-content">
+        <span>上記の設定内容（時間割・行事予定・自由ページ数など）に間違いないことを確認しました。</span>
+      </label>
+      <label class="agree-row">
+        <input type="checkbox" id="agree-nomod">
+        <span>購入後は時間割・行事予定などの内容を修正できないことに同意します。</span>
+      </label>
+      <label class="agree-row">
+        <input type="checkbox" id="agree-noshare">
+        <span>完成したPDFの二次配布・再配布をしないことに同意します。</span>
+      </label>
+
+      <div class="btn-row">
+        <button class="btn" id="make" disabled>0円で購入する</button>
+        <span class="btn-note" id="make-note">確認事項にすべてチェックすると購入できます。カード情報は送信・保存されません。</span>
       </div>
       <div class="progress" id="progress" hidden>
         <div class="bar"><span id="bar-fill"></span></div>
@@ -710,10 +751,10 @@
       <ul class="terms">
         <li>iPad の GoodNotes に取り込むと、そのままペンで書き込めます。</li>
         <li>サイドバーのしおりから、各週のページに直接飛べます。</li>
-        <li>内容を変えたいときは「入力」に戻って、何度でも作り直せます。</li>
+        <li>ご購入済みのため、この内容の時間割・行事予定は修正できません。内容を変えたい場合は、新しく購入し直してください。</li>
       </ul>
       <div class="btn-row">
-        <button class="btn-sub" data-go="2">入力に戻ってやり直す</button>
+        <button class="btn-sub" id="restart" data-go="1">最初から新しく購入する</button>
       </div>
     </div>
   </div>
@@ -891,19 +932,18 @@
   steps.forEach((s) => s.addEventListener("click", () => show(Number(s.dataset.step))));
 
   document.querySelectorAll("[data-go]").forEach((btn) => {
-    if (btn.id === "start-btn") return; // メールアドレスの必須チェックを挟むため個別に扱う
     btn.addEventListener("click", () => show(Number(btn.dataset.go)));
   });
 
-  // メールアドレスは必須。空のまま次へ進ませない（本番の購入確認メール送付先として使う想定）。
-  const mailEl = document.getElementById("mail");
-  document.getElementById("start-btn").addEventListener("click", () => {
-    if (!mailEl.value.trim() || !mailEl.checkValidity()) {
-      mailEl.reportValidity();
-      mailEl.focus();
-      return;
-    }
-    show(2);
+  // 「確認・購入へ進む」で、入力内容から購入画面の確認欄を作る。
+  document.getElementById("to-purchase").addEventListener("click", () => {
+    const input = collectInput();
+    document.getElementById("c-year").textContent = `${input.schoolYear}年度`;
+    document.getElementById("c-free").textContent = input.freePages + "枚";
+    let lessonCount = 0;
+    Object.values(input.timetable.grid).forEach((periods) => { lessonCount += Object.keys(periods).length; });
+    document.getElementById("c-lessons").textContent = lessonCount + "コマ";
+    document.getElementById("c-events").textContent = input.events.length + "件";
   });
 
   // ── お会計（見た目だけの購入フロー） ───────────────────
@@ -949,7 +989,7 @@
 
     paymentBox.classList.toggle("is-waived", total === 0);
     paymentBadge.hidden = total !== 0;
-    document.getElementById("start-btn").textContent = total === 0 ? "0円で購入する" : yen(total) + "で購入する";
+    document.getElementById("make").textContent = total === 0 ? "0円で購入する" : yen(total) + "で購入する";
     paymentNote.textContent = total === 0
       ? "クーポンにより合計0円です。カード情報は入力しなくても購入に進めます（お試しで入れても実際には使われません）。"
       : "このデモでは実際の請求は発生しません。カード情報は送信・保存されません。";
@@ -1033,9 +1073,24 @@
   const progress = document.getElementById("progress");
   const barFill = document.getElementById("bar-fill");
   const progressText = document.getElementById("progress-text");
+  const mailEl = document.getElementById("mail");
   let blobUrl = null;
 
+  // 購入前の確認事項は3つとも同意しないと購入ボタンを押せない。
+  const agreeBoxes = ["agree-content", "agree-nomod", "agree-noshare"].map((id) => document.getElementById(id));
+  function syncMakeEnabled() {
+    makeBtn.disabled = !agreeBoxes.every((box) => box.checked);
+  }
+  agreeBoxes.forEach((box) => box.addEventListener("change", syncMakeEnabled));
+  syncMakeEnabled();
+
   makeBtn.addEventListener("click", async () => {
+    // メールアドレスは必須（本番の購入確認メール送付先として使う想定）。
+    if (!mailEl.value.trim() || !mailEl.checkValidity()) {
+      mailEl.reportValidity();
+      mailEl.focus();
+      return;
+    }
     const input = collectInput();
     makeBtn.disabled = true;
     makeNote.hidden = true;
@@ -1068,7 +1123,7 @@
       progressText.textContent = "作成できませんでした: " + (err && err.message ? err.message : err);
       barFill.style.width = "0";
     } finally {
-      makeBtn.disabled = false;
+      syncMakeEnabled();
       setTimeout(() => { progress.hidden = true; makeNote.hidden = false; }, 600);
     }
   });
