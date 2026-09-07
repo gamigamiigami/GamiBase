@@ -1,5 +1,5 @@
 /* 週案簿の紙面から取った配色。藍のインク、朱は日曜と祝日にだけ使う。 */
-:root {
+.flow {
     --paper: #eef1f5;
     --surface: #ffffff;
     --surface-sunk: #f6f8fa;
@@ -407,7 +407,7 @@
 }
 
 /* LPの配色に合わせた上書き。主役の一色を藍からLPのコーラルに寄せる。 */
-:root {
+.flow {
   --ai: #d1544a;
   --ai-soft: #fde8e6;
   --ai-quiet: #fff5f4;
@@ -421,3 +421,6 @@
 }
 .flow p { text-align: left; margin: 0 0 10px; }
 .flow ul { margin: 0; padding: 0; }
+
+/* LPのセクション背景に馴染ませる（白いカードは中の .screen が持っている） */
+.flow { background: transparent; }
