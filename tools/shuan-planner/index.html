@@ -402,24 +402,61 @@
   ul.terms { margin: 18px 0 0; padding-left: 1.2em; font-size: 13.5px; color: var(--ink-soft); }
   ul.terms li { margin-bottom: 4px; }
 
-  /* ── 下部の解説 ───────────────────────────── */
-  .after { margin-top: 34px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 20px 22px; }
-  .panel h4 { margin: 0 0 8px; font-size: 15px; font-family: "Shippori Mincho", serif; }
-  .panel p { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-soft); }
-  pre {
+  /* ── 価格・クーポン ───────────────────────── */
+  .price-card {
     background: var(--surface-sunk);
     border: 1px solid var(--rule);
-    border-radius: 8px;
-    padding: 12px 14px;
-    overflow-x: auto;
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 12.5px;
-    line-height: 1.7;
-    margin: 0;
-    color: var(--ink);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-top: 4px;
   }
-  footer { margin-top: 30px; font-size: 12.5px; color: var(--ink-faint); }
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .price-row:last-child { border-bottom: 0; }
+  .price-label { font-size: 13.5px; color: var(--ink-soft); }
+  .price-value {
+    font-family: "Shippori Mincho", serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .price-value.strike { color: var(--ink-faint); text-decoration: line-through; font-weight: 500; font-size: 14px; margin-right: 8px; }
+  .price-value.discount { color: var(--ok); }
+  .total-row .price-label { font-weight: 700; color: var(--ink); font-size: 14.5px; }
+  .total-row .price-value.total { font-size: 26px; color: var(--ai); }
+  .coupon-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .coupon-input { display: flex; gap: 8px; }
+  .coupon-input input { flex: 1 1 auto; text-transform: uppercase; }
+  .coupon-msg { margin: 0; font-size: 12.5px; min-height: 1.4em; }
+  .coupon-msg.ok { color: var(--ok); font-weight: 700; }
+  .coupon-msg.err { color: var(--shu); font-weight: 700; }
+
+  #payment.is-waived {
+    opacity: .55;
+  }
+  #payment.is-waived input {
+    background: var(--surface-sunk);
+    cursor: not-allowed;
+  }
+  .payment-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--ok-soft);
+    color: var(--ok);
+    border: 1px solid color-mix(in srgb, var(--ok) 40%, var(--surface));
+    vertical-align: 1px;
+  }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
@@ -497,9 +534,51 @@
           <input id="mail" type="email" placeholder="例：teacher@example.com" required>
         </div>
       </div>
+
+      <h3>お会計</h3>
+      <div class="price-card">
+        <div class="price-row">
+          <span class="price-label">週案スケジュール帳（<span id="product-1">令和8年度版</span>・買い切り）</span>
+          <span class="price-value" id="price-base">¥3,980</span>
+        </div>
+        <div class="price-row coupon-row">
+          <label for="coupon">クーポンコード<span class="badge opt">任意</span></label>
+          <div class="coupon-input">
+            <input id="coupon" type="text" value="SENSEI100" placeholder="お持ちの方はこちら" autocomplete="off">
+            <button type="button" class="btn-sub" id="apply-coupon">適用</button>
+          </div>
+          <p class="coupon-msg" id="coupon-msg"></p>
+        </div>
+        <div class="price-row discount-row" id="discount-row" hidden>
+          <span class="price-label">クーポン割引（<span id="coupon-applied"></span>・定価の100倍オフ）</span>
+          <span class="price-value discount" id="price-discount">−¥398,000</span>
+        </div>
+        <div class="price-row total-row">
+          <span class="price-label">お支払い合計</span>
+          <span class="price-value strike" id="price-strike" hidden>¥3,980</span><span class="price-value total" id="price-total">¥3,980</span>
+        </div>
+      </div>
+
+      <h3>お支払い方法<span class="payment-badge" id="payment-badge" hidden>0円のため不要</span></h3>
+      <div class="fields" id="payment">
+        <div>
+          <label for="cc-num">カード番号</label>
+          <input id="cc-num" type="text" inputmode="numeric" autocomplete="off" placeholder="4242 4242 4242 4242">
+        </div>
+        <div>
+          <label for="cc-exp">有効期限</label>
+          <input id="cc-exp" type="text" autocomplete="off" placeholder="MM / YY">
+        </div>
+        <div>
+          <label for="cc-cvc">セキュリティコード</label>
+          <input id="cc-cvc" type="text" inputmode="numeric" autocomplete="off" placeholder="CVC">
+        </div>
+      </div>
+      <p class="btn-note" id="payment-note" style="margin-top:6px"></p>
+
       <div class="btn-row">
-        <button class="btn" id="start-btn" data-go="2">はじめる（無料）</button>
-        <span class="btn-note">支払いはありません。次の画面で内容を入力すると、その場でPDFができます。</span>
+        <button class="btn" id="start-btn" data-go="2">0円で購入する</button>
+        <span class="btn-note">カード情報は送信・保存されません。次の画面で内容を入力すると、その場でPDFができます。</span>
       </div>
     </div>
 
@@ -612,31 +691,6 @@
     </div>
   </div>
 
-  <div class="after">
-    <div class="panel">
-      <h4>販売用のサーバー版</h4>
-      <p>1注文1生成の制限つきで配布する仕組みは、別途 Python 版として用意しています。</p>
-      <pre>cd schedule-builder
-pip install -r requirements.txt
-export PLANNER_SECRET="$(python3 -c \
-  'import secrets;print(secrets.token_hex(32))')"
-PYTHONPATH=src python3 -m planner serve</pre>
-      <p style="margin:10px 0 0">→ http://127.0.0.1:5000/</p>
-    </div>
-    <div class="panel">
-      <h4>インターネットに公開する</h4>
-      <p>Render に <code>render.yaml</code> を読み込ませると、この通りに構築されます。</p>
-      <pre>Render → New → Blueprint
-  → gamigamiigami/GamiBase を選ぶ
-  → Apply（5〜10分）</pre>
-      <p style="margin:10px 0 0">手順の詳細と他の方法は <code>schedule-builder/DEPLOY.md</code>。</p>
-    </div>
-  </div>
-
-  <footer>
-    決済は <code>/checkout</code> の1か所だけに閉じ込めてあります。本番化はそこを差し替えるだけで、
-    生成・ライセンス・ダウンロードの仕組みは変更不要です。
-  </footer>
 </div>
 
 <script src="vendor/pdf-lib.min.js"></script>
@@ -824,6 +878,63 @@ PYTHONPATH=src python3 -m planner serve</pre>
     }
     show(2);
   });
+
+  // ── お会計（見た目だけの購入フロー） ───────────────────
+  // 定価は適当な金額。クーポンはその100倍を割り引くので、必ず0円まで落ちる
+  // （遊び心：割引額が定価よりずっと大きいという冗談）。決済は一切行わず、
+  // カード欄は見本表示のみで、値は読み取っても保存・送信もしない。
+  const PRICE = 3980;
+  const COUPON_CODE = "SENSEI100";
+  const COUPON_MULTIPLIER = 100;
+  const yen = (n) => "¥" + n.toLocaleString("ja-JP");
+
+  const couponInput = document.getElementById("coupon");
+  const couponMsg = document.getElementById("coupon-msg");
+  const discountRow = document.getElementById("discount-row");
+  const couponApplied = document.getElementById("coupon-applied");
+  const priceDiscount = document.getElementById("price-discount");
+  const priceStrike = document.getElementById("price-strike");
+  const priceTotal = document.getElementById("price-total");
+  const paymentBox = document.getElementById("payment");
+  const paymentBadge = document.getElementById("payment-badge");
+  const paymentNote = document.getElementById("payment-note");
+
+  function updatePrice() {
+    const code = couponInput.value.trim().toUpperCase();
+    const applied = code === COUPON_CODE;
+    const discount = PRICE * COUPON_MULTIPLIER;
+    const total = applied ? Math.max(0, PRICE - discount) : PRICE;
+
+    document.getElementById("price-base").textContent = yen(PRICE);
+    discountRow.hidden = !applied;
+    if (applied) {
+      couponApplied.textContent = code;
+      priceDiscount.textContent = "−" + yen(discount);
+    }
+    priceStrike.hidden = !applied;
+    priceStrike.textContent = yen(PRICE);
+    priceTotal.textContent = yen(total);
+
+    paymentBox.classList.toggle("is-waived", total === 0);
+    paymentBadge.hidden = total !== 0;
+    document.getElementById("start-btn").textContent = total === 0 ? "0円で購入する" : yen(total) + "で購入する";
+    paymentNote.textContent = total === 0
+      ? "クーポンにより合計0円です。カード情報は入力しなくても購入に進めます（お試しで入れても実際には使われません）。"
+      : "このデモでは実際の請求は発生しません。カード情報は送信・保存されません。";
+
+    if (couponInput.value.trim()) {
+      couponMsg.textContent = applied
+        ? `クーポン「${code}」を適用しました（¥${(discount).toLocaleString("ja-JP")}引き）。`
+        : "そのクーポンコードは見つかりませんでした。試しに SENSEI100 を入れてみてください。";
+      couponMsg.className = "coupon-msg " + (applied ? "ok" : "err");
+    } else {
+      couponMsg.textContent = "";
+      couponMsg.className = "coupon-msg";
+    }
+  }
+  document.getElementById("apply-coupon").addEventListener("click", updatePrice);
+  couponInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); updatePrice(); } });
+  updatePrice();
 
   // ── 入力を集めて PDF を作る ──────────────────────────
   function collectInput() {
