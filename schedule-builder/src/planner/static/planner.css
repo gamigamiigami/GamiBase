@@ -223,18 +223,6 @@ a {
   border: none;
 }
 
-/* 行事名は日付の下に小さく差し込む。書き込みの邪魔にならない大きさに留める。 */
-.month td .ev {
-  display: block;
-  font-size: 5pt;
-  line-height: 1.15;
-  color: var(--event-dot);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-
 /* ------------------------------------------------------------------ */
 /* 年間行事予定（2ページ目）                                            */
 /* ------------------------------------------------------------------ */

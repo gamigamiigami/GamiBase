@@ -67,7 +67,6 @@
                   {%- if page %}<a href="#p{{ page }}">
                   {%- else %}<span>{% endif -%}
                     {{ day.date.day }}
-                    {%- if day.event_text %}<span class="ev">{{ day.event_text }}</span>{% endif -%}
                   {%- if page %}</a>{% else %}</span>{% endif %}
                 </td>
                 {%- endif %}

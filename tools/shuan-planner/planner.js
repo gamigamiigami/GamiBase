@@ -396,6 +396,17 @@
     const rows = 6, cols = 7;
     const cellAt = (r, c) => month.cells[r * cols + c] || null;
 
+    // 日付が実在する最後の行までしか外枠を描かない
+    // （最終週が全部空欄の月では、その分だけ枠を上に詰める）。
+    let lastRow = 0;
+    for (let r = rows - 1; r >= 0; r--) {
+      if (Array.from({ length: cols }, (_, c) => cellAt(r, c)).some(Boolean)) {
+        lastRow = r;
+        break;
+      }
+    }
+    const usedH = headH + wdH + (lastRow + 1) * rowH;
+
     // 日付セルの背景（休日・長期休業・週末を塗り分ける）。存在しない日は
     // 塗りも罫線も一切つけない（9/31 のような欄をそもそも「マスなし」にする）。
     // 塗りは罫線より先に描き、罫線がにじまないようにする。
@@ -410,8 +421,8 @@
       if (fill) p.rect(cx, cy, colW, rowH, { fill, border: false });
     });
 
-    // 月全体の外枠（見出し〜曜日行〜カレンダー最下段まで）
-    p.rect(x, y, w, h, { border: COLOR.line, lw: 1 });
+    // 月全体の外枠（見出し〜曜日行〜日付が実在する最後の行まで）
+    p.rect(x, y, w, usedH, { border: COLOR.line, lw: 1 });
 
     // 罫線は「実在するマス」の境界だけを引く。存在しない日のマスは
     // 隣接する実在マスとの境界すら描かない＝箱そのものを作らない。
@@ -440,17 +451,14 @@
       }
     }
 
-    // 日付の数字・行事名・リンク（行事名は日付の下に小さく差し込み、書き込みスペースは残す）
+    // 日付の数字・リンク（日付と重なるため行事名はここには出さない。
+    // 行事の有無や内容は年間行事予定ページで確認する）
     month.cells.forEach((day, i) => {
       const cx = x + (i % 7) * colW;
       const cy = gridTop - Math.floor(i / 7) * rowH;
       if (!day) return;
       const color = day.isSun ? COLOR.sun : (day.isSat ? COLOR.sat : COLOR.ink);
       p.text(String(day.d), cx + mm(0.7), cy - mm(0.5), { size: 7.5, color });
-      if (day.events) {
-        p.text(day.events, cx + mm(0.7), cy - mm(1.9),
-          { size: 5, maxWidth: colW - mm(1.2), color: COLOR.event });
-      }
       p.link(cx, cy, colW, rowH, model.weekPageFor(day.date));
     });
   }
