@@ -431,12 +431,37 @@
   .price-value.discount { color: var(--ok); }
   .total-row .price-label { font-weight: 700; color: var(--ink); font-size: 14.5px; }
   .total-row .price-value.total { font-size: 26px; color: var(--ai); }
-  .coupon-row { flex-direction: column; align-items: stretch; gap: 8px; }
-  .coupon-input { display: flex; gap: 8px; }
-  .coupon-input input { flex: 1 1 auto; text-transform: uppercase; }
-  .coupon-msg { margin: 0; font-size: 12.5px; min-height: 1.4em; }
-  .coupon-msg.ok { color: var(--ok); font-weight: 700; }
-  .coupon-msg.err { color: var(--shu); font-weight: 700; }
+  .coupon-row { align-items: center; gap: 14px; }
+  .coupon-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px dashed var(--rule-strong);
+    border-radius: 8px;
+  }
+  .coupon-card-head { display: flex; align-items: center; gap: 8px; }
+  .coupon-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .coupon-code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: .03em;
+    color: var(--ink-faint);
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+  .coupon-amount { margin: 0; font-size: 12.5px; color: var(--ink-faint); }
+  .coupon-row.is-applied .coupon-card { border-style: solid; border-color: var(--ok); }
+  .coupon-row.is-applied .coupon-amount { color: var(--ok); font-weight: 700; }
+  #toggle-coupon[aria-pressed="true"] {
+    background: var(--ok-soft);
+    color: var(--ok);
+    border-color: color-mix(in srgb, var(--ok) 45%, var(--surface));
+  }
 
   #payment.is-waived {
     opacity: .55;
@@ -542,15 +567,17 @@
           <span class="price-value" id="price-base">¥1,980</span>
         </div>
         <div class="price-row coupon-row">
-          <label for="coupon">クーポンコード<span class="badge opt">任意</span></label>
-          <div class="coupon-input">
-            <input id="coupon" type="text" value="SENSEI100" placeholder="お持ちの方はこちら" autocomplete="off">
-            <button type="button" class="btn-sub" id="apply-coupon">適用</button>
+          <div class="coupon-card">
+            <div class="coupon-card-head">
+              <span class="coupon-name">先生応援クーポン</span>
+              <span class="coupon-code">SENSEI100</span>
+            </div>
+            <p class="coupon-amount" id="coupon-amount">使うといくら割引になるか分かります</p>
           </div>
-          <p class="coupon-msg" id="coupon-msg"></p>
+          <button type="button" class="btn-sub" id="toggle-coupon" aria-pressed="false">クーポンを使う</button>
         </div>
         <div class="price-row discount-row" id="discount-row" hidden>
-          <span class="price-label">クーポン割引（<span id="coupon-applied"></span>・定価の100倍オフ）</span>
+          <span class="price-label">クーポン割引（<span id="coupon-applied">SENSEI100</span>）</span>
           <span class="price-value discount" id="price-discount">−¥198,000</span>
         </div>
         <div class="price-row total-row">
@@ -880,18 +907,19 @@
   });
 
   // ── お会計（見た目だけの購入フロー） ───────────────────
-  // 定価は適当な金額。クーポンはその100倍を割り引くので、必ず0円まで落ちる
-  // （遊び心：割引額が定価よりずっと大きいという冗談）。決済は一切行わず、
-  // カード欄は見本表示のみで、値は読み取っても保存・送信もしない。
+  // 定価は適当な金額。クーポンはその100倍を割り引くので、使うと必ず0円まで
+  // 落ちる（遊び心：割引額が定価よりずっと大きいという冗談）。クーポンは
+  // 既に取得済みという設定で、使うかどうかだけ選べる。割引額は「使う」を
+  // 押すまでは伏せておき、使った瞬間に初めて明かして反映する。
+  // 決済は一切行わず、カード欄は見本表示のみで、値は読み取っても保存・送信もしない。
   const PRICE = 1980;
-  const COUPON_CODE = "SENSEI100";
   const COUPON_MULTIPLIER = 100;
   const yen = (n) => "¥" + n.toLocaleString("ja-JP");
 
-  const couponInput = document.getElementById("coupon");
-  const couponMsg = document.getElementById("coupon-msg");
+  const couponRow = document.querySelector(".coupon-row");
+  const couponAmount = document.getElementById("coupon-amount");
+  const toggleCoupon = document.getElementById("toggle-coupon");
   const discountRow = document.getElementById("discount-row");
-  const couponApplied = document.getElementById("coupon-applied");
   const priceDiscount = document.getElementById("price-discount");
   const priceStrike = document.getElementById("price-strike");
   const priceTotal = document.getElementById("price-total");
@@ -899,21 +927,25 @@
   const paymentBadge = document.getElementById("payment-badge");
   const paymentNote = document.getElementById("payment-note");
 
+  let couponUsed = false;
+
   function updatePrice() {
-    const code = couponInput.value.trim().toUpperCase();
-    const applied = code === COUPON_CODE;
     const discount = PRICE * COUPON_MULTIPLIER;
-    const total = applied ? Math.max(0, PRICE - discount) : PRICE;
+    const total = couponUsed ? Math.max(0, PRICE - discount) : PRICE;
 
     document.getElementById("price-base").textContent = yen(PRICE);
-    discountRow.hidden = !applied;
-    if (applied) {
-      couponApplied.textContent = code;
-      priceDiscount.textContent = "−" + yen(discount);
-    }
-    priceStrike.hidden = !applied;
+    discountRow.hidden = !couponUsed;
+    if (couponUsed) priceDiscount.textContent = "−" + yen(discount);
+    priceStrike.hidden = !couponUsed;
     priceStrike.textContent = yen(PRICE);
     priceTotal.textContent = yen(total);
+
+    couponRow.classList.toggle("is-applied", couponUsed);
+    toggleCoupon.setAttribute("aria-pressed", String(couponUsed));
+    toggleCoupon.textContent = couponUsed ? "使用中（取り消す）" : "クーポンを使う";
+    couponAmount.textContent = couponUsed
+      ? `¥${discount.toLocaleString("ja-JP")}引き（定価の100倍オフ）`
+      : "使うといくら割引になるか分かります";
 
     paymentBox.classList.toggle("is-waived", total === 0);
     paymentBadge.hidden = total !== 0;
@@ -921,19 +953,11 @@
     paymentNote.textContent = total === 0
       ? "クーポンにより合計0円です。カード情報は入力しなくても購入に進めます（お試しで入れても実際には使われません）。"
       : "このデモでは実際の請求は発生しません。カード情報は送信・保存されません。";
-
-    if (couponInput.value.trim()) {
-      couponMsg.textContent = applied
-        ? `クーポン「${code}」を適用しました（¥${(discount).toLocaleString("ja-JP")}引き）。`
-        : "そのクーポンコードは見つかりませんでした。試しに SENSEI100 を入れてみてください。";
-      couponMsg.className = "coupon-msg " + (applied ? "ok" : "err");
-    } else {
-      couponMsg.textContent = "";
-      couponMsg.className = "coupon-msg";
-    }
   }
-  document.getElementById("apply-coupon").addEventListener("click", updatePrice);
-  couponInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); updatePrice(); } });
+  toggleCoupon.addEventListener("click", () => {
+    couponUsed = !couponUsed;
+    updatePrice();
+  });
   updatePrice();
 
   // ── 入力を集めて PDF を作る ──────────────────────────
