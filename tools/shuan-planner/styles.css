@@ -1,0 +1,290 @@
+/* リセット */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Google Fonts適用・基本設定 */
+body {
+  font-family: 'Noto Serif JP', serif;
+  line-height: 1.8;
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+/* コンテナ：最大横幅1600px */
+.container,
+.section-container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ヘッダー */
+header {
+  background: #ff6f61;
+  color: #fff;
+  padding: 1rem 0;
+}
+.header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 上部3行：ロゴ、タグライン、ナビゲーション */
+.logo {
+  font-family: 'Pacifico', cursive;
+  font-size: 3rem;
+  white-space: nowrap; /* 改行させず1行で表示 */
+}
+.tagline {
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+  white-space: nowrap;
+}
+nav ul {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  margin-top: 1rem;
+  white-space: nowrap;
+}
+nav ul li {
+  margin: 0 1rem;
+}
+nav ul li a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* セクション共通スタイル */
+.section {
+  padding: 3rem 0;
+  border-bottom: 1px solid #eee;
+}
+.section h2 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #ff6f61;
+}
+.section p {
+  text-align: center;
+  margin: 1rem 0 2rem;
+}
+
+/* 概要セクション：画像3枚を横並びに中央寄せ */
+.overview-images {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.overview-img {
+  max-width: 300px;
+  width: 100%;
+  height: auto;
+}
+
+/* 使用イメージセクション：2カラムレイアウト（左：動画、右：画像スライダー） */
+.usage-container {
+  /* 特に指定なし */
+}
+.usage-content {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.video-wrapper {
+  flex: 1;
+  max-width: 600px;
+}
+.video-wrapper video {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.slider-wrapper {
+  flex: 1;
+  max-width: 600px;
+  text-align: center;
+}
+.slider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slider img {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 8px;
+}
+.slider-button {
+  background: #ff6f61;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.slider-button:hover {
+  background: #e65a50;
+}
+
+/* 価格バナー：480円〜の文字をさらに強調＆エフェクト追加 */
+.price-banner {
+  background: linear-gradient(135deg, #ffcccc, #ffe6e6);
+  padding: 2rem 1rem;
+  border-radius: 15px;
+  text-align: center;
+  font-size: 5rem;
+  font-weight: 900;
+  color: #d60000;
+  text-shadow: 4px 4px 8px rgba(0,0,0,0.2), 0 0 10px rgba(255,0,0,0.5);
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+.price-banner:hover {
+  transform: scale(1.08);
+  text-shadow: 6px 6px 12px rgba(0,0,0,0.3), 0 0 15px rgba(255,0,0,0.7);
+}
+.price-sub {
+  display: block;
+  font-size: 2rem;
+  color: #333;
+  margin-top: 0.5rem;
+}
+.price-note {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* 問い合わせ・公式LINEセクション */
+.line-container,
+.contact-info {
+  text-align: center;
+}
+.qr-img {
+  max-width: 200px;
+  margin: 1rem auto;
+  display: block;
+}
+.btn {
+  display: inline-block;
+  background: #ff6f61;
+  color: #fff;
+  padding: 0.8rem 1.5rem;
+  margin-top: 1rem;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 5px;
+}
+.sns-links {
+  margin-top: 1rem;
+}
+.sns-link {
+  margin: 0 0.5rem;
+  color: #ff6f61;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* フッター */
+footer {
+  background: #333;
+  color: #fff;
+  text-align: center;
+  padding: 1rem 0;
+  font-size: 0.9rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  /* ヘッダー：ロゴ、タグライン、ナビゲーションのフォントサイズを縮小し、横並びを維持 */
+  .logo {
+    font-size: 2rem;
+  }
+  .tagline {
+    font-size: 1rem;
+  }
+  nav ul li a {
+    font-size: 0.9rem;
+  }
+  nav ul {
+    flex-direction: row; /* 常に横並び */
+  }
+  nav ul li {
+    margin: 0 0.5rem;
+  }
+  
+  /* 使用イメージセクション：縦並びに切り替え */
+  .usage-content {
+    flex-direction: column;
+  }
+  body, .section p {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+}
+
+/* 特徴リスト：読みやすい幅に絞り、項目ごとにカードとして見せる。 */
+.strength-list {
+  list-style: none;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0;
+}
+.strength-list li {
+  background: #fff;
+  border-left: 5px solid #ff6f61;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.8rem;
+}
+.strength-list strong {
+  color: #d1544a;
+}
+
+/* 説明文が横に伸びすぎないようにする。 */
+.section > .section-container > p {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ------------------------------------------------------------------ */
+/* 購入セクション（このページ内で入力〜購入〜ダウンロードまで行う）     */
+/* ------------------------------------------------------------------ */
+
+/* 購入フローだけは中身が密なので、読みやすい幅に絞って中央に置く。 */
+.purchase-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.purchase-lead {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* 価格バナーから購入セクションへ飛ぶボタン */
+.price-cta {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+/* セクション内の余白調整（左右がぴったり詰まらないように） */
+.section-container {
+  padding: 0 1rem;
+}
