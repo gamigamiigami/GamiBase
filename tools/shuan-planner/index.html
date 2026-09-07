@@ -572,7 +572,7 @@
               <span class="coupon-name">先生応援クーポン</span>
               <span class="coupon-code">SENSEI100</span>
             </div>
-            <p class="coupon-amount" id="coupon-amount">使うといくら割引になるか分かります</p>
+            <p class="coupon-amount" id="coupon-amount"></p>
           </div>
           <button type="button" class="btn-sub" id="toggle-coupon" aria-pressed="false">クーポンを使う</button>
         </div>
@@ -945,7 +945,7 @@
     toggleCoupon.textContent = couponUsed ? "使用中（取り消す）" : "クーポンを使う";
     couponAmount.textContent = couponUsed
       ? `¥${discount.toLocaleString("ja-JP")}引き（定価の100倍オフ）`
-      : "使うといくら割引になるか分かります";
+      : "";
 
     paymentBox.classList.toggle("is-waived", total === 0);
     paymentBadge.hidden = total !== 0;
