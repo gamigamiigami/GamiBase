@@ -139,11 +139,11 @@ def test_events_rendered(built):
 def test_css_is_not_html_escaped_in_output(built):
     """テンプレートの {{ css }} が autoescape でエスケープされていないこと。
 
-    Jinja の autoescape は既定で有効なため、`| safe` を外すと content: ""; の
-    引用符が &#34; に化けて CSS が壊れる（例: 行事マーカーの ::after が消える）。
+    Jinja の autoescape は既定で有効なため、`| safe` を外すと CSS 中の
+    クォートが &#34; に化けて宣言が壊れる（例: font-family の指定が効かなくなる）。
     """
     data, _out = built
     html = render_html(data)
     assert "&#34;" not in html
     assert "&quot;" not in html
-    assert 'content: "";' in html
+    assert '"IPAGothic"' in html

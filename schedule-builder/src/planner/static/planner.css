@@ -215,22 +215,23 @@ a {
   color: var(--saturday);
 }
 
+/* 月の前後にはみ出す「日付のないマス」は、罫線も塗りも一切付けない
+   （border-collapse の性質上、隣が本物の日付セルならそちら側の罫線は
+   引かれる＝実在するマスとの境界だけは残る）。 */
 .month td.empty {
-  background: #fafafa;
-  border-color: #eee;
+  background: transparent;
+  border: none;
 }
 
-/* 行事がある日は、書き込みの邪魔にならないよう右上に小さな点だけを置く。 */
-.month td.has-event a::after,
-.month td.has-event span::after {
-  content: "";
-  position: absolute;
-  top: 0.8mm;
-  right: 0.8mm;
-  width: 1.3mm;
-  height: 1.3mm;
-  border-radius: 50%;
-  background: var(--event-dot);
+/* 行事名は日付の下に小さく差し込む。書き込みの邪魔にならない大きさに留める。 */
+.month td .ev {
+  display: block;
+  font-size: 5pt;
+  line-height: 1.15;
+  color: var(--event-dot);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 

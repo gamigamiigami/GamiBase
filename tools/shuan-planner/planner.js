@@ -393,15 +393,16 @@
       p.text(wd, x + i * colW + mm(0.8), y - headH - mm(0.5), { size: 7, color: COLOR.muted });
     });
 
-    // 日付セルの背景（休日・長期休業・週末を塗り分ける。行事は右上の点で示す）。
+    const rows = 6, cols = 7;
+    const cellAt = (r, c) => month.cells[r * cols + c] || null;
+
+    // 日付セルの背景（休日・長期休業・週末を塗り分ける）。存在しない日は
+    // 塗りも罫線も一切つけない（9/31 のような欄をそもそも「マスなし」にする）。
     // 塗りは罫線より先に描き、罫線がにじまないようにする。
     month.cells.forEach((day, i) => {
+      if (!day) return;
       const cx = x + (i % 7) * colW;
       const cy = gridTop - Math.floor(i / 7) * rowH;
-      if (!day) {
-        p.rect(cx, cy, colW, rowH, { fill: [0.98, 0.98, 0.98], border: false });
-        return;
-      }
       const fill = day.breakName ? COLOR.breakTint
         : day.holiday ? COLOR.holidayTint
         : day.isWeekend ? COLOR.weekendTint
@@ -409,20 +410,37 @@
       if (fill) p.rect(cx, cy, colW, rowH, { fill, border: false });
     });
 
-    // 罫線は縦横1本ずつ描く（セルごとに枠を重ねると境界がガタつくため）。
+    // 月全体の外枠（見出し〜曜日行〜カレンダー最下段まで）
     p.rect(x, y, w, h, { border: COLOR.line, lw: 1 });
+
+    // 罫線は「実在するマス」の境界だけを引く。存在しない日のマスは
+    // 隣接する実在マスとの境界すら描かない＝箱そのものを作らない。
     p.line(x, y - headH, x + w, y - headH, { color: COLOR.line, thickness: 1 });
     p.line(x, gridTop, x + w, gridTop, { color: COLOR.thin, thickness: 0.7 });
-    for (let c = 1; c < 7; c++) {
-      const lx = x + c * colW;
-      p.line(lx, gridTop, lx, y - h, { color: COLOR.faint, thickness: 0.5 });
-    }
-    for (let r = 1; r < 6; r++) {
-      const ly = gridTop - r * rowH;
-      p.line(x, ly, x + w, ly, { color: COLOR.faint, thickness: 0.5 });
+
+    for (let r = 0; r < rows; r++) {
+      const rowTop = gridTop - r * rowH;
+      const rowBottom = rowTop - rowH;
+      for (let c = 0; c < cols; c++) {
+        const cell = cellAt(r, c);
+        if (!cell) continue;
+        const cx = x + c * colW;
+        // 左辺: 一番左の列、または左隣が存在しない日のときだけ引く
+        if (c === 0 || !cellAt(r, c - 1)) {
+          p.line(cx, rowTop, cx, rowBottom, { color: COLOR.faint, thickness: 0.5 });
+        }
+        // 右辺: 一番右の列、または右隣が存在しない日のときだけ引く
+        if (c === cols - 1 || !cellAt(r, c + 1)) {
+          p.line(cx + colW, rowTop, cx + colW, rowBottom, { color: COLOR.faint, thickness: 0.5 });
+        }
+        // 下辺: 一番下の行、または下隣が存在しない日のときだけ引く
+        if (r === rows - 1 || !cellAt(r + 1, c)) {
+          p.line(cx, rowBottom, cx + colW, rowBottom, { color: COLOR.faint, thickness: 0.5 });
+        }
+      }
     }
 
-    // 日付の数字・行事の点・リンク（書き込みスペースを保つため、印は右上の小さな点だけ）
+    // 日付の数字・行事名・リンク（行事名は日付の下に小さく差し込み、書き込みスペースは残す）
     month.cells.forEach((day, i) => {
       const cx = x + (i % 7) * colW;
       const cy = gridTop - Math.floor(i / 7) * rowH;
@@ -430,7 +448,8 @@
       const color = day.isSun ? COLOR.sun : (day.isSat ? COLOR.sat : COLOR.ink);
       p.text(String(day.d), cx + mm(0.7), cy - mm(0.5), { size: 7.5, color });
       if (day.events) {
-        p.dot(cx + colW - mm(1.1), cy - mm(1.1), mm(0.55), COLOR.event);
+        p.text(day.events, cx + mm(0.7), cy - mm(1.9),
+          { size: 5, maxWidth: colW - mm(1.2), color: COLOR.event });
       }
       p.link(cx, cy, colW, rowH, model.weekPageFor(day.date));
     });
