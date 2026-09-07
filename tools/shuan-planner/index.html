@@ -1,1380 +1,455 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📘</text></svg>">
-<meta name="description" content="時間割と行事予定を入力するだけで、リンク付きの週案PDFがその場で完成。GoodNotesでそのまま手書きで使える「シゴデキ先生」の紹介ページ。">
-<title>シゴデキ先生 ｜ 入力するだけで完成する週案スケジュール帳</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<style>
-  /* 週案簿の紙面から取った配色。藍のインク、朱は日曜と祝日にだけ使う。 */
-  :root {
-    --paper: #eef1f5;
-    --surface: #ffffff;
-    --surface-sunk: #f6f8fa;
-    --rule: #d3dae2;
-    --rule-strong: #aab6c3;
-    --ink: #16202b;
-    --ink-soft: #56646f;
-    --ink-faint: #8695a3;
-    --ai: #27548a;          /* 藍 — 主役の一色 */
-    --ai-soft: #e4ecf5;
-    --shu: #b3453c;         /* 朱 — 日曜・祝日のみ */
-    --ai-quiet: #f2f6fa;
-    --ok: #2f7a55;
-    --ok-soft: #e5f2eb;
-    --warn-soft: #fdf3d8;
-    --warn-rule: #d9b45e;
-    --warn-ink: #7a5a12;
-    /* 授業の色分け（PDF と同じ値） */
-    --c-red: #fde0e0;
-    --c-blue: #dce8fb;
-    --c-green: #dff2e0;
-    --c-yellow: #fdf3d0;
-    --c-gray: #e8e8e8;
-    --shadow: 0 1px 2px rgba(22, 32, 43, .06), 0 8px 24px -12px rgba(22, 32, 43, .18);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --paper: #12171d;
-      --surface: #1a2129;
-      --surface-sunk: #151b22;
-      --rule: #2c3742;
-      --rule-strong: #3e4b58;
-      --ink: #e7edf3;
-      --ink-soft: #a5b2bf;
-      --ink-faint: #7b8896;
-      --ai: #7fb0e0;
-      --ai-soft: #24313f;
-      --shu: #e08a80;
-      --ai-quiet: #1d262f;
-      --ok: #7cc79c;
-      --ok-soft: #1c2b23;
-      --warn-soft: #2c2618;
-      --warn-rule: #6b5a2c;
-      --warn-ink: #d9be7a;
-      --c-red: #5c3a3a;
-      --c-blue: #2f4260;
-      --c-green: #33503a;
-      --c-yellow: #5a4d2a;
-      --c-gray: #3a4148;
-      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📘</text></svg>">
+  <meta name="description" content="教員のためのスケジュール管理ツール「シゴデキ先生.PDF」。年間カレンダーの日付から週予定ページへリンクで移動でき、時間割や行事予定を入力するとその場でPDFが完成します。">
+  <title>シゴデキ先生.PDF - 教員のためのスケジュール管理ツール</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="flow.css">
+  <style>
+    .lightbox {
+      cursor: pointer;
+      transition: transform 0.2s;
     }
-  }
-
-  :root[data-theme="dark"] {
-    --paper: #12171d;
-    --surface: #1a2129;
-    --surface-sunk: #151b22;
-    --rule: #2c3742;
-    --rule-strong: #3e4b58;
-    --ink: #e7edf3;
-    --ink-soft: #a5b2bf;
-    --ink-faint: #7b8896;
-    --ai: #7fb0e0;
-    --ai-soft: #24313f;
-    --shu: #e08a80;
-    --ai-quiet: #1d262f;
-    --ok: #7cc79c;
-    --ok-soft: #1c2b23;
-    --warn-soft: #2c2618;
-    --warn-rule: #6b5a2c;
-    --warn-ink: #d9be7a;
-    --c-red: #5c3a3a;
-    --c-blue: #2f4260;
-    --c-green: #33503a;
-    --c-yellow: #5a4d2a;
-    --c-gray: #3a4148;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
-  }
-
-  * { box-sizing: border-box; }
-
-  body {
-    margin: 0;
-    background: var(--paper);
-    color: var(--ink);
-    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
-    font-size: 15px;
-    line-height: 1.7;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .shell { max-width: 1120px; margin: 0 auto; padding: 32px 20px 72px; }
-
-  /* ── 見出し ─────────────────────────────── */
-  header { margin-bottom: 28px; }
-
-  .eyebrow {
-    font-size: 12px;
-    letter-spacing: .16em;
-    color: var(--ai);
-    font-weight: 700;
-    margin: 0 0 6px;
-  }
-
-  h1 {
-    font-family: "Shippori Mincho", "Hiragino Mincho ProN", serif;
-    font-weight: 700;
-    font-size: clamp(28px, 4.4vw, 42px);
-    line-height: 1.25;
-    margin: 0 0 10px;
-    text-wrap: balance;
-    letter-spacing: .01em;
-  }
-
-  .sub { color: var(--ink-soft); max-width: 62ch; margin: 0; }
-
-  .notice {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    background: var(--warn-soft);
-    border: 1px solid var(--warn-rule);
-    color: var(--warn-ink);
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin: 20px 0 0;
-    font-size: 13.5px;
-  }
-  .notice b { font-weight: 700; }
-
-  /* ── LP: ヒーロー ───────────────────────── */
-  .hero-cta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 22px; }
-  .btn-lg { padding: 15px 32px; font-size: 16px; }
-
-  .trust-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 22px;
-    list-style: none;
-    margin: 18px 0 0;
-    padding: 0;
-    font-size: 13px;
-    color: var(--ink-soft);
-  }
-
-  section.lp { margin: 56px 0 0; }
-  section.lp h2 {
-    font-family: "Shippori Mincho", serif;
-    font-size: clamp(20px, 2.6vw, 26px);
-    font-weight: 700;
-    margin: 0 0 6px;
-    text-align: center;
-  }
-  section.lp .lp-sub {
-    text-align: center;
-    color: var(--ink-soft);
-    font-size: 14px;
-    margin: 0 auto 28px;
-    max-width: 56ch;
-  }
-
-  /* ── LP: 悩み ───────────────────────────── */
-  .pain-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px;
-  }
-  .pain-list li {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-left: 4px solid var(--shu);
-    border-radius: 8px;
-    padding: 14px 16px;
-    font-size: 13.5px;
-    color: var(--ink-soft);
-  }
-
-  /* ── LP: 機能グリッド ───────────────────── */
-  .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
-  }
-  .feature {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 12px;
-    padding: 20px 20px 22px;
-  }
-  .feature .f-emoji { font-size: 26px; line-height: 1; margin-bottom: 10px; }
-  .feature h3 { font-size: 15px; margin: 0 0 6px; font-family: "Shippori Mincho", serif; }
-  .feature p { margin: 0; font-size: 13px; color: var(--ink-soft); }
-
-  /* ── LP: 使い方3ステップ ───────────────── */
-  .how-steps {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
-  }
-  .how-steps li { display: flex; gap: 14px; align-items: flex-start; }
-  .hs-n {
-    flex: 0 0 auto;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: var(--ai);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: "Shippori Mincho", serif;
-    font-weight: 700;
-    font-size: 15px;
-  }
-  .how-steps h3 { margin: 0 0 4px; font-size: 14.5px; }
-  .how-steps p { margin: 0; font-size: 13px; color: var(--ink-soft); }
-
-  /* ── LP: 数字で見る ─────────────────────── */
-  .proof .specs { margin-top: 0; }
-  .proof .spec .v { text-align: center; }
-  .proof .spec .k { text-align: center; }
-
-  /* ── LP: 購入セクション見出し ───────────── */
-  .purchase-section { scroll-margin-top: 20px; }
-
-  /* ── LP: FAQ ────────────────────────────── */
-  .faq-item {
-    border-bottom: 1px solid var(--rule);
-    padding: 16px 0;
-  }
-  .faq-item:first-child { border-top: 1px solid var(--rule); }
-  .faq-item h3 { margin: 0 0 6px; font-size: 14px; display: flex; gap: 8px; }
-  .faq-item h3::before { content: "Q"; color: var(--ai); font-family: "Shippori Mincho", serif; }
-  .faq-item p { margin: 0 0 0 20px; font-size: 13.5px; color: var(--ink-soft); }
-
-  .lp-footer {
-    margin-top: 50px;
-    padding-top: 20px;
-    border-top: 1px solid var(--rule);
-    font-size: 12px;
-    color: var(--ink-faint);
-    text-align: center;
-  }
-
-  @media (max-width: 640px) {
-    .pain-list, .feature-grid, .how-steps { grid-template-columns: 1fr; }
-  }
-
-  /* ── ステップの帯（実際に順番のある工程なので番号を振る） ── */
-  .rail {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin: 28px 0 20px;
-  }
-
-  .step {
-    appearance: none;
-    text-align: left;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 12px;
-    padding: 12px 16px;
-    cursor: pointer;
-    font: inherit;
-    color: var(--ink-soft);
-    display: flex;
-    gap: 12px;
-    align-items: baseline;
-    transition: border-color .18s, color .18s, background .18s;
-  }
-  .step:hover { border-color: var(--rule-strong); }
-  .step:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; }
-
-  .step .n {
-    font-family: "Shippori Mincho", serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--ink-faint);
-    font-variant-numeric: tabular-nums;
-  }
-  .step .t { font-weight: 500; font-size: 14px; }
-  .step .d { display: block; font-size: 12px; color: var(--ink-faint); }
-
-  .step[aria-selected="true"] {
-    background: var(--ai-quiet);
-    border-color: var(--ai);
-    color: var(--ink);
-  }
-  .step[aria-selected="true"] .n { color: var(--ai); }
-
-  /* ── 画面パネル ───────────────────────────── */
-  .screen {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 14px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-  }
-
-  .chrome {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    background: var(--surface-sunk);
-    border-bottom: 1px solid var(--rule);
-  }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rule-strong); }
-  .url {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 12px;
-    color: var(--ink-faint);
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 6px;
-    padding: 3px 10px;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .body { padding: 26px 28px 30px; }
-  [hidden] { display: none !important; }
-
-  h2 {
-    font-family: "Shippori Mincho", serif;
-    font-size: 21px;
-    margin: 0 0 4px;
-    font-weight: 700;
-  }
-  .lead { color: var(--ink-soft); margin: 0 0 22px; font-size: 14px; }
-
-  h3 {
-    font-size: 13px;
-    letter-spacing: .06em;
-    margin: 26px 0 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--rule);
-    color: var(--ink-soft);
-    font-weight: 700;
-  }
-  h3:first-of-type { margin-top: 0; }
-
-  label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 4px; }
-
-  /* 入力の必須・任意はバッジで示す。必須は自由ページ数だけ。 */
-  .badge {
-    display: inline-block;
-    margin-left: 6px;
-    padding: 1px 7px;
-    border-radius: 999px;
-    font-size: 10.5px;
-    font-weight: 700;
-    vertical-align: 1px;
-  }
-  .badge.req { background: color-mix(in srgb, var(--shu) 14%, var(--surface)); color: var(--shu); border: 1px solid color-mix(in srgb, var(--shu) 40%, var(--surface)); }
-  .badge.opt { background: var(--surface-sunk); color: var(--ink-faint); border: 1px solid var(--rule); }
-
-  .btn-sub {
-    appearance: none;
-    background: var(--surface);
-    color: var(--ink-soft);
-    border: 1px solid var(--rule-strong);
-    border-radius: 7px;
-    padding: 7px 14px;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .btn-sub:hover { background: var(--surface-sunk); border-color: var(--ink-faint); }
-  .btn-sub:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; }
-
-  .progress { margin-top: 16px; }
-  .progress .bar {
-    height: 6px;
-    background: var(--surface-sunk);
-    border: 1px solid var(--rule);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .progress .bar span {
-    display: block;
-    height: 100%;
-    width: 0;
-    background: var(--ai);
-    transition: width .25s ease;
-  }
-  .progress p { margin: 6px 0 0; }
-
-  a.btn { text-decoration: none; display: inline-block; }
-
-  .tt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-
-  /* 授業リスト（パレット） */
-  #palette { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-  .palette-row { display: flex; gap: 8px; align-items: center; }
-  .palette-row .p-name { flex: 1 1 auto; }
-  .palette-row .p-color { flex: 0 0 90px; }
-  .palette-row .p-swatch {
-    flex: 0 0 20px; width: 20px; height: 20px; border-radius: 5px;
-    border: 1px solid var(--rule-strong);
-  }
-  .palette-row .p-del {
-    flex: 0 0 auto;
-    appearance: none; border: 1px solid var(--rule-strong); background: var(--surface);
-    color: var(--ink-soft); border-radius: 6px; width: 30px; height: 30px;
-    font-size: 16px; line-height: 1; cursor: pointer;
-  }
-  .palette-row .p-del:hover { background: var(--surface-sunk); color: var(--shu); }
-
-  table.tt select.lesson-select { width: 100%; padding: 6px 6px; font-size: 12.5px; }
-
-  input, select, textarea {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--rule-strong);
-    border-radius: 7px;
-    background: var(--surface);
-    color: var(--ink);
-    font: inherit;
-    font-size: 14px;
-  }
-  input:focus-visible, select:focus-visible, textarea:focus-visible {
-    outline: 2px solid var(--ai);
-    outline-offset: 1px;
-    border-color: var(--ai);
-  }
-  textarea { min-height: 92px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 1.6; }
-
-  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-
-  .btn {
-    appearance: none;
-    border: 0;
-    background: var(--ai);
-    color: #fff;
-    font: inherit;
-    font-weight: 700;
-    font-size: 15px;
-    padding: 13px 26px;
-    border-radius: 9px;
-    cursor: pointer;
-    transition: filter .18s;
-  }
-  .btn:hover { filter: brightness(1.1); }
-  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .btn[disabled] { background: var(--rule-strong); cursor: not-allowed; filter: none; }
-  .btn-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 24px; }
-  .btn-note { font-size: 12.5px; color: var(--ink-faint); }
-
-  /* ── 時間割グリッド ───────────────────────── */
-  .tt-wrap { overflow-x: auto; }
-  table.tt { width: 100%; min-width: 560px; border-collapse: collapse; }
-  table.tt th, table.tt td { border: 1px solid var(--rule); padding: 5px; }
-  table.tt thead th { background: var(--surface-sunk); font-size: 13px; font-weight: 700; text-align: center; }
-  table.tt tbody th {
-    background: var(--surface-sunk);
-    width: 52px;
-    font-size: 12px;
-    color: var(--ink-soft);
-    font-variant-numeric: tabular-nums;
-  }
-  table.tt td { padding: 4px; }
-  table.tt input { border-radius: 5px; padding: 6px 8px; font-size: 13px; margin-bottom: 3px; }
-  table.tt select { border-radius: 5px; padding: 3px 6px; font-size: 11.5px; }
-
-  td.c-red input { background: var(--c-red); }
-  td.c-blue input { background: var(--c-blue); }
-  td.c-green input { background: var(--c-green); }
-  td.c-yellow input { background: var(--c-yellow); }
-  td.c-gray input { background: var(--c-gray); }
-
-  .break-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px; margin-bottom: 10px; }
-
-  /* ── 完成画面 ─────────────────────────────── */
-  .done-card {
-    background: var(--ok-soft);
-    border: 1px solid var(--ok);
-    border-radius: 12px;
-    padding: 20px 22px;
-  }
-  .order-no {
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 13px;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 5px;
-    padding: 2px 8px;
-  }
-
-  .specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; margin-top: 22px; }
-  .spec { background: var(--surface); padding: 14px 16px; }
-  .spec .v {
-    font-family: "Shippori Mincho", serif;
-    font-size: 24px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.2;
-  }
-  .spec .k { font-size: 11.5px; color: var(--ink-faint); letter-spacing: .04em; }
-
-  ul.terms { margin: 18px 0 0; padding-left: 1.2em; font-size: 13.5px; color: var(--ink-soft); }
-  ul.terms li { margin-bottom: 4px; }
-
-  /* ── 価格・クーポン ───────────────────────── */
-  .price-card {
-    background: var(--surface-sunk);
-    border: 1px solid var(--rule);
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-top: 4px;
-  }
-  .price-row {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 9px 0;
-    border-bottom: 1px dashed var(--rule);
-  }
-  .price-row:last-child { border-bottom: 0; }
-  .price-label { font-size: 13.5px; color: var(--ink-soft); }
-  .price-value {
-    font-family: "Shippori Mincho", serif;
-    font-variant-numeric: tabular-nums;
-    font-size: 17px;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-  .price-value.strike { color: var(--ink-faint); text-decoration: line-through; font-weight: 500; font-size: 14px; margin-right: 8px; }
-  .price-value.discount { color: var(--ok); }
-  .total-row .price-label { font-weight: 700; color: var(--ink); font-size: 14.5px; }
-  .total-row .price-value.total { font-size: 26px; color: var(--ai); }
-  .coupon-row { align-items: center; gap: 14px; }
-  .coupon-card {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 8px 12px;
-    background: var(--surface);
-    border: 1px dashed var(--rule-strong);
-    border-radius: 8px;
-  }
-  .coupon-card-head { display: flex; align-items: center; gap: 8px; }
-  .coupon-name { font-size: 13px; font-weight: 700; color: var(--ink); }
-  .coupon-code {
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 11px;
-    letter-spacing: .03em;
-    color: var(--ink-faint);
-    background: var(--surface-sunk);
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    padding: 1px 6px;
-  }
-  .coupon-amount { margin: 0; font-size: 12.5px; color: var(--ink-faint); }
-  .coupon-row.is-applied .coupon-card { border-style: solid; border-color: var(--ok); }
-  .coupon-row.is-applied .coupon-amount { color: var(--ok); font-weight: 700; }
-  #toggle-coupon[aria-pressed="true"] {
-    background: var(--ok-soft);
-    color: var(--ok);
-    border-color: color-mix(in srgb, var(--ok) 45%, var(--surface));
-  }
-
-  .agree-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    font-size: 13.5px;
-    font-weight: 400;
-    color: var(--ink-soft);
-    margin: 0 0 10px;
-    cursor: pointer;
-  }
-  .agree-row input[type="checkbox"] {
-    width: 17px;
-    height: 17px;
-    margin: 1px 0 0;
-    flex: 0 0 auto;
-    accent-color: var(--ai);
-  }
-
-  #payment.is-waived {
-    opacity: .55;
-  }
-  #payment.is-waived input {
-    background: var(--surface-sunk);
-    cursor: not-allowed;
-  }
-  .payment-badge {
-    display: inline-block;
-    margin-left: 8px;
-    padding: 1px 8px;
-    border-radius: 999px;
-    font-size: 10.5px;
-    font-weight: 700;
-    background: var(--ok-soft);
-    color: var(--ok);
-    border: 1px solid color-mix(in srgb, var(--ok) 40%, var(--surface));
-    vertical-align: 1px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; animation: none !important; }
-  }
-  @media (max-width: 640px) {
-    .rail { grid-template-columns: 1fr; }
-    .break-row { grid-template-columns: 1fr; }
-    .body { padding: 20px 18px 24px; }
-  }
-</style>
+    .lightbox:hover {
+      transform: scale(1.05);
+    }
+    #lightbox-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      display: none;
+    }
+    #lightbox-modal img {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    .img-caption {
+      text-align: center;
+      margin-top: 4px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-
-<div class="shell">
-  <header class="hero">
-    <p class="eyebrow">シゴデキ先生 ／ PDFリンくん</p>
-    <h1>時間割と行事予定、<br>入力するだけでリンク付き週案PDFに。</h1>
-    <p class="sub">
-      エクセルをPDF化して1つずつリンクを貼って GoodNotes に入れ直す……という毎年の作業を、
-      ブラウザに入力するだけの数分に置き換えます。年間カレンダー・年間行事予定・週ページ54週・
-      自由ページがそろった1冊が、その場で組み上がります。祝日・振替休日も年度から自動で入ります。
-    </p>
-    <div class="hero-cta">
-      <a class="btn btn-lg" href="#purchase">中身を見てみる</a>
-      <span class="btn-note">まずは画面を確認してから、購入するか決められます。</span>
+  <header>
+    <div class="header-container">
+      <h1 class="logo">シゴデキ先生.PDF</h1>
+      <p class="tagline">～ 教員のためのスマートなスケジュール管理ツール ～</p>
+      <nav>
+        <ul>
+          <li><a href="#overview">概要</a></li>
+          <li><a href="#features">特徴</a></li>
+          <li><a href="#usage">使用イメージ</a></li>
+          <li><a href="#pricing">価格</a></li>
+          <li><a href="#purchase">購入する</a></li>
+          <li><a href="#line">公式LINE</a></li>
+        </ul>
+      </nav>
     </div>
-    <ul class="trust-badges">
-      <li>🔒 入力した時間割・行事予定はどこにも送信されません</li>
-      <li>📱 GoodNotes に取り込んでそのまま手書き</li>
-      <li>⚡ 生成は数秒（86ページ・1,100リンク以上）</li>
-    </ul>
   </header>
 
-  <section class="lp pain">
-    <h2>毎年、この作業に時間を取られていませんか？</h2>
-    <p class="lp-sub">週案づくりの「面倒だけど毎年やること」を、まとめて自動化します。</p>
-    <ul class="pain-list">
-      <li>エクセルの時間割をPDF化して、1つずつリンクを貼るのが大変</li>
-      <li>行事予定の反映を忘れて、週の途中で気づいて焦る</li>
-      <li>GoodNotesで今週のページまで、毎回スクロールして探している</li>
-      <li>長期休業や祝日の色分けを、毎年ゼロから手作業でやり直している</li>
-    </ul>
-  </section>
-
-  <section class="lp features">
-    <h2>シゴデキ先生ができること</h2>
-    <p class="lp-sub">現行の運用で使っている機能を、そのまま自動化しています。</p>
-    <div class="feature-grid">
-      <div class="feature">
-        <div class="f-emoji">📅</div>
-        <h3>年間カレンダー自動リンク</h3>
-        <p>日付をタップすると、その週のページへ直接ジャンプできます。</p>
-      </div>
-      <div class="feature">
-        <div class="f-emoji">🎨</div>
-        <h3>授業の色分け</h3>
-        <p>赤・青・緑・黄・灰の5色。1ページ目に凡例が付きます。</p>
-      </div>
-      <div class="feature">
-        <div class="f-emoji">🏖️</div>
-        <h3>長期休業・祝日を自動反映</h3>
-        <p>夏季・冬季休業は期間指定、祝日・振替休日は年度から自動計算されます。</p>
-      </div>
-      <div class="feature">
-        <div class="f-emoji">🗓️</div>
-        <h3>週ページ54週分</h3>
-        <p>時間割・日別欄・指導計画・メモ欄まで、1週間分が見開きに収まります。</p>
-      </div>
-      <div class="feature">
-        <div class="f-emoji">📝</div>
-        <h3>自由ページ</h3>
-        <p>枚数を指定するだけで、罫線入りの自由記入ページを追加できます。</p>
-      </div>
-      <div class="feature">
-        <div class="f-emoji">🔒</div>
-        <h3>ブラウザだけで完結</h3>
-        <p>入力した時間割や行事予定は、どこにも送信されません。</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="lp how">
-    <h2>使い方はかんたん3ステップ</h2>
-    <p class="lp-sub">入力→購入→ダウンロードの3段階。所要時間は数分です。</p>
-    <ol class="how-steps">
-      <li>
-        <span class="hs-n">1</span>
-        <div>
-          <h3>時間割・行事予定を入力</h3>
-          <p>授業リストと色を登録すれば、時間割は選ぶだけ。行事予定は貼り付けるだけです。</p>
-        </div>
-      </li>
-      <li>
-        <span class="hs-n">2</span>
-        <div>
-          <h3>内容を確認して購入</h3>
-          <p>入力件数を確認してからお会計します。購入後は修正できないので、ここでしっかり確認します。</p>
-        </div>
-      </li>
-      <li>
-        <span class="hs-n">3</span>
-        <div>
-          <h3>PDFをダウンロード</h3>
-          <p>数秒で完成したPDFを、GoodNotes に取り込めばすぐ使えます。</p>
-        </div>
-      </li>
-    </ol>
-  </section>
-
-  <section class="lp proof">
-    <div class="specs">
-      <div class="spec"><div class="v">86</div><div class="k">ページ</div></div>
-      <div class="spec"><div class="v">1,100+</div><div class="k">リンク</div></div>
-      <div class="spec"><div class="v">54</div><div class="k">週ページ</div></div>
-      <div class="spec"><div class="v">数秒</div><div class="k">生成時間</div></div>
-    </div>
-  </section>
-
-  <section class="lp" id="purchase">
-    <h2>ここから購入できます</h2>
-    <p class="lp-sub">実際にこのページで、入力から購入・ダウンロードまで完結します。</p>
-    <div class="notice">
-      <span>🔒</span>
-      <span>
-        <b>このページだけで完結します。</b>
-        PDFはあなたのブラウザの中で作られ、入力した時間割や行事予定が
-        どこかに送信されることはありません。会員登録も不要です。
-      </span>
-    </div>
-  </section>
-
-  <div class="rail" role="tablist" aria-label="購入の流れ">
-    <button class="step" role="tab" aria-selected="true" aria-controls="panel-1" data-step="1">
-      <span class="n">01</span>
-      <span class="t">入力<span class="d">時間割・休業・行事</span></span>
-    </button>
-    <button class="step" role="tab" aria-selected="false" aria-controls="panel-2" data-step="2">
-      <span class="n">02</span>
-      <span class="t">購入<span class="d">内容確認・お会計</span></span>
-    </button>
-    <button class="step" role="tab" aria-selected="false" aria-controls="panel-3" data-step="3">
-      <span class="n">03</span>
-      <span class="t">受け取り<span class="d">ダウンロード</span></span>
-    </button>
-  </div>
-
-  <div class="screen">
-    <div class="chrome">
-      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-      <span class="url" id="url">https://schedule-builder.example.com/</span>
-    </div>
-
-    <!-- 01 入力 -->
-    <div class="body" id="panel-1" role="tabpanel">
-      <h2>スケジュール帳の内容を入力</h2>
-      <p class="lead">
-        <span id="product">令和8年度版</span>／購入手続きに進むまでは、何度でも作り直せます。
-      </p>
-
-      <h3>1. 基本情報</h3>
-      <p class="lead" style="margin:-6px 0 14px">
-        入力が必要なのは<strong>自由ページ数</strong>だけです。ほかは空欄のままでも作成できます。
-      </p>
-      <div class="fields">
-        <div>
-          <label for="year">年度を選ぶ</label>
-          <select id="year">
-            <option value="2025">令和7年度（2025年4月〜2026年3月）</option>
-            <option value="2026" selected>令和8年度（2026年4月〜2027年3月）</option>
-            <option value="2027">令和9年度（2027年4月〜2028年3月）</option>
-          </select>
-        </div>
-        <div>
-          <label for="own">お名前<span class="badge opt">任意</span></label>
-          <input id="own" type="text" value="伊神 太郎" placeholder="表紙に載せる名前（空欄でも可）">
-        </div>
-        <div>
-          <label for="sch">学校名<span class="badge opt">任意</span></label>
-          <input id="sch" type="text" placeholder="○○市立○○中学校（空欄でも可）">
-        </div>
-        <div>
-          <label for="fp">自由ページ数<span class="badge req">必須</span></label>
-          <input id="fp" type="number" value="30" min="0" max="200" required>
-        </div>
-      </div>
-
-      <h3>2. 授業リスト<span class="badge opt">任意</span></h3>
-      <p class="lead" style="margin:0 0 12px">
-        先に「授業名＋色」を登録しておくと、下の時間割では選ぶだけで済みます。
-        同じ授業は自動で同じ色になるので、コマごとに色を塗り直す必要はありません。
-      </p>
-      <div id="palette"></div>
-      <button type="button" class="btn-sub" id="add-lesson">＋ 授業を追加</button>
-
-      <h3>3. 時間割<span class="badge opt">任意</span></h3>
-      <div class="tt-head">
-        <p class="lead" style="margin:0">授業リストから選んでください。空欄の枠は空きコマになります。</p>
-        <button type="button" class="btn-sub" id="clear-tt">時間割をまっさらにする</button>
-      </div>
-      <div class="tt-wrap">
-        <table class="tt">
-          <thead>
-            <tr><th></th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th></tr>
-          </thead>
-          <tbody id="tt"></tbody>
-        </table>
-      </div>
-
-      <h3>4. 長期休業<span class="badge opt">任意</span></h3>
-      <p class="lead" style="margin-bottom:14px">
-        よくある期間を入れてあります。学校に合わせて直してください。祝日・振替休日は年度から自動計算されるので入力不要です。
-        最初の1日だけ休業名が入り、期間中は色だけが付きます。
-      </p>
-      <div id="breaks"></div>
-
-      <h3>5. 年間行事予定<span class="badge opt">任意</span></h3>
-      <p class="lead" style="margin-bottom:14px">
-        学校の行事予定表（CSV / Excel）をアップロードするか、貼り付けてください。
-        日付は <code>4/8</code>・<code>4月8日</code>・<code>2026-04-08</code> のどれでも読めます。
-      </p>
-      <textarea id="events">4/6,始業式
-4/7,入学式
-5/28,修学旅行（3年）
-10/24,体育大会
-2/27,卒業式予行
-3/5,卒業式</textarea>
-
-      <div class="btn-row">
-        <button class="btn" id="to-purchase" data-go="2">この内容で確認・購入へ進む</button>
-        <span class="btn-note">まだ購入は確定しません。次の画面で内容を確認してからお会計します。</span>
-      </div>
-    </div>
-
-    <!-- 02 購入 -->
-    <div class="body" id="panel-2" role="tabpanel" hidden>
-      <h2>内容の確認とお会計</h2>
-      <p class="lead">
-        購入すると、この内容でPDFを作成してダウンロードできるようになります。<strong>購入後は時間割・行事予定などの修正はできません。</strong>
-      </p>
-
-      <h3>ご購入内容の確認</h3>
-      <div class="specs" id="confirm-specs">
-        <div class="spec"><div class="v" id="c-year">—</div><div class="k">年度</div></div>
-        <div class="spec"><div class="v" id="c-free">—</div><div class="k">自由ページ</div></div>
-        <div class="spec"><div class="v" id="c-lessons">—</div><div class="k">時間割コマ数</div></div>
-        <div class="spec"><div class="v" id="c-events">—</div><div class="k">行事件数</div></div>
-      </div>
-      <div class="btn-row" style="margin-top:10px">
-        <button class="btn-sub" data-go="1">内容を直す（入力に戻る）</button>
-      </div>
-
-      <h3>お会計</h3>
-      <div class="price-card">
-        <div class="price-row">
-          <span class="price-label">シゴデキ先生 週案スケジュール帳（<span id="product-1">令和8年度版</span>・買い切り）</span>
-          <span class="price-value" id="price-base">¥1,980</span>
-        </div>
-        <div class="price-row coupon-row">
-          <div class="coupon-card">
-            <div class="coupon-card-head">
-              <span class="coupon-name">先生応援クーポン</span>
-              <span class="coupon-code">SENSEI100</span>
-            </div>
-            <p class="coupon-amount" id="coupon-amount"></p>
-          </div>
-          <button type="button" class="btn-sub" id="toggle-coupon" aria-pressed="false">クーポンを使う</button>
-        </div>
-        <div class="price-row discount-row" id="discount-row" hidden>
-          <span class="price-label">クーポン割引（<span id="coupon-applied">SENSEI100</span>）</span>
-          <span class="price-value discount" id="price-discount">−¥198,000</span>
-        </div>
-        <div class="price-row total-row">
-          <span class="price-label">お支払い合計</span>
-          <span class="price-value strike" id="price-strike" hidden>¥1,980</span><span class="price-value total" id="price-total">¥1,980</span>
-        </div>
-      </div>
-
-      <h3>お支払い方法<span class="payment-badge" id="payment-badge" hidden>0円のため不要</span></h3>
-      <div class="fields" id="payment">
-        <div>
-          <label for="cc-num">カード番号</label>
-          <input id="cc-num" type="text" inputmode="numeric" autocomplete="off" placeholder="4242 4242 4242 4242">
-        </div>
-        <div>
-          <label for="cc-exp">有効期限</label>
-          <input id="cc-exp" type="text" autocomplete="off" placeholder="MM / YY">
-        </div>
-        <div>
-          <label for="cc-cvc">セキュリティコード</label>
-          <input id="cc-cvc" type="text" inputmode="numeric" autocomplete="off" placeholder="CVC">
-        </div>
-      </div>
-      <p class="btn-note" id="payment-note" style="margin-top:6px"></p>
-
-      <h3>メールアドレス</h3>
-      <div class="fields">
-        <div>
-          <label for="mail">メールアドレス（購入確認をお送りします）<span class="badge req">必須</span></label>
-          <input id="mail" type="email" placeholder="例：teacher@example.com" required>
-        </div>
-      </div>
-
-      <h3>ご購入前の確認事項</h3>
-      <label class="agree-row">
-        <input type="checkbox" id="agree-content">
-        <span>上記の設定内容（時間割・行事予定・自由ページ数など）に間違いないことを確認しました。</span>
-      </label>
-      <label class="agree-row">
-        <input type="checkbox" id="agree-nomod">
-        <span>購入後は時間割・行事予定などの内容を修正できないことに同意します。</span>
-      </label>
-      <label class="agree-row">
-        <input type="checkbox" id="agree-noshare">
-        <span>完成したPDFの二次配布・再配布をしないことに同意します。</span>
-      </label>
-
-      <div class="btn-row">
-        <button class="btn" id="make" disabled>0円で購入する</button>
-        <span class="btn-note" id="make-note">確認事項にすべてチェックすると購入できます。カード情報は送信・保存されません。</span>
-      </div>
-      <div class="progress" id="progress" hidden>
-        <div class="bar"><span id="bar-fill"></span></div>
-        <p class="btn-note" id="progress-text">準備しています…</p>
-      </div>
-    </div>
-
-    <!-- 03 完成 -->
-    <div class="body" id="panel-3" role="tabpanel" hidden>
-      <h2>できあがりました</h2>
-      <p class="lead">生成が終わると、購入者にはこの画面が表示されます。</p>
-
-      <div class="done-card">
-        <p style="margin:0 0 12px"><strong id="done-for">スケジュール帳</strong> ができました。</p>
-        <a class="btn" id="dl" href="#" download="週案スケジュール帳.pdf">PDFをダウンロード</a>
-        <p class="btn-note" style="margin:12px 0 0">
-          ダウンロードしたPDFを GoodNotes で開くと、カレンダーの日付をタップしてその週へ移動できます。
+  <main>
+    <section id="overview" class="section">
+      <div class="section-container">
+        <h2>シゴデキ先生.PDF のご紹介</h2>
+        <p>
+          「シゴデキ先生.PDF」は、教員専用に開発されたデジタルスケジュール管理ツールです。<br>
+教師用タブレットで手軽にスケジュール管理が可能になり、忙しい先生方の日々の業務を強力にサポートします。
         </p>
+        <div class="overview-images">
+          <div>
+            <img src="assets/year.png" alt="年間カレンダー" class="overview-img lightbox">
+            <div class="img-caption">年間カレンダー</div>
+          </div>
+          <div>
+            <img src="assets/event.png" alt="行事リスト" class="overview-img lightbox">
+            <div class="img-caption">行事リスト</div>
+          </div>
+          <div>
+            <img src="assets/week.png" alt="週間カレンダー" class="overview-img lightbox">
+            <div class="img-caption">週間カレンダー</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="section-container">
+        <h2>特徴</h2>
+        <ul class="strength-list">
+          <li><strong>年間＆週予定管理：</strong> あなたの予定を、年間カレンダーと週予定ページで管理できます。</li>
+          <li><strong>リンク機能：</strong> 年間カレンダーの日付をクリックするだけで、該当する週予定ページにスムーズに移動可能です。</li>
+          <li><strong>自由ページ：</strong> 教材研究や座席表、提出物管理、指導記録など、必要な情報を自由に追加・編集でき、どのページからもリンクで移動が可能です。</li>
+          <li><strong>オプション：</strong> 週予定ページに時間割表を自動表示するサービスで、授業準備をさらに効率化します。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="usage" class="section">
+      <div class="section-container usage-container">
+        <h2>使用イメージ</h2>
+        <div class="usage-content">
+          <div class="video-wrapper">
+            <video controls preload="none" poster="assets/week.png">
+              <source src="assets/movie.mp4" type="video/mp4">
+              お使いのブラウザでは動画が再生できません。
+            </video>
+          </div>
+          <div class="slider-wrapper">
+            <div class="slider">
+              <button class="slider-button" id="prev-button">&#9664;</button>
+              <div>
+                <img src="assets/year.png" alt="画面例" id="slider-image" class="lightbox">
+                <div class="img-caption" id="slider-caption">年間カレンダー</div>
+              </div>
+              <button class="slider-button" id="next-button">&#9654;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="section">
+      <div class="section-container">
+        <div class="price-banner">
+          <span class="price">1,980円</span>
+          <span class="price-sub">買い切り。1年分まるごと作れます</span>
+        </div>
+        <p class="price-note">※基本パッケージ価格。オプションの詳細は公式LINEでご案内いたします。</p>
+        <div class="price-cta">
+          <a href="#purchase" class="btn">このページで購入する</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="purchase" class="section">
+      <div class="section-container">
+        <h2>ご購入</h2>
+        <p class="purchase-lead">
+          このページだけで、入力からお受け取りまで完結します。<br>
+          入力した時間割や行事予定は、どこにも送信されません。
+        </p>
+        <div class="purchase-inner flow">
+      <div class="rail" role="tablist" aria-label="購入の流れ">
+        <button class="step" role="tab" aria-selected="true" aria-controls="panel-1" data-step="1">
+          <span class="n">01</span>
+          <span class="t">入力<span class="d">時間割・休業・行事</span></span>
+        </button>
+        <button class="step" role="tab" aria-selected="false" aria-controls="panel-2" data-step="2">
+          <span class="n">02</span>
+          <span class="t">購入<span class="d">内容確認・お会計</span></span>
+        </button>
+        <button class="step" role="tab" aria-selected="false" aria-controls="panel-3" data-step="3">
+          <span class="n">03</span>
+          <span class="t">受け取り<span class="d">ダウンロード</span></span>
+        </button>
       </div>
 
-      <div class="specs">
-        <div class="spec"><div class="v" id="s-pages">—</div><div class="k">ページ</div></div>
-        <div class="spec"><div class="v" id="s-links">—</div><div class="k">リンク</div></div>
-        <div class="spec"><div class="v" id="s-weeks">—</div><div class="k">週ページ</div></div>
-        <div class="spec"><div class="v" id="s-time">—</div><div class="k">生成時間</div></div>
+      <div class="screen">
+        <div class="chrome">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="url" id="url">https://schedule-builder.example.com/</span>
+        </div>
+
+        <!-- 01 入力 -->
+        <div class="body" id="panel-1" role="tabpanel">
+          <h2>スケジュール帳の内容を入力</h2>
+          <p class="lead">
+            <span id="product">令和8年度版</span>／購入手続きに進むまでは、何度でも作り直せます。
+          </p>
+
+          <h3>1. 基本情報</h3>
+          <p class="lead" style="margin:-6px 0 14px">
+            入力が必要なのは<strong>自由ページ数</strong>だけです。ほかは空欄のままでも作成できます。
+          </p>
+          <div class="fields">
+            <div>
+              <label for="year">年度を選ぶ</label>
+              <select id="year">
+                <option value="2025">令和7年度（2025年4月〜2026年3月）</option>
+                <option value="2026" selected>令和8年度（2026年4月〜2027年3月）</option>
+                <option value="2027">令和9年度（2027年4月〜2028年3月）</option>
+              </select>
+            </div>
+            <div>
+              <label for="own">お名前<span class="badge opt">任意</span></label>
+              <input id="own" type="text" value="伊神 太郎" placeholder="表紙に載せる名前（空欄でも可）">
+            </div>
+            <div>
+              <label for="sch">学校名<span class="badge opt">任意</span></label>
+              <input id="sch" type="text" placeholder="○○市立○○中学校（空欄でも可）">
+            </div>
+            <div>
+              <label for="fp">自由ページ数<span class="badge req">必須</span></label>
+              <input id="fp" type="number" value="30" min="0" max="200" required>
+            </div>
+          </div>
+
+          <h3>2. 授業リスト<span class="badge opt">任意</span></h3>
+          <p class="lead" style="margin:0 0 12px">
+            先に「授業名＋色」を登録しておくと、下の時間割では選ぶだけで済みます。
+            同じ授業は自動で同じ色になるので、コマごとに色を塗り直す必要はありません。
+          </p>
+          <div id="palette"></div>
+          <button type="button" class="btn-sub" id="add-lesson">＋ 授業を追加</button>
+
+          <h3>3. 時間割<span class="badge opt">任意</span></h3>
+          <div class="tt-head">
+            <p class="lead" style="margin:0">授業リストから選んでください。空欄の枠は空きコマになります。</p>
+            <button type="button" class="btn-sub" id="clear-tt">時間割をまっさらにする</button>
+          </div>
+          <div class="tt-wrap">
+            <table class="tt">
+              <thead>
+                <tr><th></th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th></tr>
+              </thead>
+              <tbody id="tt"></tbody>
+            </table>
+          </div>
+
+          <h3>4. 長期休業<span class="badge opt">任意</span></h3>
+          <p class="lead" style="margin-bottom:14px">
+            よくある期間を入れてあります。学校に合わせて直してください。祝日・振替休日は年度から自動計算されるので入力不要です。
+            最初の1日だけ休業名が入り、期間中は色だけが付きます。
+          </p>
+          <div id="breaks"></div>
+
+          <h3>5. 年間行事予定<span class="badge opt">任意</span></h3>
+          <p class="lead" style="margin-bottom:14px">
+            学校の行事予定表（CSV / Excel）をアップロードするか、貼り付けてください。
+            日付は <code>4/8</code>・<code>4月8日</code>・<code>2026-04-08</code> のどれでも読めます。
+          </p>
+          <textarea id="events">4/6,始業式
+    4/7,入学式
+    5/28,修学旅行（3年）
+    10/24,体育大会
+    2/27,卒業式予行
+    3/5,卒業式</textarea>
+
+          <div class="btn-row">
+            <button class="btn" id="to-purchase" data-go="2">この内容で確認・購入へ進む</button>
+            <span class="btn-note">まだ購入は確定しません。次の画面で内容を確認してからお会計します。</span>
+          </div>
+        </div>
+
+        <!-- 02 購入 -->
+        <div class="body" id="panel-2" role="tabpanel" hidden>
+          <h2>内容の確認とお会計</h2>
+          <p class="lead">
+            購入すると、この内容でPDFを作成してダウンロードできるようになります。<strong>購入後は時間割・行事予定などの修正はできません。</strong>
+          </p>
+
+          <h3>ご購入内容の確認</h3>
+          <div class="specs" id="confirm-specs">
+            <div class="spec"><div class="v" id="c-year">—</div><div class="k">年度</div></div>
+            <div class="spec"><div class="v" id="c-free">—</div><div class="k">自由ページ</div></div>
+            <div class="spec"><div class="v" id="c-lessons">—</div><div class="k">時間割コマ数</div></div>
+            <div class="spec"><div class="v" id="c-events">—</div><div class="k">行事件数</div></div>
+          </div>
+          <div class="btn-row" style="margin-top:10px">
+            <button class="btn-sub" data-go="1">内容を直す（入力に戻る）</button>
+          </div>
+
+          <h3>お会計</h3>
+          <div class="price-card">
+            <div class="price-row">
+              <span class="price-label">シゴデキ先生 週案スケジュール帳（<span id="product-1">令和8年度版</span>・買い切り）</span>
+              <span class="price-value" id="price-base">¥1,980</span>
+            </div>
+            <div class="price-row coupon-row">
+              <div class="coupon-card">
+                <div class="coupon-card-head">
+                  <span class="coupon-name">先生応援クーポン</span>
+                  <span class="coupon-code">SENSEI100</span>
+                </div>
+                <p class="coupon-amount" id="coupon-amount"></p>
+              </div>
+              <button type="button" class="btn-sub" id="toggle-coupon" aria-pressed="false">クーポンを使う</button>
+            </div>
+            <div class="price-row discount-row" id="discount-row" hidden>
+              <span class="price-label">クーポン割引（<span id="coupon-applied">SENSEI100</span>）</span>
+              <span class="price-value discount" id="price-discount">−¥198,000</span>
+            </div>
+            <div class="price-row total-row">
+              <span class="price-label">お支払い合計</span>
+              <span class="price-value strike" id="price-strike" hidden>¥1,980</span><span class="price-value total" id="price-total">¥1,980</span>
+            </div>
+          </div>
+
+          <h3>お支払い方法<span class="payment-badge" id="payment-badge" hidden>0円のため不要</span></h3>
+          <div class="fields" id="payment">
+            <div>
+              <label for="cc-num">カード番号</label>
+              <input id="cc-num" type="text" inputmode="numeric" autocomplete="off" placeholder="4242 4242 4242 4242">
+            </div>
+            <div>
+              <label for="cc-exp">有効期限</label>
+              <input id="cc-exp" type="text" autocomplete="off" placeholder="MM / YY">
+            </div>
+            <div>
+              <label for="cc-cvc">セキュリティコード</label>
+              <input id="cc-cvc" type="text" inputmode="numeric" autocomplete="off" placeholder="CVC">
+            </div>
+          </div>
+          <p class="btn-note" id="payment-note" style="margin-top:6px"></p>
+
+          <h3>メールアドレス</h3>
+          <div class="fields">
+            <div>
+              <label for="mail">メールアドレス（購入確認をお送りします）<span class="badge req">必須</span></label>
+              <input id="mail" type="email" placeholder="例：teacher@example.com" required>
+            </div>
+          </div>
+
+          <h3>ご購入前の確認事項</h3>
+          <label class="agree-row">
+            <input type="checkbox" id="agree-content">
+            <span>上記の設定内容（時間割・行事予定・自由ページ数など）に間違いないことを確認しました。</span>
+          </label>
+          <label class="agree-row">
+            <input type="checkbox" id="agree-nomod">
+            <span>購入後は時間割・行事予定などの内容を修正できないことに同意します。</span>
+          </label>
+          <label class="agree-row">
+            <input type="checkbox" id="agree-noshare">
+            <span>完成したPDFの二次配布・再配布をしないことに同意します。</span>
+          </label>
+
+          <div class="btn-row">
+            <button class="btn" id="make" disabled>0円で購入する</button>
+            <span class="btn-note" id="make-note">確認事項にすべてチェックすると購入できます。カード情報は送信・保存されません。</span>
+          </div>
+          <div class="progress" id="progress" hidden>
+            <div class="bar"><span id="bar-fill"></span></div>
+            <p class="btn-note" id="progress-text">準備しています…</p>
+          </div>
+        </div>
+
+        <!-- 03 完成 -->
+        <div class="body" id="panel-3" role="tabpanel" hidden>
+          <h2>できあがりました</h2>
+          <p class="lead">生成が終わると、購入者にはこの画面が表示されます。</p>
+
+          <div class="done-card">
+            <p style="margin:0 0 12px"><strong id="done-for">スケジュール帳</strong> ができました。</p>
+            <a class="btn" id="dl" href="#" download="週案スケジュール帳.pdf">PDFをダウンロード</a>
+            <p class="btn-note" style="margin:12px 0 0">
+              ダウンロードしたPDFを GoodNotes で開くと、カレンダーの日付をタップしてその週へ移動できます。
+            </p>
+          </div>
+
+          <div class="specs">
+            <div class="spec"><div class="v" id="s-pages">—</div><div class="k">ページ</div></div>
+            <div class="spec"><div class="v" id="s-links">—</div><div class="k">リンク</div></div>
+            <div class="spec"><div class="v" id="s-weeks">—</div><div class="k">週ページ</div></div>
+            <div class="spec"><div class="v" id="s-time">—</div><div class="k">生成時間</div></div>
+          </div>
+
+          <h3>使い方</h3>
+          <ul class="terms">
+            <li>iPad の GoodNotes に取り込むと、そのままペンで書き込めます。</li>
+            <li>サイドバーのしおりから、各週のページに直接飛べます。</li>
+            <li>ご購入済みのため、この内容の時間割・行事予定は修正できません。内容を変えたい場合は、新しく購入し直してください。</li>
+          </ul>
+          <div class="btn-row">
+            <button class="btn-sub" id="restart" data-go="1">最初から新しく購入する</button>
+          </div>
+        </div>
       </div>
-
-      <h3>使い方</h3>
-      <ul class="terms">
-        <li>iPad の GoodNotes に取り込むと、そのままペンで書き込めます。</li>
-        <li>サイドバーのしおりから、各週のページに直接飛べます。</li>
-        <li>ご購入済みのため、この内容の時間割・行事予定は修正できません。内容を変えたい場合は、新しく購入し直してください。</li>
-      </ul>
-      <div class="btn-row">
-        <button class="btn-sub" id="restart" data-go="1">最初から新しく購入する</button>
+        </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <section class="lp faq">
-    <h2>よくある質問</h2>
-    <div class="faq-item">
-      <h3>入力した時間割や行事予定はどこかに送信されますか？</h3>
-      <p>されません。PDFの生成はすべてお使いのブラウザの中で行われます。</p>
-    </div>
-    <div class="faq-item">
-      <h3>購入後に時間割や行事予定を直せますか？</h3>
-      <p>直せません。購入前の確認画面で内容をよくご確認ください。内容を変えたい場合は、新しく購入し直してください。</p>
-    </div>
-    <div class="faq-item">
-      <h3>完成したPDFを他の先生に配ってもいいですか？</h3>
-      <p>二次配布・再配布はご遠慮いただいています。必要な方はそれぞれでご購入ください。</p>
-    </div>
-    <div class="faq-item">
-      <h3>iPad以外でも使えますか？</h3>
-      <p>PDFなので、GoodNotes以外のPDF閲覧・注釈アプリでもご利用いただけます。リンクの動作は各アプリの対応状況によります。</p>
-    </div>
-  </section>
+    <section id="line" class="section">
+      <div class="section-container">
+        <h2>公式LINEで最新情報をGET！</h2>
+        <p>
+          教員向けの最新情報、使い方のヒント、イベント情報を公式LINEでお届け中です。ぜひ「公式Rough」へご登録ください！
+        </p>
+        <div class="line-container">
+          <img src="assets/line.png" alt="公式LINE QRコード" class="qr-img">
+          <a href="https://lin.ee/cTwWhUI" class="btn">公式LINEに登録する</a>
+        </div>
+      </div>
+    </section>
 
-  <footer class="lp-footer">
-    シゴデキ先生 ／ PDFリンくん
+    <section id="contact" class="section">
+      <div class="section-container">
+        <h2>お問い合わせ</h2>
+        <p>
+          お問い合わせはすべて公式LINEから受け付けています。ご質問やご要望は、公式LINEでお気軽にご連絡ください。
+        </p>
+        <div class="contact-info">
+          <img src="assets/line.png" alt="公式LINE QRコード" class="qr-img">
+          <div class="sns-links">
+            <a href="https://lin.ee/cTwWhUI" class="sns-link">公式LINE</a>
+            <a href="#" class="sns-link">X</a>
+            <a href="#" class="sns-link">Instagram</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Rough. All rights reserved.</p>
+    </div>
   </footer>
 
-</div>
+  <div id="lightbox-modal" onclick="this.style.display='none';">
+    <img src="" alt="lightbox image" id="lightbox-image">
+  </div>
 
-<script src="vendor/pdf-lib.min.js"></script>
-<script src="vendor/fontkit.umd.min.js"></script>
-<script src="planner.js"></script>
-<script>
-  // 授業リスト（パレット）。「授業名＋色」を1回登録すれば、時間割では選ぶだけでよい。
-  const COLORS = [["", "なし"], ["red", "赤"], ["blue", "青"], ["green", "緑"], ["yellow", "黄"], ["gray", "灰"]];
-  const DAYS = ["月", "火", "水", "木", "金"];
-  const PERIODS = ["1", "2", "3", "4", "5", "6"];
-
-  let nextLessonId = 1;
-  // 初期設定は「学年+組　教科」。1〜3年生 × 1〜3組、学年ごとに色を分けておく。
-  const GRADE_COLOR = { 1: "yellow", 2: "red", 3: "blue" };
-  const palette = [];
-  for (let grade = 1; grade <= 3; grade++) {
-    for (let cls = 1; cls <= 3; cls++) {
-      palette.push({ id: nextLessonId++, name: `${grade}年${cls}組　国語`, color: GRADE_COLOR[grade] });
-    }
-  }
-
-  // 時間割の初期状態（授業リストの id で指定）。
-  const byName = (name) => palette.find((p) => p.name === name).id;
-  const PLAN = {
-    1: [byName("1年1組　国語"), byName("2年1組　国語"), "", byName("3年1組　国語"), ""],
-    2: ["", byName("1年2組　国語"), byName("2年2組　国語"), byName("3年2組　国語"), byName("1年3組　国語")],
-    3: [byName("2年3組　国語"), byName("3年3組　国語"), byName("1年1組　国語"), byName("2年1組　国語"), byName("3年1組　国語")],
-    4: ["", "", "", "", byName("1年2組　国語")],
-    5: [byName("2年2組　国語"), byName("3年2組　国語"), byName("1年3組　国語"), "", ""],
-    6: ["", "", "", "", ""]
-  };
-
-  const paletteEl = document.getElementById("palette");
-  const tbody = document.getElementById("tt");
-
-  function lessonOptionsHtml(selectedId) {
-    let html = '<option value="">－</option>';
-    palette.forEach((item) => {
-      const label = item.name || "（名前未設定）";
-      html += `<option value="${item.id}"${String(item.id) === String(selectedId) ? " selected" : ""}>${label}</option>`;
-    });
-    return html;
-  }
-
-  function applyLessonColor(select) {
-    const td = select.closest("td");
-    const item = palette.find((p) => String(p.id) === select.value);
-    td.className = item && item.color ? "c-" + item.color : "";
-  }
-
-  // 授業リストが変わるたびに、時間割側の選択肢を作り直す（選択済みの id はそのまま保つ）。
-  function syncLessonSelects() {
-    tbody.querySelectorAll("select.lesson-select").forEach((select) => {
-      const current = select.value;
-      select.innerHTML = lessonOptionsHtml(current);
-      if (![...select.options].some((o) => o.value === current)) select.value = "";
-      applyLessonColor(select);
-    });
-  }
-
-  function renderPalette() {
-    paletteEl.innerHTML = "";
-    palette.forEach((item) => {
-      const row = document.createElement("div");
-      row.className = "palette-row";
-      const colorOptions = COLORS.filter(([v]) => v).map(([v, l]) =>
-        `<option value="${v}"${v === item.color ? " selected" : ""}>${l}</option>`).join("");
-      row.innerHTML = `
-        <span class="p-swatch" style="background:${item.color ? "var(--c-" + item.color + ")" : "#fff"}"></span>
-        <input type="text" class="p-name" value="${item.name}" placeholder="授業名（例：２－１国語）">
-        <select class="p-color">${colorOptions}</select>
-        <button type="button" class="p-del" aria-label="この授業を削除">×</button>`;
-      const swatch = row.querySelector(".p-swatch");
-      row.querySelector(".p-name").addEventListener("input", (e) => {
-        item.name = e.target.value;
-        syncLessonSelects();
-      });
-      row.querySelector(".p-color").addEventListener("change", (e) => {
-        item.color = e.target.value;
-        swatch.style.background = "var(--c-" + item.color + ")";
-        syncLessonSelects();
-      });
-      row.querySelector(".p-del").addEventListener("click", () => {
-        const index = palette.findIndex((p) => p.id === item.id);
-        palette.splice(index, 1);
-        renderPalette();
-        syncLessonSelects();
-      });
-      paletteEl.appendChild(row);
-    });
-  }
-
-  document.getElementById("add-lesson").addEventListener("click", () => {
-    palette.push({ id: nextLessonId++, name: "", color: "" });
-    renderPalette();
-    syncLessonSelects();
-  });
-
-  // 授業の色見本を CSS 変数からも引けるようにする（.p-swatch のインラインスタイル用）
-  document.documentElement.style.setProperty("--c-red", "#fde0e0");
-  document.documentElement.style.setProperty("--c-blue", "#dce8fb");
-  document.documentElement.style.setProperty("--c-green", "#dff2e0");
-  document.documentElement.style.setProperty("--c-yellow", "#fdf3d0");
-  document.documentElement.style.setProperty("--c-gray", "#e8e8e8");
-
-  PERIODS.forEach((period) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<th>${period}限</th>`;
-    (PLAN[period] || ["", "", "", "", ""]).forEach((lessonId, i) => {
-      const td = document.createElement("td");
-      td.innerHTML = `<select class="lesson-select" aria-label="${DAYS[i]}曜${period}限の授業"></select>`;
-      const select = td.querySelector("select");
-      select.innerHTML = lessonOptionsHtml(lessonId);
-      select.addEventListener("change", () => applyLessonColor(select));
-      applyLessonColor(select);
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-
-  renderPalette();
-
-  // 長期休業。年度に合わせて既定値を作る。
-  const breaksEl = document.getElementById("breaks");
-  function renderBreaks(year) {
-    const rows = [
-      ["夏季休業", `${year}-07-21`, `${year}-08-31`],
-      ["冬季休業", `${year}-12-25`, `${year + 1}-01-07`],
-      ["学年末休業", `${year + 1}-03-25`, `${year + 1}-03-31`]
-    ];
-    breaksEl.innerHTML = rows.map(([name, start, end], i) => `
-      <div class="break-row">
-        <div><label for="bn${i}">名称</label><input id="bn${i}" type="text" value="${name}"></div>
-        <div><label for="bs${i}">開始</label><input id="bs${i}" type="date" value="${start}"></div>
-        <div><label for="be${i}">終了</label><input id="be${i}" type="date" value="${end}"></div>
-      </div>`).join("");
-  }
-
-  const yearEl = document.getElementById("year");
-  function syncYear() {
-    const year = Number(yearEl.value);
-    renderBreaks(year);
-    document.getElementById("product").textContent = `令和${year - 2018}年度版`;
-  }
-  yearEl.addEventListener("change", syncYear);
-  syncYear();
-
-  // 時間割の割り当てだけをまとめて空にする（授業リストそのものは残す）。
-  document.getElementById("clear-tt").addEventListener("click", () => {
-    const filled = [...tbody.querySelectorAll("select.lesson-select")].filter((s) => s.value !== "");
-    if (filled.length && !confirm("時間割の割り当てをすべて消します。よろしいですか？（授業リストは残ります）")) return;
-    tbody.querySelectorAll("select.lesson-select").forEach((select) => {
-      select.value = "";
-      applyLessonColor(select);
-    });
-  });
-
-  // 画面の切り替え
-  const steps = [...document.querySelectorAll(".step")];
-  const urls = {
-    1: "https://schedule-builder.example.com/",
-    2: "https://schedule-builder.example.com/setup/setup:ORD-D7EBCC4981EA:…",
-    3: "https://schedule-builder.example.com/done/ORD-D7EBCC4981EA:…"
-  };
-  function show(step) {
-    steps.forEach((s) => s.setAttribute("aria-selected", String(s.dataset.step === String(step))));
-    [1, 2, 3].forEach((n) => { document.getElementById("panel-" + n).hidden = n !== step; });
-    document.getElementById("url").textContent = urls[step];
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-  steps.forEach((s) => s.addEventListener("click", () => show(Number(s.dataset.step))));
-
-  document.querySelectorAll("[data-go]").forEach((btn) => {
-    btn.addEventListener("click", () => show(Number(btn.dataset.go)));
-  });
-
-  // 「確認・購入へ進む」で、入力内容から購入画面の確認欄を作る。
-  document.getElementById("to-purchase").addEventListener("click", () => {
-    const input = collectInput();
-    document.getElementById("c-year").textContent = `${input.schoolYear}年度`;
-    document.getElementById("c-free").textContent = input.freePages + "枚";
-    let lessonCount = 0;
-    Object.values(input.timetable.grid).forEach((periods) => { lessonCount += Object.keys(periods).length; });
-    document.getElementById("c-lessons").textContent = lessonCount + "コマ";
-    document.getElementById("c-events").textContent = input.events.length + "件";
-  });
-
-  // ── お会計（見た目だけの購入フロー） ───────────────────
-  // 定価は適当な金額。クーポンはその100倍を割り引くので、使うと必ず0円まで
-  // 落ちる（遊び心：割引額が定価よりずっと大きいという冗談）。クーポンは
-  // 既に取得済みという設定で、使うかどうかだけ選べる。割引額は「使う」を
-  // 押すまでは伏せておき、使った瞬間に初めて明かして反映する。
-  // 決済は一切行わず、カード欄は見本表示のみで、値は読み取っても保存・送信もしない。
-  const PRICE = 1980;
-  const COUPON_MULTIPLIER = 100;
-  const yen = (n) => "¥" + n.toLocaleString("ja-JP");
-
-  const couponRow = document.querySelector(".coupon-row");
-  const couponAmount = document.getElementById("coupon-amount");
-  const toggleCoupon = document.getElementById("toggle-coupon");
-  const discountRow = document.getElementById("discount-row");
-  const priceDiscount = document.getElementById("price-discount");
-  const priceStrike = document.getElementById("price-strike");
-  const priceTotal = document.getElementById("price-total");
-  const paymentBox = document.getElementById("payment");
-  const paymentBadge = document.getElementById("payment-badge");
-  const paymentNote = document.getElementById("payment-note");
-
-  let couponUsed = false;
-
-  function updatePrice() {
-    const discount = PRICE * COUPON_MULTIPLIER;
-    const total = couponUsed ? Math.max(0, PRICE - discount) : PRICE;
-
-    document.getElementById("price-base").textContent = yen(PRICE);
-    discountRow.hidden = !couponUsed;
-    if (couponUsed) priceDiscount.textContent = "−" + yen(discount);
-    priceStrike.hidden = !couponUsed;
-    priceStrike.textContent = yen(PRICE);
-    priceTotal.textContent = yen(total);
-
-    couponRow.classList.toggle("is-applied", couponUsed);
-    toggleCoupon.setAttribute("aria-pressed", String(couponUsed));
-    toggleCoupon.textContent = couponUsed ? "使用中（取り消す）" : "クーポンを使う";
-    couponAmount.textContent = couponUsed
-      ? `¥${discount.toLocaleString("ja-JP")}引き（定価の100倍オフ）`
-      : "";
-
-    paymentBox.classList.toggle("is-waived", total === 0);
-    paymentBadge.hidden = total !== 0;
-    document.getElementById("make").textContent = total === 0 ? "0円で購入する" : yen(total) + "で購入する";
-    paymentNote.textContent = total === 0
-      ? "クーポンにより合計0円です。カード情報は入力しなくても購入に進めます（お試しで入れても実際には使われません）。"
-      : "このデモでは実際の請求は発生しません。カード情報は送信・保存されません。";
-  }
-  toggleCoupon.addEventListener("click", () => {
-    couponUsed = !couponUsed;
-    updatePrice();
-  });
-  updatePrice();
-
-  // ── 入力を集めて PDF を作る ──────────────────────────
-  function collectInput() {
-    const year = Number(yearEl.value);
-
-    const grid = {};
-    tbody.querySelectorAll("tr").forEach((tr, rowIndex) => {
-      const period = String(rowIndex + 1);
-      tr.querySelectorAll("td").forEach((td, i) => {
-        const select = td.querySelector("select.lesson-select");
-        const item = palette.find((p) => String(p.id) === select.value);
-        if (!item || !item.name.trim()) return;
-        const weekday = DAYS[i];
-        grid[weekday] = grid[weekday] || {};
-        grid[weekday][period] = { name: item.name.trim(), color: item.color };
+  <script>
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
       });
     });
 
-    const breaks = [];
-    for (let i = 0; i < 3; i++) {
-      const name = (document.getElementById("bn" + i) || {}).value;
-      const start = (document.getElementById("bs" + i) || {}).value;
-      const end = (document.getElementById("be" + i) || {}).value;
-      if (name && name.trim() && start && end && start <= end) {
-        breaks.push({ name: name.trim(), start, end });
-      }
-    }
-
-    // 「4/8,入学式」形式を読む。1〜3月は翌年とみなす（学校年度の慣習）。
-    const events = [];
-    document.getElementById("events").value.split(/\r?\n/).forEach((line) => {
-      const row = line.trim();
-      if (!row) return;
-      const parts = row.split(/[,、\t]/);
-      if (parts.length < 2) return;
-      const raw = parts[0].trim();
-      const title = parts.slice(1).join(",").trim();
-      if (!title) return;
-      let y = year, m, d;
-      let match = raw.match(/^(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})/);
-      if (match) { y = +match[1]; m = +match[2]; d = +match[3]; }
-      else {
-        match = raw.match(/^(\d{1,2})\s*[\/月.\-]\s*(\d{1,2})/);
-        if (!match) return;
-        m = +match[1]; d = +match[2];
-        y = m <= 3 ? year + 1 : year;
-      }
-      if (m < 1 || m > 12 || d < 1 || d > 31) return;
-      const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      if (iso < `${year}-04-01` || iso > `${year + 1}-03-31`) return;
-      events.push({ date: iso, title });
+    const sliderImages = ["assets/year.png", "assets/event.png", "assets/week.png", "assets/other.png"];
+    const sliderCaptions = ["年間カレンダー", "行事リスト", "週間カレンダー", "自由ページ"];
+    let currentIndex = 0;
+    const sliderImage = document.getElementById("slider-image");
+    const sliderCaption = document.getElementById("slider-caption");
+    document.getElementById("prev-button").addEventListener("click", () => {
+      currentIndex = (currentIndex - 1 + sliderImages.length) % sliderImages.length;
+      sliderImage.src = sliderImages[currentIndex];
+      sliderCaption.textContent = sliderCaptions[currentIndex];
+    });
+    document.getElementById("next-button").addEventListener("click", () => {
+      currentIndex = (currentIndex + 1) % sliderImages.length;
+      sliderImage.src = sliderImages[currentIndex];
+      sliderCaption.textContent = sliderCaptions[currentIndex];
     });
 
-    const free = Number(document.getElementById("fp").value);
-    return {
-      schoolYear: year,
-      title: `令和${year - 2018}年度（${year}年度）スケジュール帳`,
-      owner: {
-        name: document.getElementById("own").value.trim(),
-        school: document.getElementById("sch").value.trim()
-      },
-      timetable: { grid },
-      breaks,
-      events,
-      freePages: Number.isFinite(free) ? Math.min(Math.max(free, 0), 200) : 30,
-      license: { issuedTo: document.getElementById("own").value.trim(), orderId: "" }
-    };
-  }
-
-  const makeBtn = document.getElementById("make");
-  const makeNote = document.getElementById("make-note");
-  const progress = document.getElementById("progress");
-  const barFill = document.getElementById("bar-fill");
-  const progressText = document.getElementById("progress-text");
-  const mailEl = document.getElementById("mail");
-  let blobUrl = null;
-
-  // 購入前の確認事項は3つとも同意しないと購入ボタンを押せない。
-  const agreeBoxes = ["agree-content", "agree-nomod", "agree-noshare"].map((id) => document.getElementById(id));
-  function syncMakeEnabled() {
-    makeBtn.disabled = !agreeBoxes.every((box) => box.checked);
-  }
-  agreeBoxes.forEach((box) => box.addEventListener("change", syncMakeEnabled));
-  syncMakeEnabled();
-
-  makeBtn.addEventListener("click", async () => {
-    // メールアドレスは必須（本番の購入確認メール送付先として使う想定）。
-    if (!mailEl.value.trim() || !mailEl.checkValidity()) {
-      mailEl.reportValidity();
-      mailEl.focus();
-      return;
-    }
-    const input = collectInput();
-    makeBtn.disabled = true;
-    makeNote.hidden = true;
-    progress.hidden = false;
-    const started = performance.now();
-
-    try {
-      const result = await SchedulePlanner.generate(input, {
-        onProgress(message, ratio) {
-          progressText.textContent = message;
-          barFill.style.width = Math.round(ratio * 100) + "%";
-        }
+    // Lightbox
+    document.querySelectorAll('.lightbox').forEach(img => {
+      img.addEventListener('click', function() {
+        const modal = document.getElementById('lightbox-modal');
+        const modalImg = document.getElementById('lightbox-image');
+        modal.style.display = 'flex';
+        modalImg.src = this.src;
       });
+    });
+  </script>
 
-      const seconds = ((performance.now() - started) / 1000).toFixed(1);
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-      blobUrl = URL.createObjectURL(new Blob([result.bytes], { type: "application/pdf" }));
-
-      const link = document.getElementById("dl");
-      link.href = blobUrl;
-      link.download = `${input.title}.pdf`;
-      document.getElementById("done-for").textContent = input.title;
-      document.getElementById("s-pages").textContent = result.pageCount;
-      document.getElementById("s-links").textContent = result.linkCount;
-      document.getElementById("s-weeks").textContent = result.weekCount;
-      document.getElementById("s-time").innerHTML =
-        seconds + '<span style="font-size:14px">秒</span>';
-      show(3);
-    } catch (err) {
-      progressText.textContent = "作成できませんでした: " + (err && err.message ? err.message : err);
-      barFill.style.width = "0";
-    } finally {
-      syncMakeEnabled();
-      setTimeout(() => { progress.hidden = true; makeNote.hidden = false; }, 600);
-    }
-  });
-</script>
-
+  <script src="vendor/pdf-lib.min.js"></script>
+  <script src="vendor/fontkit.umd.min.js"></script>
+  <script src="planner.js"></script>
+  <script src="flow.js"></script>
 </body>
 </html>

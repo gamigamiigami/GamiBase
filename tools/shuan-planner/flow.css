@@ -1,0 +1,423 @@
+/* 週案簿の紙面から取った配色。藍のインク、朱は日曜と祝日にだけ使う。 */
+:root {
+    --paper: #eef1f5;
+    --surface: #ffffff;
+    --surface-sunk: #f6f8fa;
+    --rule: #d3dae2;
+    --rule-strong: #aab6c3;
+    --ink: #16202b;
+    --ink-soft: #56646f;
+    --ink-faint: #8695a3;
+    --ai: #27548a;          /* 藍 — 主役の一色 */
+    --ai-soft: #e4ecf5;
+    --shu: #b3453c;         /* 朱 — 日曜・祝日のみ */
+    --ai-quiet: #f2f6fa;
+    --ok: #2f7a55;
+    --ok-soft: #e5f2eb;
+    --warn-soft: #fdf3d8;
+    --warn-rule: #d9b45e;
+    --warn-ink: #7a5a12;
+    /* 授業の色分け（PDF と同じ値） */
+    --c-red: #fde0e0;
+    --c-blue: #dce8fb;
+    --c-green: #dff2e0;
+    --c-yellow: #fdf3d0;
+    --c-gray: #e8e8e8;
+    --shadow: 0 1px 2px rgba(22, 32, 43, .06), 0 8px 24px -12px rgba(22, 32, 43, .18);
+  }
+* { box-sizing: border-box; }
+.flow {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+.flow .shell { max-width: 1120px; margin: 0 auto; padding: 32px 20px 72px; }
+/* ── 見出し ─────────────────────────────── */
+.flow header { margin-bottom: 28px; }
+.flow .eyebrow {
+    font-size: 12px;
+    letter-spacing: .16em;
+    color: var(--ai);
+    font-weight: 700;
+    margin: 0 0 6px;
+  }
+.flow h1 {
+    font-family: "Shippori Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4.4vw, 42px);
+    line-height: 1.25;
+    margin: 0 0 10px;
+    text-wrap: balance;
+    letter-spacing: .01em;
+  }
+.flow .sub { color: var(--ink-soft); max-width: 62ch; margin: 0; }
+.flow .notice {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: var(--warn-soft);
+    border: 1px solid var(--warn-rule);
+    color: var(--warn-ink);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 20px 0 0;
+    font-size: 13.5px;
+  }
+.flow .notice b { font-weight: 700; }
+/* ── ステップの帯（実際に順番のある工程なので番号を振る） ── */
+.flow .rail {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 28px 0 20px;
+  }
+.flow .step {
+    appearance: none;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font: inherit;
+    color: var(--ink-soft);
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    transition: border-color .18s, color .18s, background .18s;
+  }
+.flow .step:hover { border-color: var(--rule-strong); }
+.flow .step:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; }
+.flow .step .n {
+    font-family: "Shippori Mincho", serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+.flow .step .t { font-weight: 500; font-size: 14px; }
+.flow .step .d { display: block; font-size: 12px; color: var(--ink-faint); }
+.flow .step[aria-selected="true"] {
+    background: var(--ai-quiet);
+    border-color: var(--ai);
+    color: var(--ink);
+  }
+.flow .step[aria-selected="true"] .n { color: var(--ai); }
+/* ── 画面パネル ───────────────────────────── */
+.flow .screen {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+.flow .chrome {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--surface-sunk);
+    border-bottom: 1px solid var(--rule);
+  }
+.flow .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rule-strong); }
+.flow .url {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 3px 10px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+.flow .body { padding: 26px 28px 30px; }
+.flow [hidden] { display: none !important; }
+.flow h2 {
+    font-family: "Shippori Mincho", serif;
+    font-size: 21px;
+    margin: 0 0 4px;
+    font-weight: 700;
+  }
+.flow .lead { color: var(--ink-soft); margin: 0 0 22px; font-size: 14px; }
+.flow h3 {
+    font-size: 13px;
+    letter-spacing: .06em;
+    margin: 26px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+.flow h3:first-of-type { margin-top: 0; }
+.flow label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 4px; }
+/* 入力の必須・任意はバッジで示す。必須は自由ページ数だけ。 */
+.flow .badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    vertical-align: 1px;
+  }
+.flow .badge.req { background: color-mix(in srgb, var(--shu) 14%, var(--surface)); color: var(--shu); border: 1px solid color-mix(in srgb, var(--shu) 40%, var(--surface)); }
+.flow .badge.opt { background: var(--surface-sunk); color: var(--ink-faint); border: 1px solid var(--rule); }
+.flow .btn-sub {
+    appearance: none;
+    background: var(--surface);
+    color: var(--ink-soft);
+    border: 1px solid var(--rule-strong);
+    border-radius: 7px;
+    padding: 7px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+.flow .btn-sub:hover { background: var(--surface-sunk); border-color: var(--ink-faint); }
+.flow .btn-sub:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; }
+.flow .progress { margin-top: 16px; }
+.flow .progress .bar {
+    height: 6px;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+.flow .progress .bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--ai);
+    transition: width .25s ease;
+  }
+.flow .progress p { margin: 6px 0 0; }
+.flow a.btn { text-decoration: none; display: inline-block; }
+.flow .tt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+/* 授業リスト（パレット） */
+.flow #palette { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.flow .palette-row { display: flex; gap: 8px; align-items: center; }
+.flow .palette-row .p-name { flex: 1 1 auto; }
+.flow .palette-row .p-color { flex: 0 0 90px; }
+.flow .palette-row .p-swatch {
+    flex: 0 0 20px; width: 20px; height: 20px; border-radius: 5px;
+    border: 1px solid var(--rule-strong);
+  }
+.flow .palette-row .p-del {
+    flex: 0 0 auto;
+    appearance: none; border: 1px solid var(--rule-strong); background: var(--surface);
+    color: var(--ink-soft); border-radius: 6px; width: 30px; height: 30px;
+    font-size: 16px; line-height: 1; cursor: pointer;
+  }
+.flow .palette-row .p-del:hover { background: var(--surface-sunk); color: var(--shu); }
+.flow table.tt select.lesson-select { width: 100%; padding: 6px 6px; font-size: 12.5px; }
+.flow input, .flow select, .flow textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+  }
+.flow input:focus-visible, .flow select:focus-visible, .flow textarea:focus-visible {
+    outline: 2px solid var(--ai);
+    outline-offset: 1px;
+    border-color: var(--ai);
+  }
+.flow textarea { min-height: 92px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 1.6; }
+.flow .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.flow .btn {
+    appearance: none;
+    border: 0;
+    background: var(--ai);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 13px 26px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: filter .18s;
+  }
+.flow .btn:hover { filter: brightness(1.1); }
+.flow .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.flow .btn[disabled] { background: var(--rule-strong); cursor: not-allowed; filter: none; }
+.flow .btn-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 24px; }
+.flow .btn-note { font-size: 12.5px; color: var(--ink-faint); }
+/* ── 時間割グリッド ───────────────────────── */
+.flow .tt-wrap { overflow-x: auto; }
+.flow table.tt { width: 100%; min-width: 560px; border-collapse: collapse; }
+.flow table.tt th, .flow table.tt td { border: 1px solid var(--rule); padding: 5px; }
+.flow table.tt thead th { background: var(--surface-sunk); font-size: 13px; font-weight: 700; text-align: center; }
+.flow table.tt tbody th {
+    background: var(--surface-sunk);
+    width: 52px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+.flow table.tt td { padding: 4px; }
+.flow table.tt input { border-radius: 5px; padding: 6px 8px; font-size: 13px; margin-bottom: 3px; }
+.flow table.tt select { border-radius: 5px; padding: 3px 6px; font-size: 11.5px; }
+.flow td.c-red input { background: var(--c-red); }
+.flow td.c-blue input { background: var(--c-blue); }
+.flow td.c-green input { background: var(--c-green); }
+.flow td.c-yellow input { background: var(--c-yellow); }
+.flow td.c-gray input { background: var(--c-gray); }
+.flow .break-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+/* ── 完成画面 ─────────────────────────────── */
+.flow .done-card {
+    background: var(--ok-soft);
+    border: 1px solid var(--ok);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+.flow .order-no {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 2px 8px;
+  }
+.flow .specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; margin-top: 22px; }
+.flow .spec { background: var(--surface); padding: 14px 16px; }
+.flow .spec .v {
+    font-family: "Shippori Mincho", serif;
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+.flow .spec .k { font-size: 11.5px; color: var(--ink-faint); letter-spacing: .04em; }
+.flow ul.terms { margin: 18px 0 0; padding-left: 1.2em; font-size: 13.5px; color: var(--ink-soft); }
+.flow ul.terms li { margin-bottom: 4px; }
+/* ── 価格・クーポン ───────────────────────── */
+.flow .price-card {
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-top: 4px;
+  }
+.flow .price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+.flow .price-row:last-child { border-bottom: 0; }
+.flow .price-label { font-size: 13.5px; color: var(--ink-soft); }
+.flow .price-value {
+    font-family: "Shippori Mincho", serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+.flow .price-value.strike { color: var(--ink-faint); text-decoration: line-through; font-weight: 500; font-size: 14px; margin-right: 8px; }
+.flow .price-value.discount { color: var(--ok); }
+.flow .total-row .price-label { font-weight: 700; color: var(--ink); font-size: 14.5px; }
+.flow .total-row .price-value.total { font-size: 26px; color: var(--ai); }
+.flow .coupon-row { align-items: center; gap: 14px; }
+.flow .coupon-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px dashed var(--rule-strong);
+    border-radius: 8px;
+  }
+.flow .coupon-card-head { display: flex; align-items: center; gap: 8px; }
+.flow .coupon-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.flow .coupon-code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: .03em;
+    color: var(--ink-faint);
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+.flow .coupon-amount { margin: 0; font-size: 12.5px; color: var(--ink-faint); }
+.flow .coupon-row.is-applied .coupon-card { border-style: solid; border-color: var(--ok); }
+.flow .coupon-row.is-applied .coupon-amount { color: var(--ok); font-weight: 700; }
+.flow #toggle-coupon[aria-pressed="true"] {
+    background: var(--ok-soft);
+    color: var(--ok);
+    border-color: color-mix(in srgb, var(--ok) 45%, var(--surface));
+  }
+.flow .agree-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+    cursor: pointer;
+  }
+.flow .agree-row input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    margin: 1px 0 0;
+    flex: 0 0 auto;
+    accent-color: var(--ai);
+  }
+.flow #payment.is-waived {
+    opacity: .55;
+  }
+.flow #payment.is-waived input {
+    background: var(--surface-sunk);
+    cursor: not-allowed;
+  }
+.flow .payment-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--ok-soft);
+    color: var(--ok);
+    border: 1px solid color-mix(in srgb, var(--ok) 40%, var(--surface));
+    vertical-align: 1px;
+  }
+@media (prefers-reduced-motion: reduce) {
+* { transition: none !important; animation: none !important; }
+}
+@media (max-width: 640px) {
+.flow .rail { grid-template-columns: 1fr; }
+.flow .break-row { grid-template-columns: 1fr; }
+.flow .body { padding: 20px 18px 24px; }
+}
+
+/* LPの配色に合わせた上書き。主役の一色を藍からLPのコーラルに寄せる。 */
+:root {
+  --ai: #d1544a;
+  --ai-soft: #fde8e6;
+  --ai-quiet: #fff5f4;
+}
+.flow {
+  border-radius: 14px;
+}
+.flow h2, .flow h3 {
+  text-align: left;
+  color: inherit;
+}
+.flow p { text-align: left; margin: 0 0 10px; }
+.flow ul { margin: 0; padding: 0; }
