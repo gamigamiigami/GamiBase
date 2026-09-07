@@ -9,11 +9,17 @@
 :root {
   --line: #222;
   --line-thin: #999;
-  --closed: #e6e6e6;      /* 土日祝の背景 */
+  --closed: #e6e6e6;      /* 週ページ等の「授業がない日」の一般的な背景 */
   --sunday: #d03030;
   --saturday: #2a5fd0;
   --accent: #f5c342;      /* 自由ページ見出し */
   --muted: #666;
+  /* 年間カレンダー・年間行事予定用。休日は薄い朱色、長期休業はそれより
+     さらに淡い藤色にして、パッと見で違うと分かるようにする（休日の方が濃い）。 */
+  --holiday-tint: #fdecec;
+  --break-tint: #f3f1fa;
+  --weekend-tint: #f4f4f4;
+  --event-dot: #d8961f;
   --page-pad: 6mm;
 }
 
@@ -181,14 +187,24 @@ a {
 .month td a,
 .month td span {
   display: block;
+  position: relative;
   width: 100%;
   height: 100%;
   padding: 0.3mm 0.6mm;
   line-height: 1;
 }
 
-.month td.closed {
-  background: var(--closed);
+/* 背景の塗り分け。休日 > 長期休業 > 週末 の優先度で、休日が最も濃い。 */
+.month td.weekend {
+  background: var(--weekend-tint);
+}
+
+.month td.brk {
+  background: var(--break-tint);
+}
+
+.month td.holiday {
+  background: var(--holiday-tint);
 }
 
 .month td.sun {
@@ -204,10 +220,19 @@ a {
   border-color: #eee;
 }
 
-.month td.has-event {
-  font-weight: bold;
-  box-shadow: inset 0 -0.8mm 0 rgba(240, 170, 40, 0.55);
+/* 行事がある日は、書き込みの邪魔にならないよう右上に小さな点だけを置く。 */
+.month td.has-event a::after,
+.month td.has-event span::after {
+  content: "";
+  position: absolute;
+  top: 0.8mm;
+  right: 0.8mm;
+  width: 1.3mm;
+  height: 1.3mm;
+  border-radius: 50%;
+  background: var(--event-dot);
 }
+
 
 /* ------------------------------------------------------------------ */
 /* 年間行事予定（2ページ目）                                            */
@@ -261,8 +286,16 @@ a {
   text-overflow: ellipsis;
 }
 
-.events-table td.closed {
-  background: var(--closed);
+.events-table td.weekend {
+  background: var(--weekend-tint);
+}
+
+.events-table td.brk {
+  background: var(--break-tint);
+}
+
+.events-table td.holiday {
+  background: var(--holiday-tint);
 }
 
 .events-table td.sun .d {
@@ -481,39 +514,6 @@ a {
   letter-spacing: 0.03em;
 }
 
-/* ------------------------------------------------------------------ */
-/* 凡例（授業の色分け・長期休業）                                       */
-/* ------------------------------------------------------------------ */
-
-.legend {
-  flex: 0 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1mm 4mm;
-  margin-bottom: 1.5mm;
-  font-size: 7.5pt;
-  color: #333;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 1.2mm;
-}
-
-.legend-item i {
-  display: inline-block;
-  width: 3.4mm;
-  height: 3.4mm;
-  border: 0.25mm solid #999;
-  border-radius: 0.6mm;
-}
-
-/* 長期休業の日は、土日祝とは別の色にして区別できるようにする */
-.month td.brk,
-.events-table td.brk {
-  background: #efe4f5;
-}
 
 /* 週ページの曜日見出しに出す「夏季休業」などの理由 */
 .timetable thead th .cl {

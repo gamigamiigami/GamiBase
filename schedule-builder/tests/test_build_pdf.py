@@ -134,3 +134,16 @@ def test_events_rendered(built):
     html = render_html(data)
     assert "入学式" in html
     assert "卒業式（午前）" in html
+
+
+def test_css_is_not_html_escaped_in_output(built):
+    """テンプレートの {{ css }} が autoescape でエスケープされていないこと。
+
+    Jinja の autoescape は既定で有効なため、`| safe` を外すと content: ""; の
+    引用符が &#34; に化けて CSS が壊れる（例: 行事マーカーの ::after が消える）。
+    """
+    data, _out = built
+    html = render_html(data)
+    assert "&#34;" not in html
+    assert "&quot;" not in html
+    assert 'content: "";' in html

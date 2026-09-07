@@ -493,12 +493,12 @@
           <input id="buyer" type="text" value="伊神 太郎">
         </div>
         <div>
-          <label for="mail">メールアドレス</label>
-          <input id="mail" type="email" value="teacher@example.com">
+          <label for="mail">メールアドレス<span class="badge req">必須</span></label>
+          <input id="mail" type="email" placeholder="例：teacher@example.com" required>
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn" data-go="2">はじめる（無料）</button>
+        <button class="btn" id="start-btn" data-go="2">はじめる（無料）</button>
         <span class="btn-note">支払いはありません。次の画面で内容を入力すると、その場でPDFができます。</span>
       </div>
     </div>
@@ -810,7 +810,19 @@ PYTHONPATH=src python3 -m planner serve</pre>
   steps.forEach((s) => s.addEventListener("click", () => show(Number(s.dataset.step))));
 
   document.querySelectorAll("[data-go]").forEach((btn) => {
+    if (btn.id === "start-btn") return; // メールアドレスの必須チェックを挟むため個別に扱う
     btn.addEventListener("click", () => show(Number(btn.dataset.go)));
+  });
+
+  // メールアドレスは必須。空のまま次へ進ませない（本番の購入確認メール送付先として使う想定）。
+  const mailEl = document.getElementById("mail");
+  document.getElementById("start-btn").addEventListener("click", () => {
+    if (!mailEl.value.trim() || !mailEl.checkValidity()) {
+      mailEl.reportValidity();
+      mailEl.focus();
+      return;
+    }
+    show(2);
   });
 
   // ── 入力を集めて PDF を作る ──────────────────────────

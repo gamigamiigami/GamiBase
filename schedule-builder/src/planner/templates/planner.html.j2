@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <title>{{ data.display_title }}</title>
     <style>
-{{ css }}
+{{ css | safe }}
     </style>
   </head>
   <body>
@@ -62,7 +62,7 @@
                 <td class="empty"></td>
                 {%- else %}
                 {%- set page = cal.week_page_for(day.date) %}
-                <td class="{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}"
+                <td class="{{ 'holiday ' if day.is_holiday }}{{ 'brk ' if day.is_break and not day.is_holiday }}{{ 'weekend ' if day.is_weekend and not day.is_holiday and not day.is_break }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}{{ 'has-event' if day.events }}"
                     title="{{ day.md_with_weekday }}{% if day.closed_label %} {{ day.closed_label }}{% endif %}{% if day.event_text %} {{ day.event_text }}{% endif %}">
                   {%- if page %}<a href="#p{{ page }}">{{ day.date.day }}</a>
                   {%- else %}<span>{{ day.date.day }}</span>{% endif %}
@@ -103,7 +103,7 @@
             <td class="empty"></td>
             {%- else %}
             {%- set page = cal.week_page_for(day.date) %}
-            <td class="{{ 'closed ' if day.is_closed }}{{ 'brk ' if day.is_break }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}">
+            <td class="{{ 'holiday ' if day.is_holiday }}{{ 'brk ' if day.is_break and not day.is_holiday }}{{ 'weekend ' if day.is_weekend and not day.is_holiday and not day.is_break }}{{ 'sun ' if day.is_sunday }}{{ 'sat ' if day.is_saturday }}">
               {%- if page %}<a href="#p{{ page }}">
               {%- else %}<span>{% endif %}
                 <span class="d">{{ day.date.day }}{{ day.weekday_ja }}</span>

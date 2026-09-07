@@ -151,8 +151,8 @@ def create_app(
         <input type="text" id="name" name="name" placeholder="山田 太郎" required>
       </div>
       <div>
-        <label for="email">メールアドレス</label>
-        <input type="email" id="email" name="email" placeholder="you@example.com">
+        <label for="email">メールアドレス<span class="badge req">必須</span></label>
+        <input type="email" id="email" name="email" placeholder="例：you@example.com" required>
       </div>
     </div>
     <button class="btn big" type="submit">テスト購入する（無料）</button>
@@ -165,13 +165,25 @@ def create_app(
     @app.post("/checkout")
     def checkout():
         """決済の代わり。本番ではここを決済Webhookに置き換える。"""
+        email = request.form.get("email", "").strip()
+        # ブラウザの required は回避できるため、サーバー側でも必ず確認する。
+        if not email or "@" not in email:
+            return (
+                _page(
+                    "エラー",
+                    '<div class="card"><div class="err">'
+                    "メールアドレスを入力してください。</div></div>",
+                ),
+                400,
+            )
+
         db = store()
         try:
             year = int(request.form.get("year", "0"))
             order = db.create_order(
                 product=f"令和{year - 2018}年度版",
                 issued_to=request.form.get("name", "").strip(),
-                email=request.form.get("email", "").strip(),
+                email=email,
             )
             token = db.issue_setup_token(order.order_id)
         finally:

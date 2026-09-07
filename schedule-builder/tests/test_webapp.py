@@ -189,3 +189,18 @@ def test_form_marks_optional_and_required(client):
     assert 'class="badge req">必須' in body
     assert body.count('class="badge opt">任意') >= 4  # 名前・学校・時間割・休業・行事
     assert "時間割をまっさらにする" in body
+
+
+def test_checkout_requires_email(client):
+    """メールアドレスは必須（ブラウザの required を回避されてもサーバー側で弾く）。"""
+    res = client.post("/checkout", data={"year": "2025", "name": "山田 太郎", "email": ""})
+    assert res.status_code == 400
+    assert "メールアドレスを入力してください" in res.get_data(as_text=True)
+
+
+def test_email_field_has_no_prefilled_sample(client):
+    body = client.get("/").get_data(as_text=True)
+    assert 'placeholder="例：you@example.com"' in body
+    assert "you@example.com\"" in body  # プレースホルダとしてのみ
+    assert 'value="you@example.com"' not in body
+    assert "required" in body
