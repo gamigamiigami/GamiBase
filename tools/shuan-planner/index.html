@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📘</text></svg>">
-<meta name="description" content="時間割と行事予定からリンク付きの週案PDFを自動生成するツールの、購入から受け取りまでの画面デモ。">
-<title>シゴデキ先生 ｜ 週案スケジュール帳 販売フロー</title>
+<meta name="description" content="時間割と行事予定を入力するだけで、リンク付きの週案PDFがその場で完成。GoodNotesでそのまま手書きで使える「シゴデキ先生」の紹介ページ。">
+<title>シゴデキ先生 ｜ 入力するだけで完成する週案スケジュール帳</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
@@ -142,6 +142,130 @@
     font-size: 13.5px;
   }
   .notice b { font-weight: 700; }
+
+  /* ── LP: ヒーロー ───────────────────────── */
+  .hero-cta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 22px; }
+  .btn-lg { padding: 15px 32px; font-size: 16px; }
+
+  .trust-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  section.lp { margin: 56px 0 0; }
+  section.lp h2 {
+    font-family: "Shippori Mincho", serif;
+    font-size: clamp(20px, 2.6vw, 26px);
+    font-weight: 700;
+    margin: 0 0 6px;
+    text-align: center;
+  }
+  section.lp .lp-sub {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: 0 auto 28px;
+    max-width: 56ch;
+  }
+
+  /* ── LP: 悩み ───────────────────────────── */
+  .pain-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .pain-list li {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--shu);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+
+  /* ── LP: 機能グリッド ───────────────────── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .feature {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 20px 20px 22px;
+  }
+  .feature .f-emoji { font-size: 26px; line-height: 1; margin-bottom: 10px; }
+  .feature h3 { font-size: 15px; margin: 0 0 6px; font-family: "Shippori Mincho", serif; }
+  .feature p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+  /* ── LP: 使い方3ステップ ───────────────── */
+  .how-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .how-steps li { display: flex; gap: 14px; align-items: flex-start; }
+  .hs-n {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--ai);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .how-steps h3 { margin: 0 0 4px; font-size: 14.5px; }
+  .how-steps p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+  /* ── LP: 数字で見る ─────────────────────── */
+  .proof .specs { margin-top: 0; }
+  .proof .spec .v { text-align: center; }
+  .proof .spec .k { text-align: center; }
+
+  /* ── LP: 購入セクション見出し ───────────── */
+  .purchase-section { scroll-margin-top: 20px; }
+
+  /* ── LP: FAQ ────────────────────────────── */
+  .faq-item {
+    border-bottom: 1px solid var(--rule);
+    padding: 16px 0;
+  }
+  .faq-item:first-child { border-top: 1px solid var(--rule); }
+  .faq-item h3 { margin: 0 0 6px; font-size: 14px; display: flex; gap: 8px; }
+  .faq-item h3::before { content: "Q"; color: var(--ai); font-family: "Shippori Mincho", serif; }
+  .faq-item p { margin: 0 0 0 20px; font-size: 13.5px; color: var(--ink-soft); }
+
+  .lp-footer {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-size: 12px;
+    color: var(--ink-faint);
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .pain-list, .feature-grid, .how-steps { grid-template-columns: 1fr; }
+  }
 
   /* ── ステップの帯（実際に順番のある工程なので番号を振る） ── */
   .rail {
@@ -514,23 +638,122 @@
 <body>
 
 <div class="shell">
-  <header>
-    <p class="eyebrow">週案スケジュール帳 販売フロー ／ PDFリンくん</p>
-    <h1>シゴデキ先生</h1>
+  <header class="hero">
+    <p class="eyebrow">シゴデキ先生 ／ PDFリンくん</p>
+    <h1>時間割と行事予定、<br>入力するだけでリンク付き週案PDFに。</h1>
     <p class="sub">
-      年度と時間割を入力すると、リンク付きの週案PDF（年間カレンダー・年間行事予定・週ページ54週・自由ページ）が
-      その場で組み上がります。GoodNotes に取り込んで、そのまま手書きで使う前提の設計です。
-      祝日・振替休日は年度から自動で入ります。
+      エクセルをPDF化して1つずつリンクを貼って GoodNotes に入れ直す……という毎年の作業を、
+      ブラウザに入力するだけの数分に置き換えます。年間カレンダー・年間行事予定・週ページ54週・
+      自由ページがそろった1冊が、その場で組み上がります。祝日・振替休日も年度から自動で入ります。
     </p>
+    <div class="hero-cta">
+      <a class="btn btn-lg" href="#purchase">中身を見てみる</a>
+      <span class="btn-note">まずは画面を確認してから、購入するか決められます。</span>
+    </div>
+    <ul class="trust-badges">
+      <li>🔒 入力した時間割・行事予定はどこにも送信されません</li>
+      <li>📱 GoodNotes に取り込んでそのまま手書き</li>
+      <li>⚡ 生成は数秒（86ページ・1,100リンク以上）</li>
+    </ul>
+  </header>
+
+  <section class="lp pain">
+    <h2>毎年、この作業に時間を取られていませんか？</h2>
+    <p class="lp-sub">週案づくりの「面倒だけど毎年やること」を、まとめて自動化します。</p>
+    <ul class="pain-list">
+      <li>エクセルの時間割をPDF化して、1つずつリンクを貼るのが大変</li>
+      <li>行事予定の反映を忘れて、週の途中で気づいて焦る</li>
+      <li>GoodNotesで今週のページまで、毎回スクロールして探している</li>
+      <li>長期休業や祝日の色分けを、毎年ゼロから手作業でやり直している</li>
+    </ul>
+  </section>
+
+  <section class="lp features">
+    <h2>シゴデキ先生ができること</h2>
+    <p class="lp-sub">現行の運用で使っている機能を、そのまま自動化しています。</p>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="f-emoji">📅</div>
+        <h3>年間カレンダー自動リンク</h3>
+        <p>日付をタップすると、その週のページへ直接ジャンプできます。</p>
+      </div>
+      <div class="feature">
+        <div class="f-emoji">🎨</div>
+        <h3>授業の色分け</h3>
+        <p>赤・青・緑・黄・灰の5色。1ページ目に凡例が付きます。</p>
+      </div>
+      <div class="feature">
+        <div class="f-emoji">🏖️</div>
+        <h3>長期休業・祝日を自動反映</h3>
+        <p>夏季・冬季休業は期間指定、祝日・振替休日は年度から自動計算されます。</p>
+      </div>
+      <div class="feature">
+        <div class="f-emoji">🗓️</div>
+        <h3>週ページ54週分</h3>
+        <p>時間割・日別欄・指導計画・メモ欄まで、1週間分が見開きに収まります。</p>
+      </div>
+      <div class="feature">
+        <div class="f-emoji">📝</div>
+        <h3>自由ページ</h3>
+        <p>枚数を指定するだけで、罫線入りの自由記入ページを追加できます。</p>
+      </div>
+      <div class="feature">
+        <div class="f-emoji">🔒</div>
+        <h3>ブラウザだけで完結</h3>
+        <p>入力した時間割や行事予定は、どこにも送信されません。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp how">
+    <h2>使い方はかんたん3ステップ</h2>
+    <p class="lp-sub">入力→購入→ダウンロードの3段階。所要時間は数分です。</p>
+    <ol class="how-steps">
+      <li>
+        <span class="hs-n">1</span>
+        <div>
+          <h3>時間割・行事予定を入力</h3>
+          <p>授業リストと色を登録すれば、時間割は選ぶだけ。行事予定は貼り付けるだけです。</p>
+        </div>
+      </li>
+      <li>
+        <span class="hs-n">2</span>
+        <div>
+          <h3>内容を確認して購入</h3>
+          <p>入力件数を確認してからお会計します。購入後は修正できないので、ここでしっかり確認します。</p>
+        </div>
+      </li>
+      <li>
+        <span class="hs-n">3</span>
+        <div>
+          <h3>PDFをダウンロード</h3>
+          <p>数秒で完成したPDFを、GoodNotes に取り込めばすぐ使えます。</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="lp proof">
+    <div class="specs">
+      <div class="spec"><div class="v">86</div><div class="k">ページ</div></div>
+      <div class="spec"><div class="v">1,100+</div><div class="k">リンク</div></div>
+      <div class="spec"><div class="v">54</div><div class="k">週ページ</div></div>
+      <div class="spec"><div class="v">数秒</div><div class="k">生成時間</div></div>
+    </div>
+  </section>
+
+  <section class="lp" id="purchase">
+    <h2>ここから購入できます</h2>
+    <p class="lp-sub">実際にこのページで、入力から購入・ダウンロードまで完結します。</p>
     <div class="notice">
       <span>🔒</span>
       <span>
         <b>このページだけで完結します。</b>
         PDFはあなたのブラウザの中で作られ、入力した時間割や行事予定が
-        どこかに送信されることはありません。支払いも会員登録も不要です。
+        どこかに送信されることはありません。会員登録も不要です。
       </span>
     </div>
-  </header>
+  </section>
 
   <div class="rail" role="tablist" aria-label="購入の流れ">
     <button class="step" role="tab" aria-selected="true" aria-controls="panel-1" data-step="1">
@@ -758,6 +981,30 @@
       </div>
     </div>
   </div>
+
+  <section class="lp faq">
+    <h2>よくある質問</h2>
+    <div class="faq-item">
+      <h3>入力した時間割や行事予定はどこかに送信されますか？</h3>
+      <p>されません。PDFの生成はすべてお使いのブラウザの中で行われます。</p>
+    </div>
+    <div class="faq-item">
+      <h3>購入後に時間割や行事予定を直せますか？</h3>
+      <p>直せません。購入前の確認画面で内容をよくご確認ください。内容を変えたい場合は、新しく購入し直してください。</p>
+    </div>
+    <div class="faq-item">
+      <h3>完成したPDFを他の先生に配ってもいいですか？</h3>
+      <p>二次配布・再配布はご遠慮いただいています。必要な方はそれぞれでご購入ください。</p>
+    </div>
+    <div class="faq-item">
+      <h3>iPad以外でも使えますか？</h3>
+      <p>PDFなので、GoodNotes以外のPDF閲覧・注釈アプリでもご利用いただけます。リンクの動作は各アプリの対応状況によります。</p>
+    </div>
+  </section>
+
+  <footer class="lp-footer">
+    シゴデキ先生 ／ PDFリンくん
+  </footer>
 
 </div>
 
