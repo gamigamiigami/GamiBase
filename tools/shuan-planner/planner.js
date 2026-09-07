@@ -40,12 +40,17 @@
     thin: [0.6, 0.6, 0.6],
     faint: [0.8, 0.8, 0.8],
     muted: [0.4, 0.4, 0.4],
-    closed: [0.902, 0.902, 0.902],
+    closed: [0.902, 0.902, 0.902],  // 週ページ等の「授業がない日」の一般的なグレー
     head: [0.957, 0.957, 0.957],
     sun: [0.816, 0.188, 0.188],
     sat: [0.165, 0.373, 0.816],
-    brk: [0.937, 0.894, 0.961],
+    // 年間カレンダー・年間行事予定用。休日は薄い朱色、長期休業はそれよりさらに
+    // 淡い藤色にして、パッと見て違うと分かるようにする（休日のほうが濃い）。
+    holidayTint: [0.988, 0.925, 0.925],
+    breakTint: [0.965, 0.958, 0.984],
+    weekendTint: [0.955, 0.955, 0.955],
     accent: [0.961, 0.765, 0.259],
+    event: [0.85, 0.58, 0.16],
     white: [1, 1, 1]
   };
 
@@ -282,6 +287,19 @@
         return out + "…";
       },
       width(str, size) { return font.widthOfTextAtSize(String(str), size); },
+      // 1本の罫線。表組みは「セルごとに枠を描く」と境界線が二重に重なって
+      // 太さがガタつくため、格子はこれで縦横1本ずつ引く。
+      line(x1, y1, x2, y2, opts = {}) {
+        page.drawLine({
+          start: { x: x1, y: y1 },
+          end: { x: x2, y: y2 },
+          thickness: opts.thickness == null ? 0.6 : opts.thickness,
+          color: col(opts.color || COLOR.thin)
+        });
+      },
+      dot(cx, cy, r, color) {
+        page.drawEllipse({ x: cx, y: cy, xScale: r, yScale: r, color: col(color) });
+      },
       // リンクは全ページを作り終えてから貼るので、いったん記録する
       link(x, y, w, h, targetPage) {
         if (targetPage == null) return;
@@ -356,38 +374,64 @@
   }
 
   function drawMonth(p, model, month, x, y, w, h) {
-    p.rect(x, y, w, h, { border: COLOR.line, lw: 1.1 });
-
     const headH = mm(5);
-    p.rect(x, y, w, headH, { fill: COLOR.head, border: COLOR.line, lw: 1.1 });
+    const wdH = mm(3.4);
+    const colW = w / 7;
+    const gridTop = y - headH - wdH;
+    const rowH = (h - headH - wdH) / 6;
+
+    // 見出し（月名）
+    p.rect(x, y, w, headH, { fill: COLOR.head, border: false });
     p.text(`${month.month}月`, x + mm(1.6), y - mm(1.1), { size: 10 });
     const en = new Date(Date.UTC(2000, month.month - 1, 1))
       .toLocaleString("en-US", { month: "long", timeZone: "UTC" });
     p.text(en, x + mm(1.6) + p.width(`${month.month}月`, 10) + mm(1.5), y - mm(1.5),
       { size: 7, color: COLOR.muted });
 
-    const wdH = mm(3.4);
-    const colW = w / 7;
-    let ty = y - headH;
+    // 曜日ラベル
     SUN_FIRST.forEach((wd, i) => {
-      p.text(wd, x + i * colW + mm(0.8), ty - mm(0.5), { size: 7, color: COLOR.muted });
+      p.text(wd, x + i * colW + mm(0.8), y - headH - mm(0.5), { size: 7, color: COLOR.muted });
     });
-    p.rect(x, ty - wdH, w, 0, { border: COLOR.thin, lw: 0.7 });
-    ty -= wdH;
 
-    const rowH = (h - headH - wdH) / 6;
+    // 日付セルの背景（休日・長期休業・週末を塗り分ける。行事は右上の点で示す）。
+    // 塗りは罫線より先に描き、罫線がにじまないようにする。
     month.cells.forEach((day, i) => {
       const cx = x + (i % 7) * colW;
-      const cy = ty - Math.floor(i / 7) * rowH;
+      const cy = gridTop - Math.floor(i / 7) * rowH;
       if (!day) {
-        p.rect(cx, cy, colW, rowH, { fill: [0.98, 0.98, 0.98], border: COLOR.faint, lw: 0.4 });
+        p.rect(cx, cy, colW, rowH, { fill: [0.98, 0.98, 0.98], border: false });
         return;
       }
-      // 年間カレンダーは無地。曜日の色分け（日曜=朱・土曜=藍）だけを付ける。
-      p.rect(cx, cy, colW, rowH, { border: COLOR.faint, lw: 0.4 });
+      const fill = day.breakName ? COLOR.breakTint
+        : day.holiday ? COLOR.holidayTint
+        : day.isWeekend ? COLOR.weekendTint
+        : null;
+      if (fill) p.rect(cx, cy, colW, rowH, { fill, border: false });
+    });
+
+    // 罫線は縦横1本ずつ描く（セルごとに枠を重ねると境界がガタつくため）。
+    p.rect(x, y, w, h, { border: COLOR.line, lw: 1 });
+    p.line(x, y - headH, x + w, y - headH, { color: COLOR.line, thickness: 1 });
+    p.line(x, gridTop, x + w, gridTop, { color: COLOR.thin, thickness: 0.7 });
+    for (let c = 1; c < 7; c++) {
+      const lx = x + c * colW;
+      p.line(lx, gridTop, lx, y - h, { color: COLOR.faint, thickness: 0.5 });
+    }
+    for (let r = 1; r < 6; r++) {
+      const ly = gridTop - r * rowH;
+      p.line(x, ly, x + w, ly, { color: COLOR.faint, thickness: 0.5 });
+    }
+
+    // 日付の数字・行事の点・リンク（書き込みスペースを保つため、印は右上の小さな点だけ）
+    month.cells.forEach((day, i) => {
+      const cx = x + (i % 7) * colW;
+      const cy = gridTop - Math.floor(i / 7) * rowH;
+      if (!day) return;
       const color = day.isSun ? COLOR.sun : (day.isSat ? COLOR.sat : COLOR.ink);
-      // 書き込む前提なので、日付は左上に小さく置く
       p.text(String(day.d), cx + mm(0.7), cy - mm(0.5), { size: 7.5, color });
+      if (day.events) {
+        p.dot(cx + colW - mm(1.1), cy - mm(1.1), mm(0.55), COLOR.event);
+      }
       p.link(cx, cy, colW, rowH, model.weekPageFor(day.date));
     });
   }
@@ -408,25 +452,50 @@
     const inner = PAGE_W - PAD * 2;
     const colW = inner / 12;
     const headH = mm(5);
-
-    model.months.forEach((month, i) => {
-      const x = PAD + i * colW;
-      p.rect(x, y, colW, headH, { fill: COLOR.head, border: COLOR.line, lw: 0.8 });
-      p.text(`${month.month}月`, x + colW / 2, y - mm(1.1), { size: 8, align: "center" });
-    });
-
     const rowH = (y - headH - bottom) / 31;
+    const gridBottom = y - headH - 31 * rowH;
+
+    // 背景の塗り分けを先に（休日は薄い朱、長期休業はさらに淡い藤色、週末は無地グレー）
     for (let row = 0; row < 31; row++) {
       model.months.forEach((month, i) => {
         const x = PAD + i * colW;
         const cy = y - headH - row * rowH;
         const day = month.cells.filter(Boolean)[row];
-        if (!day) {
-          p.rect(x, cy, colW, rowH, { fill: [0.94, 0.94, 0.94], border: COLOR.faint, lw: 0.4 });
-          return;
-        }
-        const fill = day.breakName ? COLOR.brk : (day.isClosed ? COLOR.closed : null);
-        p.rect(x, cy, colW, rowH, { fill, border: COLOR.faint, lw: 0.4 });
+        const fill = !day ? [0.96, 0.96, 0.96]
+          : day.breakName ? COLOR.breakTint
+          : day.holiday ? COLOR.holidayTint
+          : day.isWeekend ? COLOR.weekendTint
+          : null;
+        if (fill) p.rect(x, cy, colW, rowH, { fill, border: false });
+      });
+    }
+
+    // 見出しの帯
+    model.months.forEach((month, i) => {
+      const x = PAD + i * colW;
+      p.rect(x, y, colW, headH, { fill: COLOR.head, border: false });
+      p.text(`${month.month}月`, x + colW / 2, y - mm(1.1), { size: 8, align: "center" });
+    });
+
+    // 罫線は縦横1本ずつ（12列 × 31行のマス目をまとめて描く）
+    p.rect(PAD, y, inner, y - gridBottom, { border: COLOR.line, lw: 1 });
+    p.line(PAD, y - headH, PAD + inner, y - headH, { color: COLOR.line, thickness: 0.8 });
+    for (let c = 1; c < 12; c++) {
+      const lx = PAD + c * colW;
+      p.line(lx, y, lx, gridBottom, { color: COLOR.faint, thickness: 0.5 });
+    }
+    for (let r = 1; r < 31; r++) {
+      const ly = y - headH - r * rowH;
+      p.line(PAD, ly, PAD + inner, ly, { color: COLOR.faint, thickness: 0.4 });
+    }
+
+    // 文字とリンク
+    for (let row = 0; row < 31; row++) {
+      model.months.forEach((month, i) => {
+        const x = PAD + i * colW;
+        const cy = y - headH - row * rowH;
+        const day = month.cells.filter(Boolean)[row];
+        if (!day) return;
         const color = day.isSun ? COLOR.sun : (day.isSat ? COLOR.sat : COLOR.muted);
         p.text(`${day.d}${day.weekday}`, x + mm(0.6), cy - mm(0.35), { size: 6, color });
         const label = [day.closedLabel, day.events].filter(Boolean).join(" / ");
