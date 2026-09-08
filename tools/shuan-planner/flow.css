@@ -268,11 +268,16 @@
 .flow table.tt td { padding: 4px; }
 .flow table.tt input { border-radius: 5px; padding: 6px 8px; font-size: 13px; margin-bottom: 3px; }
 .flow table.tt select { border-radius: 5px; padding: 3px 6px; font-size: 11.5px; }
-.flow td.c-red input { background: var(--c-red); }
-.flow td.c-blue input { background: var(--c-blue); }
-.flow td.c-green input { background: var(--c-green); }
-.flow td.c-yellow input { background: var(--c-yellow); }
-.flow td.c-gray input { background: var(--c-gray); }
+/* 時間割のマスは、授業リストで決めた色をそのまま出す（PDFの色分けのプレビュー）。
+   マス自体を塗り、選択欄は透明にして下の色を透かす。こうすると
+   ▼のマークは残るので、選べる欄だと分かったままにできる。 */
+.flow td.c-red { background: var(--c-red); }
+.flow td.c-blue { background: var(--c-blue); }
+.flow td.c-green { background: var(--c-green); }
+.flow td.c-yellow { background: var(--c-yellow); }
+.flow td.c-gray { background: var(--c-gray); }
+.flow table.tt td[class^="c-"] select { background: transparent; border-color: rgba(0, 0, 0, .18); }
+.flow table.tt td { transition: background .15s; }
 .flow .break-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px; margin-bottom: 10px; }
 /* ── 完成画面 ─────────────────────────────── */
 .flow .done-card {
@@ -424,3 +429,139 @@
 
 /* LPのセクション背景に馴染ませる（白いカードは中の .screen が持っている） */
 .flow { background: transparent; }
+
+/* ── 入力のヒント・CSV読み込み ───────────────────────── */
+.flow .hint-list {
+  margin: 0 0 12px;
+  padding-left: 1.2em;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.8;
+}
+.flow .hint-list li { margin-bottom: 2px; }
+.flow .hint-list code {
+  background: var(--surface-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11.5px;
+}
+
+.flow .events-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+/* ファイル選択は既定の見た目だと分かりにくいので、ボタンとして見せる。 */
+.flow .file-btn {
+  display: inline-block;
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: 7px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.flow .file-btn:hover { background: var(--surface-sunk); border-color: var(--ink-faint); }
+.flow .file-btn input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.flow .file-note {
+  flex: 1 1 240px;
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+
+/* ── クーポン（今回限りの特別感を出す） ─────────────── */
+.flow .coupon-card {
+  position: relative;
+  background: linear-gradient(135deg, #fffaf3, #fff3ef);
+  border: 2px dashed var(--coupon-line, #e8a33d);
+  padding: 14px 16px 12px;
+  overflow: hidden;
+}
+.flow .coupon-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #e8a33d;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: 2px 12px;
+  border-bottom-left-radius: 8px;
+}
+.flow .coupon-name { font-size: 14.5px; }
+/* 右上のリボンに文字がぶつからないよう、見出し行の右を空けておく。 */
+.flow .coupon-card-head { flex-wrap: wrap; padding-right: 74px; }
+.flow .coupon-catch {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: #8a6413;
+}
+.flow .coupon-row.is-applied .coupon-catch { display: none; }
+.flow .coupon-row.is-applied .coupon-card {
+  border-style: solid;
+  border-color: var(--ok);
+  background: linear-gradient(135deg, #f2fbf6, #eaf7f0);
+}
+.flow .coupon-row.is-applied .coupon-ribbon { background: var(--ok); }
+.flow .coupon-amount { font-size: 15px; }
+
+/* 未使用のあいだは、押してほしいボタンとして目立たせる。 */
+.flow .coupon-use {
+  background: #e8a33d;
+  border-color: #cf8c28;
+  color: #fff;
+  font-size: 14px;
+  padding: 11px 20px;
+  box-shadow: 0 4px 12px -5px rgba(232, 163, 61, .9);
+}
+.flow .coupon-use:hover { background: #d9932f; border-color: #b87b1f; color: #fff; }
+.flow .coupon-use[aria-pressed="true"] {
+  background: var(--ok-soft);
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--surface));
+  box-shadow: none;
+  font-weight: 700;
+}
+
+/* クーポン未使用でカード欄に触れたときの案内 */
+.flow .coupon-alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-rule);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 0 0 14px;
+  animation: coupon-pop .25s ease-out;
+}
+.flow .coupon-alert .ca-icon { font-size: 22px; line-height: 1.2; }
+.flow .coupon-alert strong { display: block; font-size: 14px; color: var(--warn-ink); margin-bottom: 4px; }
+.flow .coupon-alert p { margin: 0 0 10px; font-size: 13px; color: var(--warn-ink); }
+.flow .coupon-alert b { font-weight: 700; }
+
+@keyframes coupon-pop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 560px) {
+  .flow .coupon-row { flex-direction: column; align-items: stretch; }
+  .flow .coupon-use { width: 100%; }
+}

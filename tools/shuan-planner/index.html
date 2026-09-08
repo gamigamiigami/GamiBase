@@ -46,7 +46,7 @@
           年間カレンダーの日付をタップすれば、その週のページへ一発で飛べます。
         </p>
         <div class="hero-actions">
-          <a href="#purchase" class="btn">このページで購入する</a>
+          <a href="#purchase" class="cta">このページで購入する</a>
           <span class="hero-note">1,980円・買い切り／その場でダウンロード</span>
         </div>
         <ul class="hero-points">
@@ -230,7 +230,7 @@
             <li>ページ内リンク 1,100以上／GoodNotes用しおり付き</li>
             <li>ご購入後すぐダウンロード</li>
           </ul>
-          <a href="#purchase" class="btn">このページで購入する</a>
+          <a href="#purchase" class="cta">このページで購入する</a>
           <p class="price-note">※基本パッケージ価格。オプションの詳細は公式LINEでご案内いたします。</p>
         </div>
       </div>
@@ -330,16 +330,30 @@
           <div id="breaks"></div>
 
           <h3>5. 年間行事予定<span class="badge opt">任意</span></h3>
-          <p class="lead" style="margin-bottom:14px">
-            学校の行事予定表（CSV / Excel）をアップロードするか、貼り付けてください。
-            日付は <code>4/8</code>・<code>4月8日</code>・<code>2026-04-08</code> のどれでも読めます。
+          <p class="lead" style="margin-bottom:10px">
+            <strong>1行に1件</strong>、「日付 , 行事名」の形で入力してください。改行で何件でも追加できます。
           </p>
-          <textarea id="events">4/6,始業式
-    4/7,入学式
-    5/28,修学旅行（3年）
-    10/24,体育大会
-    2/27,卒業式予行
-    3/5,卒業式</textarea>
+          <ul class="hint-list">
+            <li>区切りは <code>,</code>（カンマ）・<code>、</code>・タブのどれでもOK。エクセルからそのままコピー＆貼り付けできます。</li>
+            <li>日付は <code>4/8</code>・<code>4月8日</code>・<code>2026-04-08</code> のどれでも読めます。</li>
+            <li>1〜3月は自動で翌年（年度内）として扱います。年度外の日付は取り込みません。</li>
+          </ul>
+          <div class="events-tools">
+            <label class="file-btn">
+              CSVファイルを読み込む
+              <input type="file" id="events-file" accept=".csv,.tsv,.txt,text/csv,text/plain">
+            </label>
+            <span class="file-note" id="events-file-note">
+              エクセルの場合は「名前を付けて保存 → CSV」にするか、表を選んでコピーし、下の欄に貼り付けてください。
+            </span>
+          </div>
+          <textarea id="events" aria-label="年間行事予定">4/6,始業式
+4/7,入学式
+5/28,修学旅行（3年）
+10/24,体育大会
+2/27,卒業式予行
+3/5,卒業式</textarea>
+          <p class="btn-note" id="events-count" style="margin-top:6px"></p>
 
           <div class="btn-row">
             <button class="btn" id="to-purchase" data-go="2">この内容で確認・購入へ進む</button>
@@ -373,13 +387,15 @@
             </div>
             <div class="price-row coupon-row">
               <div class="coupon-card">
+                <span class="coupon-ribbon">今回限り</span>
                 <div class="coupon-card-head">
-                  <span class="coupon-name">先生応援クーポン</span>
+                  <span class="coupon-name">🎉 スペシャル先生応援クーポン</span>
                   <span class="coupon-code">SENSEI100</span>
                 </div>
+                <p class="coupon-catch">あなたはこのクーポンを持っています。使えば、お支払いは…？</p>
                 <p class="coupon-amount" id="coupon-amount"></p>
               </div>
-              <button type="button" class="btn-sub" id="toggle-coupon" aria-pressed="false">クーポンを使う</button>
+              <button type="button" class="btn-sub coupon-use" id="toggle-coupon" aria-pressed="false">クーポンを使う</button>
             </div>
             <div class="price-row discount-row" id="discount-row" hidden>
               <span class="price-label">クーポン割引（<span id="coupon-applied">SENSEI100</span>）</span>
@@ -392,6 +408,14 @@
           </div>
 
           <h3>お支払い方法<span class="payment-badge" id="payment-badge" hidden>0円のため不要</span></h3>
+          <div class="coupon-alert" id="coupon-alert" hidden role="alert">
+            <span class="ca-icon">🎫</span>
+            <div>
+              <strong>ちょっと待ってください！ クーポン、持っていますよ！</strong>
+              <p>カード情報を入れる前に、上の「スペシャル先生応援クーポン」を使ってください。お支払いは <b>0円</b> になります。</p>
+              <button type="button" class="btn-sub" id="coupon-alert-use">クーポンを使って0円にする</button>
+            </div>
+          </div>
           <div class="fields" id="payment">
             <div>
               <label for="cc-num">カード番号</label>
@@ -409,9 +433,13 @@
           <p class="btn-note" id="payment-note" style="margin-top:6px"></p>
 
           <h3>メールアドレス</h3>
+          <p class="lead" style="margin:-6px 0 12px">
+            ご購入の控えをお送りするための連絡先です。
+            <strong>時間割・行事予定などの入力内容が送信されることはありません</strong>（PDFはこの端末の中だけで作られます）。
+          </p>
           <div class="fields">
             <div>
-              <label for="mail">メールアドレス（購入確認をお送りします）<span class="badge req">必須</span></label>
+              <label for="mail">メールアドレス<span class="badge req">必須</span></label>
               <input id="mail" type="email" placeholder="例：teacher@example.com" required>
             </div>
           </div>
@@ -531,7 +559,7 @@
             教員向けの最新情報、使い方のヒント、イベント情報を公式LINEでお届け中です。
             ご質問・ご要望も、こちらからお気軽にご連絡ください。
           </p>
-          <a href="https://lin.ee/cTwWhUI" class="btn btn-line">公式LINEに登録する</a>
+          <a href="https://lin.ee/cTwWhUI" class="cta cta-line">公式LINEに登録する</a>
           <div class="sns-links">
             <a href="https://lin.ee/cTwWhUI" class="sns-link">公式LINE</a>
             <a href="#" class="sns-link">X</a>
@@ -552,7 +580,7 @@
 <!-- スマホ縦向き用の追従CTA -->
 <div class="sticky-cta">
   <div class="sc-price">1,980円<small>買い切り・すぐダウンロード</small></div>
-  <a href="#purchase" class="btn">購入する</a>
+  <a href="#purchase" class="cta">購入する</a>
 </div>
 
 <div id="lightbox-modal">

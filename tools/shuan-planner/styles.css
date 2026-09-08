@@ -517,7 +517,7 @@ img {
 /* 価格                                                                */
 /* ------------------------------------------------------------------ */
 
-.price-card {
+#pricing .price-card {
   max-width: 620px;
   margin: 0 auto;
   background: var(--surface);
@@ -528,7 +528,7 @@ img {
   text-align: center;
 }
 
-.price-head {
+#pricing .price-head {
   background: linear-gradient(135deg, var(--coral), #ff8a7d);
   color: #fff;
   padding: 14px 20px;
@@ -537,11 +537,11 @@ img {
   letter-spacing: .06em;
 }
 
-.price-body {
+#pricing .price-body {
   padding: clamp(26px, 4vw, 38px) clamp(20px, 4vw, 40px) clamp(26px, 4vw, 34px);
 }
 
-.price-amount {
+#pricing .price-amount {
   display: flex;
   align-items: baseline;
   justify-content: center;
@@ -550,7 +550,7 @@ img {
   margin-bottom: 6px;
 }
 
-.price-amount .num {
+#pricing .price-amount .num {
   font-size: clamp(52px, 9vw, 78px);
   font-weight: 700;
   color: var(--coral-dark);
@@ -558,13 +558,13 @@ img {
   font-feature-settings: "tnum";
 }
 
-.price-amount .yen {
+#pricing .price-amount .yen {
   font-size: clamp(20px, 3vw, 28px);
   font-weight: 700;
   color: var(--coral-dark);
 }
 
-.price-tag {
+#pricing .price-tag {
   display: inline-block;
   background: var(--coral-tint);
   color: var(--coral-deep);
@@ -575,7 +575,7 @@ img {
   margin-bottom: 22px;
 }
 
-.price-includes {
+#pricing .price-includes {
   list-style: none;
   text-align: left;
   max-width: 380px;
@@ -584,7 +584,7 @@ img {
   color: var(--ink-soft);
 }
 
-.price-includes li {
+#pricing .price-includes li {
   padding: 9px 0;
   border-bottom: 1px dashed var(--rule);
   display: flex;
@@ -594,14 +594,14 @@ img {
 
 .price-includes li:last-child { border-bottom: 0; }
 
-.price-includes li::before {
+#pricing .price-includes li::before {
   content: "✓";
   color: var(--coral);
   font-weight: 700;
   flex: 0 0 auto;
 }
 
-.price-note {
+#pricing .price-note {
   font-size: 12.5px;
   color: var(--ink-faint);
   margin-top: 16px;
@@ -611,7 +611,7 @@ img {
 /* ボタン                                                              */
 /* ------------------------------------------------------------------ */
 
-.btn {
+.cta {
   display: inline-block;
   background: var(--coral);
   color: #fff;
@@ -627,31 +627,31 @@ img {
   font-family: inherit;
 }
 
-.btn:hover {
+.cta:hover {
   background: var(--coral-deep);
   transform: translateY(-2px);
   box-shadow: 0 10px 22px -8px rgba(255, 111, 97, .9);
 }
 
-.btn-ghost {
+.cta-ghost {
   background: transparent;
   color: var(--coral-deep);
   border: 1.5px solid var(--coral-line);
   box-shadow: none;
 }
 
-.btn-ghost:hover {
+.cta-ghost:hover {
   background: var(--coral-tint);
   color: var(--coral-deep);
   box-shadow: none;
 }
 
-.btn-line {
+.cta-line {
   background: #06c755;
   box-shadow: 0 6px 16px -6px rgba(6, 199, 85, .8);
 }
 
-.btn-line:hover {
+.cta-line:hover {
   background: #05a948;
   box-shadow: 0 10px 22px -8px rgba(6, 199, 85, .9);
 }
@@ -836,7 +836,7 @@ img {
   font-weight: 400;
 }
 
-.sticky-cta .btn {
+.sticky-cta .cta {
   padding: 12px 22px;
   font-size: 14px;
   white-space: nowrap;
@@ -907,7 +907,7 @@ img {
 @media (max-width: 560px) {
   .logo small { display: none; }
   .hero-points { flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; }
-  .hero-actions .btn { width: 100%; text-align: center; }
+  .hero-actions .cta { width: 100%; text-align: center; }
   .faq-item .faq-body { padding-left: 20px; }
   .gallery figcaption { padding: 12px 14px 14px; }
 }

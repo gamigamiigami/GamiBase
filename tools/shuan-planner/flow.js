@@ -218,7 +218,7 @@
     toggleCoupon.setAttribute("aria-pressed", String(couponUsed));
     toggleCoupon.textContent = couponUsed ? "使用中（取り消す）" : "クーポンを使う";
     couponAmount.textContent = couponUsed
-      ? `¥${discount.toLocaleString("ja-JP")}引き（定価の100倍オフ）`
+      ? `${yen(discount)}引き（なんと定価の100倍オフ）`
       : "";
 
     paymentBox.classList.toggle("is-waived", total === 0);
@@ -227,12 +227,115 @@
     paymentNote.textContent = total === 0
       ? "クーポンにより合計0円です。カード情報は入力しなくても購入に進めます（お試しで入れても実際には使われません）。"
       : "このデモでは実際の請求は発生しません。カード情報は送信・保存されません。";
+
+    // クーポンを使えば0円になるので、使った時点で案内は引っ込める。
+    if (couponUsed) couponAlert.hidden = true;
   }
   toggleCoupon.addEventListener("click", () => {
     couponUsed = !couponUsed;
     updatePrice();
   });
+
+  // クーポンを使わずにカード情報を入れようとしたら、まず教えてあげる。
+  const couponAlert = document.getElementById("coupon-alert");
+  const cardFields = ["cc-num", "cc-exp", "cc-cvc"].map((id) => document.getElementById(id));
+  function nudgeCoupon(e) {
+    if (couponUsed) return;
+    couponAlert.hidden = false;
+    couponAlert.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (e && e.target) e.target.blur();
+  }
+  cardFields.forEach((el) => {
+    if (!el) return;
+    el.addEventListener("focus", nudgeCoupon);
+    el.addEventListener("beforeinput", nudgeCoupon);
+  });
+  document.getElementById("coupon-alert-use").addEventListener("click", () => {
+    couponUsed = true;
+    updatePrice();
+    couponRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
   updatePrice();
+
+  // ── 年間行事予定の読み取り ──────────────────────────
+  // 1行1件。「日付 , 行事名」をカンマ・読点・タブのどれで区切ってもよい
+  // （エクセルからそのまま貼るとタブ区切りになる）。
+  // 1〜3月は翌年＝年度内として扱い、年度外の日付は捨てる。
+  function parseEvents(text, year) {
+    const events = [];
+    text.split(/\r?\n/).forEach((line) => {
+      const row = line.trim();
+      if (!row) return;
+      const parts = row.split(/[,、\t]/);
+      if (parts.length < 2) return;
+      const raw = parts[0].trim();
+      const title = parts.slice(1).join(",").trim();
+      if (!title) return;
+      let y = year, m, d;
+      let match = raw.match(/^(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})/);
+      if (match) { y = +match[1]; m = +match[2]; d = +match[3]; }
+      else {
+        match = raw.match(/^(\d{1,2})\s*[\/月.\-]\s*(\d{1,2})/);
+        if (!match) return;
+        m = +match[1]; d = +match[2];
+        y = m <= 3 ? year + 1 : year;
+      }
+      if (m < 1 || m > 12 || d < 1 || d > 31) return;
+      const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      if (iso < `${year}-04-01` || iso > `${year + 1}-03-31`) return;
+      events.push({ date: iso, title });
+    });
+    return events;
+  }
+
+  // 何件読めているかをその場で返す。書き方を間違えたまま進まないようにする。
+  const eventsEl = document.getElementById("events");
+  const eventsCount = document.getElementById("events-count");
+  function updateEventsCount() {
+    const lines = eventsEl.value.split(/\r?\n/).filter((l) => l.trim()).length;
+    const ok = parseEvents(eventsEl.value, Number(yearEl.value)).length;
+    if (!lines) {
+      eventsCount.textContent = "";
+      return;
+    }
+    eventsCount.textContent = ok === lines
+      ? `${ok}件を読み取りました。`
+      : `${ok}件を読み取りました（${lines - ok}行は日付として読めないか、年度外のため取り込みません）。`;
+  }
+  eventsEl.addEventListener("input", updateEventsCount);
+  yearEl.addEventListener("change", updateEventsCount);
+  updateEventsCount();
+
+  // CSV / TSV の読み込み。エクセルから書き出したCSVは Shift_JIS のことが多いので、
+  // UTF-8 で文字化けしたら Shift_JIS で読み直す。
+  const eventsFile = document.getElementById("events-file");
+  const eventsFileNote = document.getElementById("events-file-note");
+  function decodeCsv(buffer) {
+    const utf8 = new TextDecoder("utf-8").decode(buffer);
+    if (!utf8.includes("�")) return utf8;
+    try {
+      return new TextDecoder("shift_jis").decode(buffer);
+    } catch (err) {
+      return utf8;
+    }
+  }
+  eventsFile.addEventListener("change", async () => {
+    const file = eventsFile.files && eventsFile.files[0];
+    if (!file) return;
+    try {
+      const text = decodeCsv(await file.arrayBuffer());
+      // 1列目が日付として読めない行（見出し行など）はそのまま残し、判断は本人に委ねる。
+      const current = eventsEl.value.trim();
+      eventsEl.value = (current ? current + "\n" : "") + text.trim();
+      updateEventsCount();
+      const added = parseEvents(text, Number(yearEl.value)).length;
+      eventsFileNote.textContent = `${file.name} を読み込みました（${added}件）。中身を確認して、いらない行は消してください。`;
+    } catch (err) {
+      eventsFileNote.textContent = "読み込めませんでした: " + (err && err.message ? err.message : err);
+    }
+    eventsFile.value = "";
+  });
 
   // ── 入力を集めて PDF を作る ──────────────────────────
   function collectInput() {
@@ -261,30 +364,7 @@
       }
     }
 
-    // 「4/8,入学式」形式を読む。1〜3月は翌年とみなす（学校年度の慣習）。
-    const events = [];
-    document.getElementById("events").value.split(/\r?\n/).forEach((line) => {
-      const row = line.trim();
-      if (!row) return;
-      const parts = row.split(/[,、\t]/);
-      if (parts.length < 2) return;
-      const raw = parts[0].trim();
-      const title = parts.slice(1).join(",").trim();
-      if (!title) return;
-      let y = year, m, d;
-      let match = raw.match(/^(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})/);
-      if (match) { y = +match[1]; m = +match[2]; d = +match[3]; }
-      else {
-        match = raw.match(/^(\d{1,2})\s*[\/月.\-]\s*(\d{1,2})/);
-        if (!match) return;
-        m = +match[1]; d = +match[2];
-        y = m <= 3 ? year + 1 : year;
-      }
-      if (m < 1 || m > 12 || d < 1 || d > 31) return;
-      const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      if (iso < `${year}-04-01` || iso > `${year + 1}-03-31`) return;
-      events.push({ date: iso, title });
-    });
+    const events = parseEvents(document.getElementById("events").value, year);
 
     const free = Number(document.getElementById("fp").value);
     return {
