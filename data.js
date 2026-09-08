@@ -258,13 +258,6 @@ const SITE_DATA = [
     emoji: "📋",
     zip: { url: "./tools/sekigae/tool.html", label: "ツール本体をダウンロード（推奨）" },
   },
-  {
-    category: "useful",
-    title: "迷路謎メーカー",
-    description: "オリジナルの迷路謎を作れる先生向けツール。",
-    url: "https://gamigamiigami.github.io/Workspace/projects/meiro-nazo-maker/",
-    emoji: "🌀",
-  },
 
   // ==== 便利ツール ====
   {
@@ -313,9 +306,9 @@ const SITE_DATA = [
     category: "useful",
     group: "pdf-linkun",
     section: "ツール本体",
-    title: "週案スケジュール帳メーカー",
+    title: "シゴデキ先生.PDF",
     description: "年度と時間割を入れると、リンク付きの週案PDF（86ページ）がその場で作れます。祝日は自動、入力データは送信されません。",
-    url: "./tools/shuan-planner/",
+    url: "./tools/shigodeki-sensei/",
     emoji: "📘",
     tags: ["自動生成", "GoodNotes", "無料"],
   },
