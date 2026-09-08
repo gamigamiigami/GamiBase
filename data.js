@@ -333,6 +333,14 @@ const SITE_DATA = [
     zip: { url: "./downloads/shigodeki-sensei-mihon.xlsm", label: "見本エクセルをダウンロード" },
   },
 
+  {
+    category: "useful",
+    title: "迷路謎メーカー",
+    description: "オリジナルの迷路謎を作れる先生向けツール。",
+    url: "https://gamigamiigami.github.io/Workspace/projects/meiro-nazo-maker/",
+    emoji: "🌀",
+  },
+
   // ==== イベント ====
   {
     category: "event",
