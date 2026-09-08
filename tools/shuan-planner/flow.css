@@ -507,12 +507,6 @@
 .flow .coupon-name { font-size: 14.5px; }
 /* 右上のリボンに文字がぶつからないよう、見出し行の右を空けておく。 */
 .flow .coupon-card-head { flex-wrap: wrap; padding-right: 74px; }
-.flow .coupon-catch {
-  margin: 6px 0 0;
-  font-size: 12.5px;
-  color: #8a6413;
-}
-.flow .coupon-row.is-applied .coupon-catch { display: none; }
 .flow .coupon-row.is-applied .coupon-card {
   border-style: solid;
   border-color: var(--ok);
