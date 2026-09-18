@@ -1981,15 +1981,21 @@
         const gridWidth = grid.scrollWidth;
         if (!wrapWidth || !gridWidth) return;
 
-        // 横はばだけでなく、画面の残り高さにも必ず入るようにする
-        // （スクロール・ズームアウトなしで全体が見えることを優先し、
-        //   高さが足りない場合でも下限をつけずに縮める）
+        // 横はばだけでなく、画面の残り高さにも必ず入るようにする。
+        // 「残り高さ」は今のスクロール位置（wrap.getBoundingClientRect().top）を使うと、
+        // 上に長い説明やボタンがあるときに「まだ上までスクロールしていないだけ」で
+        // 見かけ上マイナスになり、座席表がとんでもなく小さくなってしまう不具合があった。
+        // 貼りつく操作バー（sticky-bar）はスクロールしても画面上に残りつづけるので、
+        // そのぶんだけ画面の高さから引けば、スクロール位置に関係なく正しく計算できる。
         let scale = Math.min(1, wrapWidth / gridWidth);
         if (typeof window !== 'undefined' && window.innerHeight && grid.scrollHeight) {
-          const rect = wrap.getBoundingClientRect();
-          const availableHeight = Math.max(60, window.innerHeight - rect.top - 16); // 下に少し余白
+          const bar = document.querySelector('.sticky-bar');
+          const barHeight = (bar && bar.offsetHeight) || 0;
+          const availableHeight = Math.max(240, window.innerHeight - barHeight - 24);
           scale = Math.min(scale, availableHeight / grid.scrollHeight);
         }
+        // 万が一の計算まちがいでも、座席表が見えなくなるほど縮まないよう下限をつける
+        scale = Math.max(scale, 0.4);
         if (scale >= 0.999) return; // 入りきっているので何もしない
 
         grid.style.transformOrigin = 'left top';
