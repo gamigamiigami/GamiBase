@@ -16,6 +16,7 @@
       --danger: #c0392b;
       --warn: #b7950b;
       --info: #2471a3;
+      --finalize: #1e8449;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -39,6 +40,15 @@
     }
     button.primary { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: bold; }
     button.danger-btn { color: var(--danger); border-color: var(--danger); }
+    /* 「記録する」＝この座席替えを決定するボタン。ほかの操作ボタンとまぎれないよう見た目を分ける */
+    .finalize-row {
+      margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--border);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    button.finalize-btn {
+      background: var(--finalize); border-color: var(--finalize); color: #fff;
+      font-weight: bold; font-size: 16px; padding: 10px 18px;
+    }
     button:active { opacity: 0.8; }
     input[type="text"], input[type="number"], select, textarea {
       font-family: inherit;
@@ -140,11 +150,13 @@
       font-size: 14px;
       letter-spacing: 0.3em;
     }
-    .seat-grid-wrap { overflow-x: auto; padding-bottom: 6px; }
-    .seat-grid { display: grid; gap: 6px; min-width: fit-content; }
+    /* 横方向は minmax(0, 1fr) なので、はばがせまくても列がちぢんでぜったいに
+       はみ出さない（スクロールバーは出さない。縦方向は fitGridToScreen で縮小する） */
+    .seat-grid-wrap { overflow: hidden; padding-bottom: 6px; }
+    .seat-grid { display: grid; gap: 6px; width: 100%; }
     /* 席マス：中に「机の四角（.desk）」を置く。向きによって四角の形が変わる */
     .seat {
-      min-width: 80px;
+      min-width: 0; /* 列がふえてもぜったいにあふれないよう、下限をつけない */
       height: 92px;
       display: flex;
       align-items: center;
@@ -471,6 +483,9 @@
       body { background: #fff; padding: 0; font-size: 13px; }
       .card { border: none; padding: 0; margin-bottom: 16px; }
       .seat { cursor: default; }
+      /* 画面上で座席表を縮小表示したときの transform は、印刷には持ちこまない */
+      .seat-grid { transform: none !important; }
+      .seat-grid-wrap { height: auto !important; overflow: visible !important; }
       .print-header { display: block !important; margin-bottom: 10px; font-size: 14px; }
       .roster-card { page-break-inside: avoid; border-width: 1px; }
       .print-break { page-break-before: always; } /* このカードは新しいページから印刷する */
@@ -486,10 +501,11 @@
     }
     .print-header { display: none; }
 
-    /* ===== iPad縦持ち（〜820px）調整 ===== */
+    /* ===== iPad縦持ち（〜820px）調整 =====
+       .seat に min-width をつけない（列がふえてもぜったいにあふれないように） */
     @media (max-width: 820px) {
       nav.tabs button { font-size: 13px; padding: 10px 6px; }
-      .seat { min-width: 68px; height: 80px; }
+      .seat { height: 80px; }
       .desk { font-size: 12px; }
     }
   </style>
@@ -627,7 +643,6 @@
     <div class="sticky-bar no-print">
       <div class="row">
         <button id="btnRunShuffle" class="primary" style="font-size:17px">🎲 席替え実行</button>
-        <button id="btnSaveHistory">💾 記録する</button>
         <button id="btnInvertGender" title="今の男子と女子の位置を入れかえます">🔁 男女を逆に</button>
         <button id="btnFlipView" title="黒板を上にするか下にするかを切りかえます">🔄 黒板の向き</button>
         <button id="btnCompare" title="前回の座席と今回の座席をならべて見くらべます">🔍 前回とならべる</button>
@@ -642,6 +657,12 @@
         <span class="hint" id="pinCount"></span>
       </div>
       <p class="hint" id="shuffleToolHint" style="display:none"></p>
+      <!-- 「記録する」＝この座席替えを決定するボタン。ほかのボタンにまぎれないよう、
+           区切り線を入れて別の行にする -->
+      <div class="row finalize-row">
+        <button id="btnSaveHistory" class="finalize-btn">💾 記録する（この座席に決定）</button>
+        <span class="hint">記録すると次回の「前回」になります。📌の固定は自動で消えます</span>
+      </div>
       <!-- 前回とくらべた結果をここに常に出す（別のページを見に行かなくてよい） -->
       <div id="prevCheck" class="prev-check"></div>
       <!-- NG設定にひっかかったときの大きな警告 -->
@@ -654,6 +675,10 @@
       <label class="check-label">
         <input type="checkbox" id="chkChecker">
         ♟ 男女が交互（市松模様）になるようにする
+      </label>
+      <label class="check-label">
+        <input type="checkbox" id="chkGroupColor" checked>
+        🎨 班の色をこの画面に表示する（オフにすると机のわく色だけになります）
       </label>
       <div class="row">
         <button id="btnClearPins">📌 今回だけの固定をぜんぶ消す</button>
@@ -895,16 +920,19 @@
 
     // 「良くない席」の減点。数が大きいほど強く避ける。
     // 避けたい順（先生の指定）：
-    //   ×× 前回ととなりが同じ      … 絶対に避けたい
+    //   ×× 前回ととなりが同じ      … 絶対に避けたい（特定の2人が前回もとなり）
     //   ×  前回と席の位置が同じ    … できるだけ避けたい
     //      （ただしNG設定で1か所しか座れない生徒は仕方ないので数えない）
-    //   ▲  前回と前後・斜めが同じ  … 可能なら避けたい
+    //   ▲  前回も今回も同じ班の2人が、いま となり／前後／斜め になっている
+    //      … 可能なら避けたい（「また同じ班！」の繰り返しを、いまの近さで見つける）
+    //      特定の2人が「前回も斜めだった」かは問わない。同じ班であることだけが条件
     //   □  前回近くだった人と同じ班 … 避ける必要はないが知りたい（減点なし・お知らせのみ）
     const PENALTY = {
-      side: 2000,      // ×× 前回と左右のとなりが同じ
+      side: 2000,      // ×× 前回と左右のとなりが同じ（特定の2人の位置の繰り返し）
       sameSeat: 600,   // ×  前回とまったく同じ席
-      frontBack: 120,  // ▲  前回と前後が同じ
-      diagonal: 100,   // ▲  前回と斜めが同じ
+      groupSide: 150,  // ▲  同じ班の2人が、いま となり になっている
+      frontBack: 120,  // ▲  同じ班の2人が、いま 前後 になっている
+      diagonal: 100,   // ▲  同じ班の2人が、いま 斜め になっている
       pastSide: 110,   // ▲  前回より前の回で となり同士 だった（可能なら避けたい）
       oldNear: 8       // もっと前の回で前後だった（軽めに避ける）
     };
@@ -969,6 +997,7 @@
         history: [],
         currentSeats: null,   // 直近の席替え結果（席キー → 生徒ID）
         checkerGender: false, // 男女を市松模様（交互）に並べるか
+        showGroupColor: true, // 席替えページで班の色を表示するか（目がちかちかする場合はオフに）
         numberMode: 'serial', // 出席番号の付け方：'serial'（通し番号）| 'gender'（男1・女1…）
         tempFixed: {},        // 今回だけの固定（席キー → 生徒ID）。記録するとリセットされる
         viewFlipped: false    // 座席表を「黒板が下」で表示するか
@@ -1170,9 +1199,11 @@
 
     // 前回（最新の履歴）とくらべて、何がダブっているかを数える
     function comparePrevious(cr, assignment, prevInfo, forcedSet) {
-      const result = { sameSeat: 0, side: 0, fb: 0, diag: 0, nearThenGroup: 0, sameSeatForced: 0,
+      const result = { sameSeat: 0, side: 0, fb: 0, diag: 0, groupSide: 0,
+                       nearThenGroup: 0, sameSeatForced: 0,
                        hasPrev: !!prevInfo,
-                       seatsSameSeat: [], seatsSide: [], seatsFb: [], seatsDiag: [], seatsGroup: [] };
+                       seatsSameSeat: [], seatsSide: [], seatsFb: [], seatsDiag: [],
+                       seatsGroupSide: [], seatsGroup: [] };
       if (!prevInfo) return result;
       const forced = forcedSet || getForcedSeatStudents(cr);
       const seatOf = {};
@@ -1199,9 +1230,26 @@
           if (seatOf[b]) result[seatKey].push(seatOf[b]);
         }
       };
+      // ×× 「特定の2人」がとなり同士だったかどうかの繰り返し（位置そのものの一致）
       collect(rel.side, prevInfo.rel.side, 'side', 'seatsSide');
-      collect(rel.fb, prevInfo.rel.fb, 'fb', 'seatsFb');
-      collect(rel.diag, prevInfo.rel.diag, 'diag', 'seatsDiag');
+
+      // ▲ 前後・斜め・となり：「前回も今回も同じ班」の2人が、いまその位置関係にある。
+      //   特定の2人が前回どの位置にいたかは問わない。同じ班であることだけを見る。
+      //   （斜め・前後・となりであっても、班が前回とちがえば数えない）
+      const groupRepeat = new Set();
+      for (const pk of rel.group) if (prevInfo.rel.group.has(pk)) groupRepeat.add(pk);
+      const collectGroupRepeat = (set, countKey, seatKey) => {
+        for (const pk of set) {
+          if (!groupRepeat.has(pk)) continue;
+          result[countKey]++;
+          const [a, b] = pk.split('|');
+          if (seatOf[a]) result[seatKey].push(seatOf[a]);
+          if (seatOf[b]) result[seatKey].push(seatOf[b]);
+        }
+      };
+      collectGroupRepeat(rel.side, 'groupSide', 'seatsGroupSide');
+      collectGroupRepeat(rel.fb, 'fb', 'seatsFb');
+      collectGroupRepeat(rel.diag, 'diag', 'seatsDiag');
 
       // □ 前回「近く（となり・前後・斜め）」だった2人が、今回 同じ班になっている
       //   避ける必要はないが知りたい、という項目なので減点はしない
@@ -1224,6 +1272,7 @@
       // 避けたい順に重みをつける（□の「近くだった人が同じ班」は減点しない）
       let p = cmp.side * PENALTY.side +
               cmp.sameSeat * PENALTY.sameSeat +
+              cmp.groupSide * PENALTY.groupSide +
               cmp.fb * PENALTY.frontBack +
               cmp.diag * PENALTY.diagonal;
 
@@ -1657,9 +1706,25 @@
           }
         };
         reportRepeat(rel.side, prevRel.side, 'error', 'となり同士');
-        reportRepeat(rel.fb, prevRel.fb, 'warn', '前後');
-        reportRepeat(rel.diag, prevRel.diag, 'warn', '斜め');
-        reportRepeat(rel.group, prevRel.group, 'warn', '同じ班');
+
+        // ▲ 「前回も今回も同じ班」の2人が、いま となり／前後／斜め になっている。
+        //   特定の2人が前回どの位置にいたかは問わない。同じ班であることだけを見る
+        const groupRepeat = new Set();
+        for (const pk of rel.group) if (prevRel.group.has(pk)) groupRepeat.add(pk);
+        const reportGroupRepeat = (set, label) => {
+          for (const pk of set) {
+            if (!groupRepeat.has(pk)) continue;
+            const [a, b] = pk.split('|');
+            warnings.push({
+              level: 'warn',
+              text: '⚠️ ' + nameOf(a) + ' と ' + nameOf(b) + ' は前回も同じ班で、今回も' + label + 'です',
+              seats: [seatOf[a], seatOf[b]].filter(Boolean)
+            });
+          }
+        };
+        reportGroupRepeat(rel.side, 'となり');
+        reportGroupRepeat(rel.fb, '前後');
+        reportGroupRepeat(rel.diag, '斜め');
       }
 
       // --- これまでの回で「となり同士」だったことがあるか（前回ぶんは上で出済み） ---
@@ -1705,13 +1770,11 @@
         '<span class="chk none">前回（' + escapeHtml(latest.label) + '）とくらべて</span>' +
         item('❌', 'となりが同じ', cmp.side, '組', 'bad') +
         item('⚠️', '席が同じ', cmp.sameSeat, '人', 'warn') +
-        item('△', '前後が同じ', cmp.fb, '組', 'mild') +
-        item('△', '斜めが同じ', cmp.diag, '組', 'mild') +
+        item('△', 'となりが同じ班', cmp.groupSide, '組', 'mild') +
+        item('△', '前後が同じ班', cmp.fb, '組', 'mild') +
+        item('△', '斜めが同じ班', cmp.diag, '組', 'mild') +
         item('△', '前にもとなり', countPastSidePairs(cr, cr.currentSeats, buildHistoryRelations(cr)).pairs, '組', 'mild') +
-        '<span class="chk note">□前回近くだった人と同じ班 ' + cmp.nearThenGroup + '組</span>' +
-        (cmp.sameSeatForced
-          ? '<span class="chk note">（NGで1席しかない ' + cmp.sameSeatForced + '人は「席が同じ」から除外）</span>'
-          : '');
+        '<span class="chk note">□前回近くだった人と同じ班 ' + cmp.nearThenGroup + '組</span>';
     }
 
     // NG設定やぶりを画面のいちばん上に大きく出す
@@ -1737,7 +1800,8 @@
       extra = extra || {};
       const container = document.getElementById(containerId);
       container.innerHTML = '';
-      container.style.gridTemplateColumns = 'repeat(' + cr.cols + ', minmax(64px, 1fr))';
+      // minmax(0, 1fr)：はばがせまくても列がちぢむだけで、ぜったいにあふれない
+      container.style.gridTemplateColumns = 'repeat(' + cr.cols + ', minmax(0, 1fr))';
 
       // 警告レベルを席キーごとに集計（席替え表示用）
       const seatLevel = {};
@@ -1833,6 +1897,8 @@
 
               // 見くらべモードでは、男女・班の色をつけない（えらんだ生徒だけを目立たせるため）
               if (extra.plain) group = null;
+              // 班の色をオフにしているとき（目がちかちかする場合）
+              if (extra.hideGroup) group = null;
 
               // 【班】＝太いわく＋右下のラベル。【男女】＝背景色＋左上の●印。
               // 役割を分けてあるので、どちらの色も同時に見える。
@@ -1892,6 +1958,46 @@
           }
           container.appendChild(cell);
         }
+      }
+
+      fitGridToScreen(container);
+    }
+
+    // 座席表が画面の横はばに入りきらないとき、全体が見えるように縮小する。
+    // （実機のレイアウト情報が必要な処理なので、テスト用の簡易DOMでは
+    //   必要なメソッドがなく、その場合は何もしないで抜ける）
+    function fitGridToScreen(grid) {
+      try {
+        if (!grid || typeof grid.closest !== 'function') return;
+        const wrap = grid.closest('.seat-grid-wrap');
+        if (!wrap || typeof wrap.getBoundingClientRect !== 'function') return;
+
+        // まず縮小をいったん外して、本来の大きさを測る
+        grid.style.transform = '';
+        grid.style.transformOrigin = '';
+        wrap.style.height = '';
+
+        const wrapWidth = wrap.clientWidth;
+        const gridWidth = grid.scrollWidth;
+        if (!wrapWidth || !gridWidth) return;
+
+        // 横はばだけでなく、画面の残り高さにも必ず入るようにする
+        // （スクロール・ズームアウトなしで全体が見えることを優先し、
+        //   高さが足りない場合でも下限をつけずに縮める）
+        let scale = Math.min(1, wrapWidth / gridWidth);
+        if (typeof window !== 'undefined' && window.innerHeight && grid.scrollHeight) {
+          const rect = wrap.getBoundingClientRect();
+          const availableHeight = Math.max(60, window.innerHeight - rect.top - 16); // 下に少し余白
+          scale = Math.min(scale, availableHeight / grid.scrollHeight);
+        }
+        if (scale >= 0.999) return; // 入りきっているので何もしない
+
+        grid.style.transformOrigin = 'left top';
+        grid.style.transform = 'scale(' + scale + ')';
+        // scale で縮めた分、まわりの余白（高さ）も詰める
+        wrap.style.height = (grid.scrollHeight * scale) + 'px';
+      } catch (e) {
+        // レイアウト測定に失敗しても、座席表そのものは表示されているので無視する
       }
     }
 
@@ -2649,6 +2755,14 @@
       saveState();
     });
 
+    // 班の色の表示切りかえ（目がちかちかする場合はオフに）
+    document.getElementById('chkGroupColor').addEventListener('change', (e) => {
+      const cr = getActiveClassroom();
+      cr.showGroupColor = e.target.checked;
+      saveState();
+      renderShuffleTab();
+    });
+
     // --- 席替えタブの手なおしモード ---
     let shuffleTool = 'none';  // 'none' | 'swap' | 'pin'
     let swapFirstKey = null;   // 入れ替えで1つ目に選んだ席
@@ -2987,6 +3101,7 @@
     function renderShuffleTab() {
       const cr = getActiveClassroom();
       document.getElementById('chkChecker').checked = !!cr.checkerGender;
+      document.getElementById('chkGroupColor').checked = cr.showGroupColor !== false;
 
       // 準備ができていないときの案内（生徒0名・席不足）
       const guide = document.getElementById('shuffleGuide');
@@ -3041,6 +3156,7 @@
         warnings: lastWarnings,
         flip: !!cr.viewFlipped,
         selectedKey: swapFirstKey,
+        hideGroup: cr.showGroupColor === false,
         onTap: (shuffleTool === 'none') ? null : onShuffleSeatTap
       });
       renderLegend('shuffleLegend', cr);
@@ -3587,6 +3703,7 @@
           else { cr.year = ''; cr.className = cr.name || ''; }
         }
         if (cr.checkerGender === undefined) cr.checkerGender = false;
+        if (cr.showGroupColor === undefined) cr.showGroupColor = true;
         if (!cr.tempFixed) cr.tempFixed = {};
         if (cr.viewFlipped === undefined) cr.viewFlipped = false;
         if (cr.grade === undefined) cr.grade = '';
@@ -3612,6 +3729,25 @@
         }
       }
     }
+
+    // 画面の向きを変えたり、サイズを変えたときも座席表の縮小しなおす
+    let resizeTimer = null;
+    function refitAllGrids() {
+      for (const id of ['shuffleGrid', 'compareNowGrid', 'comparePrevGrid', 'layoutGrid', 'groupGrid', 'ngGrid']) {
+        const el = document.getElementById(id);
+        if (el) fitGridToScreen(el);
+      }
+    }
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(refitAllGrids, 150);
+    });
+    // 画面回転（iPadの縦横切りかえ）は resize より遅れて高さが確定することがあるので、
+    // 少し時間をおいてもう一度はかりなおす
+    window.addEventListener('orientationchange', () => {
+      setTimeout(refitAllGrids, 100);
+      setTimeout(refitAllGrids, 400);
+    });
 
     function init() {
       state = loadState();
