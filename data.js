@@ -260,8 +260,8 @@ const SITE_DATA = [
   },
   {
     category: "tool",
-    title: "Answer",
-    description: "授業や作業で使える教育ツール。",
+    title: "てすとも君",
+    description: "テスト作成のお供になる教育ツール。",
     url: "https://gamigamiigami.github.io/Answer/",
     emoji: "💡",
   },
