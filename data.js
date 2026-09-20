@@ -258,6 +258,13 @@ const SITE_DATA = [
     emoji: "📋",
     zip: { url: "./tools/sekigae/tool.html", label: "ツール本体をダウンロード（推奨）" },
   },
+  {
+    category: "tool",
+    title: "Answer",
+    description: "授業や作業で使える教育ツール。",
+    url: "https://gamigamiigami.github.io/Answer/",
+    emoji: "💡",
+  },
 
   // ==== 便利ツール ====
   {
