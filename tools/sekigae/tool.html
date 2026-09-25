@@ -643,7 +643,7 @@
     <div class="sticky-bar no-print">
       <div class="row">
         <button id="btnRunShuffle" class="primary" style="font-size:17px">🎲 席替え実行</button>
-        <button id="btnInvertGender" title="今の男子と女子の位置を入れかえます">🔁 男女を逆に</button>
+        <button id="btnInvertGender" title="今の座席を2列ずつ左右に入れかえます（市松模様なら男女が反転します）">🔁 男女を逆に</button>
         <button id="btnFlipView" title="黒板を上にするか下にするかを切りかえます">🔄 黒板の向き</button>
         <button id="btnCompare" title="前回の座席と今回の座席をならべて見くらべます">🔍 前回とならべる</button>
         <button id="btnPrintSeats">🖨 印刷</button>
@@ -997,6 +997,7 @@
         history: [],
         currentSeats: null,   // 直近の席替え結果（席キー → 生徒ID）
         checkerGender: false, // 男女を市松模様（交互）に並べるか
+        checkerMaleParity: null, // 市松のどちら側を男子にするか（0/1）。null なら自動で決める
         showGroupColor: true, // 席替えページで班の色を表示するか（目がちかちかする場合はオフに）
         numberMode: 'serial', // 出席番号の付け方：'serial'（通し番号）| 'gender'（男1・女1…）
         tempFixed: {},        // 今回だけの固定（席キー → 生徒ID）。記録するとリセットされる
@@ -1453,6 +1454,10 @@
     // 市松模様のための「その生徒が座ってほしい席」の集合を作る。
     // (行+列) が偶数の席グループと奇数の席グループに分け、男子・女子をそれぞれに割りあてる。
     // → となり合う席は必ず parity が変わるので、男・女・男・女… のジグザグになる。
+    //
+    // どちらの parity を男子にするかは、cr.checkerMaleParity が指定されていればそれに従う
+    // （「🔁男女を逆に」で反転させた並びを、次の席替え実行でも保つため）。
+    // 指定がなければ、人数のズレがいちばん小さくなる側を自動で選ぶ（これまでの動き）
     function buildCheckerPreference(cr, seats, active) {
       const seatsEven = seats.filter(k => seatParity(k) === 0);
       const seatsOdd  = seats.filter(k => seatParity(k) === 1);
@@ -1460,11 +1465,17 @@
       const females = active.filter(s => s.gender === 'f');
       if (males.length === 0 || females.length === 0) return null; // 片方しかいなければ市松にできない
 
-      // 男子を偶数側／奇数側どちらに置くほうが人数のズレが小さいかで決める
-      const costEven = Math.abs(seatsEven.length - males.length) + Math.abs(seatsOdd.length - females.length);
-      const costOdd  = Math.abs(seatsOdd.length - males.length) + Math.abs(seatsEven.length - females.length);
-      const maleSeats   = new Set(costEven <= costOdd ? seatsEven : seatsOdd);
-      const femaleSeats = new Set(costEven <= costOdd ? seatsOdd : seatsEven);
+      let maleOnEven;
+      if (cr.checkerMaleParity === 0 || cr.checkerMaleParity === 1) {
+        maleOnEven = (cr.checkerMaleParity === 0);
+      } else {
+        // 男子を偶数側／奇数側どちらに置くほうが人数のズレが小さいかで決める
+        const costEven = Math.abs(seatsEven.length - males.length) + Math.abs(seatsOdd.length - females.length);
+        const costOdd  = Math.abs(seatsOdd.length - males.length) + Math.abs(seatsEven.length - females.length);
+        maleOnEven = costEven <= costOdd;
+      }
+      const maleSeats   = new Set(maleOnEven ? seatsEven : seatsOdd);
+      const femaleSeats = new Set(maleOnEven ? seatsOdd : seatsEven);
 
       const prefer = {};
       for (const s of males)   prefer[s.id] = maleSeats;
@@ -2901,35 +2912,67 @@
       renderShuffleTab();
     });
 
-    // 男女の位置を入れかえる（市松模様の白黒を反転するイメージ）
+    // 男女の位置を入れかえる。
+    // 新しく割り振り直すのではなく、「今の座席」の2列ずつ（机の向きに関係なく、
+    // 前向きとみなして左右）を丸ごと入れかえる。市松模様になっていれば、
+    // これで男女がそのまま反転する。
+    // ・1年間の固定席（🔒）がからむ2列は、動かさずそのままにする
+    // ・今回だけの固定📌はそのままでは動かさない“対象外”にせず、席といっしょに動かす
+    //   （ピン止めした人も強制的に入れかわり、新しい席にピンがつきなおす）
+    // ・この反転を cr.checkerMaleParity に覚えておき、次に「🎲席替え実行」しても
+    //   もとの並びにもどらないようにする
     document.getElementById('btnInvertGender').addEventListener('click', () => {
       const cr = getActiveClassroom();
       if (!cr.currentSeats) { alert('先に席替えを実行してください'); return; }
       const a = cr.currentSeats;
-      const maleSeats = [], femaleSeats = [];
+
+      // 反転する前に、いまどちらの parity に男子が多いかを覚えておく
+      // （席替えを毎回この向きで再現できるように、反転後は逆の parity を記録する）
+      let evenMale = 0, oddMale = 0, evenFemale = 0, oddFemale = 0;
       for (const key of Object.keys(a)) {
-        const sid = a[key];
-        if (!sid) continue;
-        // 固定席・今回だけの固定は動かさない（先生が決めた席なので）
-        if (cr.tempFixed[key] === sid) continue;
-        if (cr.deskMeta[key] && cr.deskMeta[key].fixedStudentId === sid) continue;
-        const st = getStudent(cr, sid);
-        if (!st) continue;
-        if (st.gender === 'm') maleSeats.push(key);
-        else if (st.gender === 'f') femaleSeats.push(key);
+        const sid = a[key]; if (!sid) continue;
+        const st = getStudent(cr, sid); if (!st || !st.gender) continue;
+        const isEven = seatParity(key) === 0;
+        if (st.gender === 'm') { if (isEven) evenMale++; else oddMale++; }
+        else { if (isEven) evenFemale++; else oddFemale++; }
       }
-      if (maleSeats.length === 0 || femaleSeats.length === 0) {
-        alert('男子か女子のどちらかがいないため、入れかえられません');
+      const hadCheckerData = (evenMale + oddMale + evenFemale + oddFemale) > 0;
+      const maleWasOnEven = evenMale + oddFemale >= oddMale + evenFemale; // 男子が多い側
+
+      let swapped = 0, skippedFixed = 0;
+      for (let r = 0; r < cr.rows; r++) {
+        for (let c = 0; c + 1 < cr.cols; c += 2) {
+          const k1 = r + '-' + c, k2 = r + '-' + (c + 1);
+          const m1 = getDeskMeta(cr, r, c), m2 = getDeskMeta(cr, r, c + 1);
+          if (m1.disabled || m2.disabled) continue; // 通路をはさむ組はそのまま
+          if (m1.fixedStudentId || m2.fixedStudentId) { skippedFixed++; continue; } // 1年間の固定はそのまま
+
+          const s1 = a[k1] || null, s2 = a[k2] || null;
+          if (!s1 && !s2) continue;
+
+          // 今回だけの固定📌が、どちらの生徒についていたかを覚えておく
+          const pinned = new Set();
+          if (cr.tempFixed[k1] !== undefined) pinned.add(cr.tempFixed[k1]);
+          if (cr.tempFixed[k2] !== undefined) pinned.add(cr.tempFixed[k2]);
+          delete cr.tempFixed[k1];
+          delete cr.tempFixed[k2];
+
+          a[k1] = s2;
+          a[k2] = s1;
+          // ピンは、生徒といっしょに新しい席へついていく
+          if (s2 && pinned.has(s2)) cr.tempFixed[k1] = s2;
+          if (s1 && pinned.has(s1)) cr.tempFixed[k2] = s1;
+          swapped++;
+        }
+      }
+      if (swapped === 0) {
+        alert(skippedFixed
+          ? '1年間の固定席にかかる列しかないため、入れかえられませんでした'
+          : '入れかえられる列がありませんでした（列が1つしかない教室など）');
         return;
       }
-      const males = maleSeats.map(k => a[k]);
-      const females = femaleSeats.map(k => a[k]);
-      const n = Math.min(maleSeats.length, femaleSeats.length);
-      // 男子は女子がいた席へ、女子は男子がいた席へ（あまった人はそのまま）
-      for (let i = 0; i < n; i++) {
-        a[femaleSeats[i]] = males[i];
-        a[maleSeats[i]] = females[i];
-      }
+      // 反転後は男子の parity が逆になったはずなので、次の席替え実行もこの向きを守る
+      if (hadCheckerData) cr.checkerMaleParity = maleWasOnEven ? 1 : 0;
       lastWarnings = checkSoftConstraints(cr, a);
       saveState();
       renderShuffleTab();
@@ -3715,6 +3758,7 @@
           else { cr.year = ''; cr.className = cr.name || ''; }
         }
         if (cr.checkerGender === undefined) cr.checkerGender = false;
+        if (cr.checkerMaleParity === undefined) cr.checkerMaleParity = null;
         if (cr.showGroupColor === undefined) cr.showGroupColor = true;
         if (!cr.tempFixed) cr.tempFixed = {};
         if (cr.viewFlipped === undefined) cr.viewFlipped = false;
