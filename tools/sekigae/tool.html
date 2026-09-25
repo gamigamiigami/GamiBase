@@ -1971,11 +1971,16 @@
         if (!grid || typeof grid.closest !== 'function') return;
         const wrap = grid.closest('.seat-grid-wrap');
         if (!wrap || typeof wrap.getBoundingClientRect !== 'function') return;
+        // 「黒板」の帯はいつも seat-grid-wrap の直前にある（room-view の中でも、外でも）。
+        // 座席表を縮小したときは、黒板の帯もおなじはばに縮めて、大きさをそろえる
+        const prev = wrap.previousElementSibling;
+        const board = (prev && prev.classList && prev.classList.contains('board-label')) ? prev : null;
 
         // まず縮小をいったん外して、本来の大きさを測る
         grid.style.transform = '';
         grid.style.transformOrigin = '';
         wrap.style.height = '';
+        if (board) board.style.width = '';
 
         const wrapWidth = wrap.clientWidth;
         const gridWidth = grid.scrollWidth;
@@ -2000,8 +2005,9 @@
 
         grid.style.transformOrigin = 'left top';
         grid.style.transform = 'scale(' + scale + ')';
-        // scale で縮めた分、まわりの余白（高さ）も詰める
+        // scale で縮めた分、まわりの余白（高さ）も詰める。黒板の帯も座席表のはばに合わせる
         wrap.style.height = (grid.scrollHeight * scale) + 'px';
+        if (board) board.style.width = (wrapWidth * scale) + 'px';
       } catch (e) {
         // レイアウト測定に失敗しても、座席表そのものは表示されているので無視する
       }
