@@ -324,7 +324,25 @@
       font-size: 14px;
     }
     .hard-alert ul { margin: 4px 0 4px 18px; }
-    .hard-alert .hint { color: var(--danger); }
+    /* 1件につかならず1行におさめる（折り返して読みづらくなるのを防ぐ） */
+    .hard-alert li { white-space: nowrap; overflow-x: auto; }
+    .hard-alert .hint { color: var(--danger); white-space: normal; }
+    /* 横はばに余裕がある画面では、右がわに浮かせて表示する。
+       メッセージが増えても、座席表がある左がわの高さや位置はずれない */
+    @media (min-width: 900px) {
+      .hard-alert.open {
+        position: fixed;
+        top: 170px;
+        right: 12px;
+        width: 300px;
+        max-height: calc(100vh - 190px);
+        overflow-y: auto;
+        margin-top: 0;
+        z-index: 60;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+        font-size: 13px;
+      }
+    }
     /* NG設定にひっかかっている席は、はっきり赤くする */
     .seat.ng-violation .desk {
       background: #fdecea !important;
@@ -646,6 +664,8 @@
         <button id="btnInvertGender" title="今の座席を2列ずつ左右に入れかえます（市松模様なら男女が反転します）">🔁 男女を逆に</button>
         <button id="btnFlipView" title="黒板を上にするか下にするかを切りかえます">🔄 黒板の向き</button>
         <button id="btnCompare" title="前回の座席と今回の座席をならべて見くらべます">🔍 前回とならべる</button>
+        <button id="btnUndoSeat" title="席替えの変更を1つ前にもどします（Ctrl+Z）" disabled>↩️ 元に戻す</button>
+        <button id="btnRedoSeat" title="元に戻した変更をやり直します（Ctrl+Y）" disabled>↪️ やり直す</button>
         <button id="btnPrintSeats">🖨 印刷</button>
       </div>
       <!-- 手なおしボタンも上に貼りつける（座席を見ながら押せるように） -->
@@ -782,8 +802,10 @@
         <span class="hint" id="ngSeatCount"></span>
       </div>
       <p class="hint">席をタップでNG席の登録/解除（赤＝NG席）。「ぜんぶNGにする」→座ってよい席だけ解除、が早いです。</p>
-      <div class="board-label">黒　板</div>
-      <div class="seat-grid-wrap"><div id="ngGrid" class="seat-grid"></div></div>
+      <div class="room-view" id="ngRoom">
+        <div class="board-label">黒　板</div>
+        <div class="seat-grid-wrap"><div id="ngGrid" class="seat-grid"></div></div>
+      </div>
     </div>
   </section>
 
@@ -1807,10 +1829,11 @@
     function renderHardAlert(cr) {
       const el = document.getElementById('hardAlert');
       if (!el) return;
-      if (!cr.currentSeats) { el.innerHTML = ''; el.style.display = 'none'; return; }
+      if (!cr.currentSeats) { el.innerHTML = ''; el.style.display = 'none'; el.classList.remove('open'); return; }
       const v = checkNgViolations(cr, cr.currentSeats);
-      if (v.length === 0) { el.innerHTML = ''; el.style.display = 'none'; return; }
+      if (v.length === 0) { el.innerHTML = ''; el.style.display = 'none'; el.classList.remove('open'); return; }
       el.style.display = 'block';
+      el.classList.add('open'); // 横はばが広い画面では、これで座席表の右に浮かせて表示する
       el.innerHTML =
         '<strong>🚫 NG設定にひっかかっています（' + v.length + '件）</strong><ul>' +
         v.map(w => '<li>' + escapeHtml(w.text.replace(/^🚫 /, '')) + '</li>').join('') +
@@ -2730,6 +2753,11 @@
       const cr = getActiveClassroom();
       const sid = document.getElementById('ngSeatStudent').value;
 
+      // 黒板の向きは、③席替えタブでえらんだ向きにそろえる（席替えの方で変えたら自動で反映）
+      const flip = !!cr.viewFlipped;
+      const room = document.getElementById('ngRoom');
+      if (room) room.classList.toggle('flipped', flip);
+
       // いま何席がNGで、座れる席が何席あるかを出す（全部NGにしたあとの目安）
       const countEl = document.getElementById('ngSeatCount');
       if (countEl) {
@@ -2744,6 +2772,7 @@
 
       renderGrid('ngGrid', cr, 'ng', {
         ngStudentId: sid,
+        flip: flip,
         onTap: (key) => {
           if (!sid) { alert('先に生徒を選択してください'); return; }
           const [r, c] = key.split('-').map(Number);
@@ -2814,6 +2843,86 @@
     document.getElementById('toolSwap').addEventListener('click', () => setShuffleTool('swap'));
     document.getElementById('toolPin').addEventListener('click', () => setShuffleTool('pin'));
 
+    // =====================================================
+    // 元に戻す・やり直す（Ctrl+Z / Ctrl+Y）
+    // 「③席替え」タブでの座席の変更（実行・入れかえ・今回だけ固定・男女を逆に・空にする）
+    // だけを対象にする。教室ごとに別の履歴を持つ（ページの再読みこみでは消える）
+    // =====================================================
+    const undoStacks = {}; // 教室ID → 元に戻すためのスナップショット配列
+    const redoStacks = {}; // 教室ID → やり直すためのスナップショット配列
+    const UNDO_LIMIT = 30;
+
+    function snapshotSeatState(cr) {
+      return {
+        currentSeats: cr.currentSeats ? Object.assign({}, cr.currentSeats) : null,
+        tempFixed: Object.assign({}, cr.tempFixed || {}),
+        checkerMaleParity: cr.checkerMaleParity
+      };
+    }
+    function applySeatSnapshot(cr, snap) {
+      cr.currentSeats = snap.currentSeats ? Object.assign({}, snap.currentSeats) : null;
+      cr.tempFixed = Object.assign({}, snap.tempFixed || {});
+      cr.checkerMaleParity = snap.checkerMaleParity;
+    }
+    // 変更する前のようすを覚えておく。これを呼んだあとに実際の変更をおこなうと、
+    // Ctrl+Z でこの時点にもどせる（新しい変更をすると「やり直し」はできなくなる）
+    function pushUndo(cr) {
+      commitUndo(cr, snapshotSeatState(cr));
+    }
+    // 変更前のスナップショットをあとから確定させたいとき用（男女を逆に、など、
+    // 実際に何か変わったかが処理の終わりまでわからない場合に使う）
+    function commitUndo(cr, snap) {
+      const stack = undoStacks[cr.id] || (undoStacks[cr.id] = []);
+      stack.push(snap);
+      if (stack.length > UNDO_LIMIT) stack.shift();
+      redoStacks[cr.id] = [];
+      updateUndoRedoButtons();
+    }
+    function undoSeatChange() {
+      const cr = getActiveClassroom();
+      const stack = undoStacks[cr.id];
+      if (!stack || stack.length === 0) return;
+      (redoStacks[cr.id] || (redoStacks[cr.id] = [])).push(snapshotSeatState(cr));
+      applySeatSnapshot(cr, stack.pop());
+      swapFirstKey = null;
+      lastWarnings = cr.currentSeats ? checkSoftConstraints(cr, cr.currentSeats) : [];
+      saveState();
+      renderShuffleTab();
+      renderRosterTab();
+      updateUndoRedoButtons();
+    }
+    function redoSeatChange() {
+      const cr = getActiveClassroom();
+      const redo = redoStacks[cr.id];
+      if (!redo || redo.length === 0) return;
+      (undoStacks[cr.id] || (undoStacks[cr.id] = [])).push(snapshotSeatState(cr));
+      applySeatSnapshot(cr, redo.pop());
+      swapFirstKey = null;
+      lastWarnings = cr.currentSeats ? checkSoftConstraints(cr, cr.currentSeats) : [];
+      saveState();
+      renderShuffleTab();
+      renderRosterTab();
+      updateUndoRedoButtons();
+    }
+    function updateUndoRedoButtons() {
+      const cr = getActiveClassroom();
+      const btnUndo = document.getElementById('btnUndoSeat');
+      const btnRedo = document.getElementById('btnRedoSeat');
+      if (btnUndo) btnUndo.disabled = !(undoStacks[cr.id] && undoStacks[cr.id].length);
+      if (btnRedo) btnRedo.disabled = !(redoStacks[cr.id] && redoStacks[cr.id].length);
+    }
+    document.getElementById('btnUndoSeat').addEventListener('click', undoSeatChange);
+    document.getElementById('btnRedoSeat').addEventListener('click', redoSeatChange);
+    // キーボード操作（Ctrl+Z＝元に戻す／Ctrl+Y＝やり直す）。
+    // 名前や理由メモなどの入力中は、ブラウザ標準の入力の取りけしを優先させる
+    document.addEventListener('keydown', (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); undoSeatChange(); }
+      else if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); redoSeatChange(); }
+    });
+
     // 席をタップしたときの動き（入れ替え／今回だけ固定）
     function onShuffleSeatTap(key) {
       const cr = getActiveClassroom();
@@ -2828,6 +2937,7 @@
           swapFirstKey = null; // 同じ席をもう一度タップ＝えらび直し
         } else {
           // 2つの席の生徒を入れかえる（空席との入れかえ＝移動もできる）
+          pushUndo(cr);
           const a = cr.currentSeats[swapFirstKey] || null;
           const b = cr.currentSeats[key] || null;
           cr.currentSeats[swapFirstKey] = b;
@@ -2858,6 +2968,7 @@
 
       if (shuffleTool === 'pin') {
         if (cr.tempFixed[key]) {
+          pushUndo(cr);
           delete cr.tempFixed[key]; // もう一度タップで解除
           saveState();
           renderShuffleTab();
@@ -2866,6 +2977,7 @@
         const sid = cr.currentSeats[key];
         if (sid) {
           // すでに座っている生徒をこの席に固定する
+          pushUndo(cr);
           for (const k of Object.keys(cr.tempFixed)) if (cr.tempFixed[k] === sid) delete cr.tempFixed[k];
           cr.tempFixed[key] = sid;
           saveState();
@@ -2895,6 +3007,7 @@
         () => {
           const sid = document.getElementById('pinStudent').value;
           if (!sid) { alert('生徒をえらんでください'); return false; }
+          pushUndo(cr);
           // その生徒が別の席に予約されていたら外す
           for (const k of Object.keys(cr.tempFixed)) if (cr.tempFixed[k] === sid) delete cr.tempFixed[k];
           cr.tempFixed[key] = sid;
@@ -2910,6 +3023,7 @@
       if (n === 0) { alert('今の座席はもう空です'); return; }
       if (!confirm('今の座席をぜんぶ空にします。よろしいですか？\n' +
                    '（記録した回・NG設定・📌の固定は消えません）')) return;
+      pushUndo(cr);
       cr.currentSeats = null;
       swapFirstKey = null;
       compareStudentId = null;
@@ -2922,6 +3036,7 @@
       const n = Object.keys(cr.tempFixed || {}).length;
       if (n === 0) { alert('今回だけの固定📌はありません'); return; }
       if (!confirm('今回だけの固定📌を' + n + '件ぜんぶ消します。よろしいですか？')) return;
+      pushUndo(cr);
       cr.tempFixed = {};
       saveState();
       renderShuffleTab();
@@ -2954,6 +3069,7 @@
       }
       const hadCheckerData = (evenMale + oddMale + evenFemale + oddFemale) > 0;
       const maleWasOnEven = evenMale + oddFemale >= oddMale + evenFemale; // 男子が多い側
+      const undoSnap = snapshotSeatState(cr); // 実際に何か変わったときだけ、あとでundoスタックに積む
 
       let swapped = 0, skippedFixed = 0, skippedNg = 0;
       for (let r = 0; r < cr.rows; r++) {
@@ -3000,6 +3116,7 @@
             : '入れかえられる列がありませんでした（列が1つしかない教室など）'));
         return;
       }
+      commitUndo(cr, undoSnap);
       // 反転後は男子の parity が逆になったはずなので、次の席替え実行もこの向きを守る
       if (hadCheckerData) cr.checkerMaleParity = maleWasOnEven ? 1 : 0;
       lastWarnings = checkSoftConstraints(cr, a);
@@ -3130,6 +3247,7 @@
         alert(result.error);
         return;
       }
+      pushUndo(cr);
       cr.currentSeats = result.assignment;
       swapFirstKey = null;
       lastWarnings = checkSoftConstraints(cr, result.assignment);
@@ -3189,6 +3307,7 @@
       const cr = getActiveClassroom();
       document.getElementById('chkChecker').checked = !!cr.checkerGender;
       document.getElementById('chkGroupColor').checked = cr.showGroupColor !== false;
+      updateUndoRedoButtons();
 
       // 準備ができていないときの案内（生徒0名・席不足）
       const guide = document.getElementById('shuffleGuide');
