@@ -1432,6 +1432,21 @@
       return !(meta && meta.ngStudentIds && meta.ngStudentIds.includes(student.id));
     }
 
+    // ある生徒をある席に置いたときに、NG設定にひっかからないかを調べる。
+    // 「🔁男女を逆に」で席を入れかえるときに使う（excludeKey には、いま入れかえ中の
+    // 相手の席を渡す。2人はもともととなり同士だったので、その組み合わせがNGでも
+    // 入れかえのせいで新しく起きた問題ではないため、ここでは無視する）
+    function wouldCreateNgViolation(cr, sid, key, assignment, excludeKey) {
+      const meta = cr.deskMeta[key];
+      if (meta && meta.ngStudentIds && meta.ngStudentIds.includes(sid)) return true;
+      for (const nk of getNeighbors(cr, key)) {
+        if (nk === excludeKey) continue;
+        const nid = assignment[nk];
+        if (nid && nid !== sid && isNGPair(cr, sid, nid)) return true;
+      }
+      return false;
+    }
+
     // ハード制約：着席NGでなく、配置済みの隣にNGペア相手がいないこと。
     // さらに prevSide が渡されていれば「前回となり同士だった相手のとなり」も禁止する
     // （××＝絶対に避けたい、なので減点ではなくルールとして守る）
@@ -2919,6 +2934,7 @@
     // ・1年間の固定席（🔒）がからむ2列は、動かさずそのままにする
     // ・今回だけの固定📌はそのままでは動かさない“対象外”にせず、席といっしょに動かす
     //   （ピン止めした人も強制的に入れかわり、新しい席にピンがつきなおす）
+    // ・入れかえた結果NG設定（着席NG・隣席NG）にひっかかる組は、入れかえずにそのままにする
     // ・この反転を cr.checkerMaleParity に覚えておき、次に「🎲席替え実行」しても
     //   もとの並びにもどらないようにする
     document.getElementById('btnInvertGender').addEventListener('click', () => {
@@ -2939,7 +2955,7 @@
       const hadCheckerData = (evenMale + oddMale + evenFemale + oddFemale) > 0;
       const maleWasOnEven = evenMale + oddFemale >= oddMale + evenFemale; // 男子が多い側
 
-      let swapped = 0, skippedFixed = 0;
+      let swapped = 0, skippedFixed = 0, skippedNg = 0;
       for (let r = 0; r < cr.rows; r++) {
         for (let c = 0; c + 1 < cr.cols; c += 2) {
           const k1 = r + '-' + c, k2 = r + '-' + (c + 1);
@@ -2950,6 +2966,19 @@
           const s1 = a[k1] || null, s2 = a[k2] || null;
           if (!s1 && !s2) continue;
 
+          // まず入れかえてみて、NG設定にひっかからないかたしかめる。
+          // ひっかかるなら、その組だけもとにもどして入れかえない
+          a[k1] = s2;
+          a[k2] = s1;
+          const bad = (s2 && wouldCreateNgViolation(cr, s2, k1, a, k2)) ||
+                      (s1 && wouldCreateNgViolation(cr, s1, k2, a, k1));
+          if (bad) {
+            a[k1] = s1;
+            a[k2] = s2;
+            skippedNg++;
+            continue;
+          }
+
           // 今回だけの固定📌が、どちらの生徒についていたかを覚えておく
           const pinned = new Set();
           if (cr.tempFixed[k1] !== undefined) pinned.add(cr.tempFixed[k1]);
@@ -2957,8 +2986,6 @@
           delete cr.tempFixed[k1];
           delete cr.tempFixed[k2];
 
-          a[k1] = s2;
-          a[k2] = s1;
           // ピンは、生徒といっしょに新しい席へついていく
           if (s2 && pinned.has(s2)) cr.tempFixed[k1] = s2;
           if (s1 && pinned.has(s1)) cr.tempFixed[k2] = s1;
@@ -2966,9 +2993,11 @@
         }
       }
       if (swapped === 0) {
-        alert(skippedFixed
-          ? '1年間の固定席にかかる列しかないため、入れかえられませんでした'
-          : '入れかえられる列がありませんでした（列が1つしかない教室など）');
+        alert(skippedNg
+          ? 'NG設定にひっかかるため、入れかえられる列がありませんでした'
+          : (skippedFixed
+            ? '1年間の固定席にかかる列しかないため、入れかえられませんでした'
+            : '入れかえられる列がありませんでした（列が1つしかない教室など）'));
         return;
       }
       // 反転後は男子の parity が逆になったはずなので、次の席替え実行もこの向きを守る
@@ -2977,6 +3006,9 @@
       saveState();
       renderShuffleTab();
       renderRosterTab();
+      if (skippedNg > 0) {
+        alert(skippedNg + '組は、入れかえるとNG設定にひっかかるため、そのままにしました。');
+      }
     });
 
     // --- 前回とならべて見くらべるモード ---
