@@ -324,8 +324,10 @@
       font-size: 14px;
     }
     .hard-alert ul { margin: 4px 0 4px 18px; }
-    /* 1件につかならず1行におさめる（折り返して読みづらくなるのを防ぐ） */
-    .hard-alert li { white-space: nowrap; overflow-x: auto; }
+    /* 1件につかならず1行におさめる（折り返して読みづらくなるのを防ぐ）。
+       入りきらない場合は「…」で省略し、タップ／ホバーで全文が見られるようにする
+       （行ごとに横スクロールバーが出るとかえって見づらいため） */
+    .hard-alert li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .hard-alert .hint { color: var(--danger); white-space: normal; }
     /* 横はばに余裕がある画面では、右がわに浮かせて表示する。
        メッセージが増えても、座席表がある左がわの高さや位置はずれない */
@@ -341,6 +343,13 @@
         z-index: 60;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
         font-size: 13px;
+      }
+      /* NG警告が右がわに浮くぶん、③席替えタブの中身は左に寄せて、右に場所をあけておく
+         （警告と座席表・ボタンが重ならないように）。警告が出ているときだけ効かせる */
+      body.has-ng-alert #tab-shuffle {
+        margin-left: 14px;
+        margin-right: 340px;
+        max-width: none;
       }
     }
     /* NG設定にひっかかっている席は、はっきり赤くする */
@@ -1829,14 +1838,26 @@
     function renderHardAlert(cr) {
       const el = document.getElementById('hardAlert');
       if (!el) return;
-      if (!cr.currentSeats) { el.innerHTML = ''; el.style.display = 'none'; el.classList.remove('open'); return; }
+      if (!cr.currentSeats) {
+        el.innerHTML = ''; el.style.display = 'none'; el.classList.remove('open');
+        document.body.classList.remove('has-ng-alert');
+        return;
+      }
       const v = checkNgViolations(cr, cr.currentSeats);
-      if (v.length === 0) { el.innerHTML = ''; el.style.display = 'none'; el.classList.remove('open'); return; }
+      if (v.length === 0) {
+        el.innerHTML = ''; el.style.display = 'none'; el.classList.remove('open');
+        document.body.classList.remove('has-ng-alert');
+        return;
+      }
       el.style.display = 'block';
       el.classList.add('open'); // 横はばが広い画面では、これで座席表の右に浮かせて表示する
+      document.body.classList.add('has-ng-alert'); // 出ているときだけ、③タブの中身を左に寄せる
       el.innerHTML =
         '<strong>🚫 NG設定にひっかかっています（' + v.length + '件）</strong><ul>' +
-        v.map(w => '<li>' + escapeHtml(w.text.replace(/^🚫 /, '')) + '</li>').join('') +
+        v.map(w => {
+          const t = w.text.replace(/^🚫 /, '');
+          return '<li title="' + escapeHtml(t) + '">' + escapeHtml(t) + '</li>';
+        }).join('') +
         '</ul><span class="hint">手で入れかえた席が原因です。もどすか、「🎲席替え実行」でやり直してください。</span>';
     }
 
