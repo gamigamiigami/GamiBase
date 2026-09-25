@@ -1463,21 +1463,6 @@
       return !(meta && meta.ngStudentIds && meta.ngStudentIds.includes(student.id));
     }
 
-    // ある生徒をある席に置いたときに、NG設定にひっかからないかを調べる。
-    // 「🔁男女を逆に」で席を入れかえるときに使う（excludeKey には、いま入れかえ中の
-    // 相手の席を渡す。2人はもともととなり同士だったので、その組み合わせがNGでも
-    // 入れかえのせいで新しく起きた問題ではないため、ここでは無視する）
-    function wouldCreateNgViolation(cr, sid, key, assignment, excludeKey) {
-      const meta = cr.deskMeta[key];
-      if (meta && meta.ngStudentIds && meta.ngStudentIds.includes(sid)) return true;
-      for (const nk of getNeighbors(cr, key)) {
-        if (nk === excludeKey) continue;
-        const nid = assignment[nk];
-        if (nid && nid !== sid && isNGPair(cr, sid, nid)) return true;
-      }
-      return false;
-    }
-
     // ハード制約：着席NGでなく、配置済みの隣にNGペア相手がいないこと。
     // さらに prevSide が渡されていれば「前回となり同士だった相手のとなり」も禁止する
     // （××＝絶対に避けたい、なので減点ではなくルールとして守る）
@@ -3092,7 +3077,7 @@
       const maleWasOnEven = evenMale + oddFemale >= oddMale + evenFemale; // 男子が多い側
       const undoSnap = snapshotSeatState(cr); // 実際に何か変わったときだけ、あとでundoスタックに積む
 
-      let swapped = 0, skippedFixed = 0, skippedNg = 0;
+      let swapped = 0, skippedFixed = 0;
       for (let r = 0; r < cr.rows; r++) {
         for (let c = 0; c + 1 < cr.cols; c += 2) {
           const k1 = r + '-' + c, k2 = r + '-' + (c + 1);
@@ -3103,18 +3088,10 @@
           const s1 = a[k1] || null, s2 = a[k2] || null;
           if (!s1 && !s2) continue;
 
-          // まず入れかえてみて、NG設定にひっかからないかたしかめる。
-          // ひっかかるなら、その組だけもとにもどして入れかえない
+          // NG設定にひっかかっても、先生の指示（このボタン）を優先して入れかえる。
+          // ひっかかっていないかは、あとでまとめて知らせる
           a[k1] = s2;
           a[k2] = s1;
-          const bad = (s2 && wouldCreateNgViolation(cr, s2, k1, a, k2)) ||
-                      (s1 && wouldCreateNgViolation(cr, s1, k2, a, k1));
-          if (bad) {
-            a[k1] = s1;
-            a[k2] = s2;
-            skippedNg++;
-            continue;
-          }
 
           // 今回だけの固定📌が、どちらの生徒についていたかを覚えておく
           const pinned = new Set();
@@ -3130,11 +3107,9 @@
         }
       }
       if (swapped === 0) {
-        alert(skippedNg
-          ? 'NG設定にひっかかるため、入れかえられる列がありませんでした'
-          : (skippedFixed
-            ? '1年間の固定席にかかる列しかないため、入れかえられませんでした'
-            : '入れかえられる列がありませんでした（列が1つしかない教室など）'));
+        alert(skippedFixed
+          ? '1年間の固定席にかかる列しかないため、入れかえられませんでした'
+          : '入れかえられる列がありませんでした（列が1つしかない教室など）');
         return;
       }
       commitUndo(cr, undoSnap);
@@ -3144,8 +3119,13 @@
       saveState();
       renderShuffleTab();
       renderRosterTab();
-      if (skippedNg > 0) {
-        alert(skippedNg + '組は、入れかえるとNG設定にひっかかるため、そのままにしました。');
+      // NG設定にひっかかっていたら、入れかえたうえで知らせる（📌の1年間固定なしで、
+      // 手なおしの🔀入れかえとおなじ考え方。ここでは入れかえを止めない）
+      const ngNow = checkNgViolations(cr, a);
+      if (ngNow.length) {
+        alert('🚫 NG設定にひっかかりました\n\n' +
+              ngNow.map(w => '・' + w.text.replace(/^🚫 /, '')).join('\n') +
+              '\n\nこのままでも記録できますが、直すことをおすすめします。');
       }
     });
 
