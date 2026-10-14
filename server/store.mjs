@@ -1,39 +1,21 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, chmodSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import {
-  randomBytes,
-  createHash,
-  scrypt as scryptCallback,
-  timingSafeEqual,
-} from "node:crypto";
-import { promisify } from "node:util";
+import { randomBytes } from "node:crypto";
+import { hash, emailOf, validEmail } from "./credentials.mjs";
+export {
+  hash,
+  emailOf,
+  validEmail,
+  validPassword,
+  passwordHash,
+  passwordMatches,
+} from "./credentials.mjs";
 import { fileURLToPath } from "node:url";
-const scrypt = promisify(scryptCallback);
 // Keep buyer credentials and notebooks outside the static-site checkout.
 export const defaultDataDir = fileURLToPath(
   new URL("../../.shigodeki-data/", import.meta.url),
 );
-export const hash = (value) => createHash("sha256").update(value).digest("hex");
-export const emailOf = (value) =>
-  typeof value === "string" ? value.trim().toLowerCase() : "";
-export const validEmail = (email) =>
-  email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-export const validPassword = (value) =>
-  typeof value === "string" && value.length >= 12 && value.length <= 128;
-export async function passwordHash(
-  value,
-  salt = randomBytes(16).toString("hex"),
-) {
-  return `${salt}:${(await scrypt(value, salt, 64)).toString("hex")}`;
-}
-export async function passwordMatches(value, encoded) {
-  const [salt] = encoded.split(":");
-  return timingSafeEqual(
-    Buffer.from(await passwordHash(value, salt)),
-    Buffer.from(encoded),
-  );
-}
 export function openStore(path) {
   mkdirSync(dirname(resolve(path)), { recursive: true, mode: 0o700 });
   const db = new DatabaseSync(path);

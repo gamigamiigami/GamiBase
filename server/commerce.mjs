@@ -1,4 +1,4 @@
-import { hash } from "./store.mjs";
+import { hash } from "./credentials.mjs";
 
 // Prices and entitlement decisions are always made on the server.
 export const PRODUCT = Object.freeze({

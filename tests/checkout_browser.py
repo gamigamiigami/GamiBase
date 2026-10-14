@@ -21,7 +21,8 @@ with tempfile.TemporaryDirectory(prefix='shigodeki-checkout-') as tmp:
     env = {**os.environ, 'PORT': str(port), 'HOST': '127.0.0.1', 'APP_ORIGIN': base,
            'SHIGODEKI_DATA_DIR': tmp, 'SHIGODEKI_COUPON_CODE': 'browser-coupon-only'}
     with (OUTPUT / 'checkout-server.log').open('w') as log:
-        server = subprocess.Popen(['node', 'server/index.mjs'], cwd=ROOT, env=env, stdout=log, stderr=log)
+        entry = 'tests/supabase-dev-server.mjs' if os.environ.get('SHIGODEKI_TEST_BACKEND') == 'supabase' else 'server/index.mjs'
+        server = subprocess.Popen(['node', entry], cwd=ROOT, env=env, stdout=log, stderr=log)
         try:
             for _ in range(60):
                 try:

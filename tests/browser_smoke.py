@@ -32,7 +32,8 @@ with tempfile.TemporaryDirectory(prefix='shigodeki-browser-') as tmp:
     '''], cwd=ROOT, env=env, check=True, capture_output=True)
     seed = json.loads(Path(env['TEST_SEED_PATH']).read_text())
     with (OUTPUT / 'browser-server.log').open('w') as log:
-        server = subprocess.Popen(['node', 'server/index.mjs'], cwd=ROOT, env=env, stdout=log, stderr=log)
+        entry = 'tests/supabase-dev-server.mjs' if os.environ.get('SHIGODEKI_TEST_BACKEND') == 'supabase' else 'server/index.mjs'
+        server = subprocess.Popen(['node', entry], cwd=ROOT, env=env, stdout=log, stderr=log)
         try:
             for _ in range(60):
                 try:

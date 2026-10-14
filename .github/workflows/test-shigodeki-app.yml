@@ -6,6 +6,11 @@ on:
       - "server/**"
       - "tests/**"
       - "package.json"
+      - "package-lock.json"
+      - "supabase/**"
+      - "netlify/**"
+      - "netlify.toml"
+      - "scripts/**"
       - ".github/workflows/test-shigodeki-app.yml"
   pull_request:
     paths:
@@ -13,6 +18,11 @@ on:
       - "server/**"
       - "tests/**"
       - "package.json"
+      - "package-lock.json"
+      - "supabase/**"
+      - "netlify/**"
+      - "netlify.toml"
+      - "scripts/**"
       - ".github/workflows/test-shigodeki-app.yml"
 permissions:
   contents: read
@@ -24,4 +34,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - run: npm ci
       - run: npm test
+      - run: npm run build:netlify

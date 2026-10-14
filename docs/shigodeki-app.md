@@ -1,10 +1,12 @@
 # シゴデキ先生 週案ノート（PWA）
 
+Netlify＋Supabaseで公開する場合は [専用の手順](shigodeki-netlify.md) を参照してください。以下は主にNode.js＋SQLiteで常駐サーバーを使う場合の説明です。
+
 Excel/PDFを経由せず、ブラウザ上で時間割・時数・手書きを管理するアプリ版です。購入案内は `tools/shigodeki-sensei/index.html`、従来のPDF生成は `tools/shigodeki-sensei/pdf.html` で利用できます。PDF作成デモでは決済・コード発行を行いません。iPadのSafariから「共有 → ホーム画面に追加」すると独立したウィンドウで起動できます。App Storeへの登録・有料開発者アカウントは不要です。
 
 ## 起動と動作確認
 
-Node.js 24以上を使い、リポジトリのルートで実行します。外部npmパッケージはなく、`npm install`は不要です。
+Node.js 24以上を使い、リポジトリのルートで実行します。SQLite版の起動自体に外部npmパッケージは不要です。テスト・Netlifyビルドには `npm ci` で開発用の依存を準備してください。
 
 ```bash
 npm start
