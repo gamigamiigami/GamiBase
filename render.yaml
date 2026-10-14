@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: shigodeki-sensei
+    runtime: node
+    plan: starter
+    branch: claude/portal-site-creation-s2woj3
+    buildCommand: npm test
+    startCommand: npm start
+    healthCheckPath: /healthz
+    disk:
+      name: shigodeki-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_ORIGIN
+        sync: false
+      - key: SHIGODEKI_COUPON_CODE
+        sync: false
+      - key: SHIGODEKI_DATA_DIR
+        value: /var/data/shigodeki

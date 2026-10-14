@@ -1,4 +1,4 @@
-const CACHE = "shigodeki-shell-v2";
+const CACHE = "shigodeki-shell-v3";
 const ROOT = new URL("./", self.location.href);
 const FILES = [
   "./",
@@ -9,6 +9,7 @@ const FILES = [
   "validation.mjs",
   "storage.mjs",
   "ink.mjs",
+  "install.mjs",
   "manifest.webmanifest",
   "icon.svg",
   "icon-180.png",

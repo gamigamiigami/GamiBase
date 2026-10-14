@@ -2,14 +2,14 @@ name: Test Shigodeki app
 on:
   push:
     paths:
-      - "tools/shigodeki-sensei/app/**"
+      - "tools/shigodeki-sensei/**"
       - "server/**"
       - "tests/**"
       - "package.json"
       - ".github/workflows/test-shigodeki-app.yml"
   pull_request:
     paths:
-      - "tools/shigodeki-sensei/app/**"
+      - "tools/shigodeki-sensei/**"
       - "server/**"
       - "tests/**"
       - "package.json"

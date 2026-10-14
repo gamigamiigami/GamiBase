@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#244c43" />
     <meta
       name="description"
-      content="シゴデキ先生は、時間割の変更・授業時数の集計・手書きの記録をひとつにする先生のための週案ノート。iPadのホーム画面から使えるアプリ版を準備中。機能と購入後の使い方をご案内します。"
+      content="シゴデキ先生は、時間割の変更・授業時数の集計・手書きの記録をひとつにする先生のための週案ノート。本体価格980円。特別クーポンの適用と、ホーム画面に追加して使う方法をご案内します。"
     />
     <meta
       property="og:title"
@@ -20,7 +20,7 @@
     <title>シゴデキ先生 | 時間割・時数・手書きがひとつになる週案ノート</title>
     <link rel="icon" href="app/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="landing.css" />
-    <script src="landing.js" defer></script>
+    <script type="module" src="landing.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">本文へ移動</a>
@@ -53,13 +53,13 @@
           </p>
           <div class="hero-actions">
             <a class="button primary" href="#purchase"
-              >アプリ版の利用案内を見る <span aria-hidden="true">→</span></a
+              >アプリの価格・取得方法を見る <span aria-hidden="true">→</span></a
             ><a class="quiet-link" href="pdf.html"
               >PDF版の作成デモはこちら <span aria-hidden="true">↗</span></a
             >
           </div>
           <p class="hero-status">
-            <span>アプリ版は公開準備中</span> iPadのホーム画面から使うPWA
+            <span>アプリ本体 980円</span> iPadのホーム画面から使うPWA
           </p>
         </div>
         <div class="hero-visual">
@@ -248,26 +248,28 @@
             <p class="eyebrow">GETTING STARTED</p>
             <h2>購入から、最初の一週間まで。</h2>
           </div>
-          <p>販売開始後は、利用コードをお渡しする方式です。</p>
+          <p>特別クーポンで取得する方も、あなた専用のアカウントで。</p>
         </div>
         <ol class="getting-started">
           <li>
             <span>01</span>
-            <h3>購入を確認</h3>
-            <p>ご案内する購入方法でお手続き。販売者が購入を確認します。</p>
+            <h3>価格・クーポンを確認</h3>
+            <p>
+              本体価格は980円。特別クーポンをお持ちの方は、取得画面で適用します。
+            </p>
           </li>
           <li>
             <span>02</span>
-            <h3>利用コードを受け取る</h3>
+            <h3>お支払い額を確認</h3>
             <p>
-              購入時のメールアドレスに紐づいた、一度限りのコードをお渡しします。
+              クーポンの特典は適用後に表示。0円になった場合は、そのまま無料で取得できます。
             </p>
           </li>
           <li>
             <span>03</span>
             <h3>自分のアカウントを作る</h3>
             <p>
-              案内されたアプリURLで、メールアドレス・パスワード・コードを入力。
+              無料取得はメールアドレスとパスワードで登録。通常購入は購入確認後の利用コードで登録します。
             </p>
           </li>
           <li>
@@ -293,11 +295,12 @@
           <article class="purchase-card">
             <div class="purchase-card-top">
               <span>シゴデキ先生</span
-              ><span class="status-pill">アプリ版・公開準備中</span>
+              ><span class="status-pill">PWAアプリ版</span>
             </div>
             <h3>あなた専用の週案ノート</h3>
-            <p class="price-announcement">
-              価格・販売開始日は、<br />公開時にご案内します。
+            <p class="app-price"><span>本体価格</span><strong>¥980</strong></p>
+            <p class="coupon-teaser">
+              特別クーポンをお持ちですか？<br />特典の内容は、コードを適用してからのお楽しみ。
             </p>
             <ul class="included">
               <li>クラス・教科ごとの時数集計</li>
@@ -305,12 +308,14 @@
               <li>週案への手書き・授業メモ</li>
               <li>アカウント専用の保存・バックアップ</li>
             </ul>
-            <p class="availability-note">
-              現在、このページで購入・決済は受け付けていません。公開状況や利用については、公式LINEでお問い合わせいただけます。
+            <p class="availability-note" id="commerce-status" role="status">
+              アプリの取得受付は準備中です。価格と取得方法は、次の画面で確認できます。
             </p>
-            <a class="button primary" href="https://lin.ee/cTwWhUI"
-              >公式LINEで利用について相談する
-              <span aria-hidden="true">↗</span></a
+            <a class="button primary" href="checkout.html" data-checkout
+              >購入・特別クーポンの確認へ <span aria-hidden="true">→</span></a
+            >
+            <a class="purchase-login" href="checkout.html" data-app-login
+              >すでに取得済みの方はこちら →</a
             >
             <p class="purchase-note">
               初版は1アカウントにつき1年度分。月〜日・1〜6限に対応します。
@@ -365,7 +370,7 @@
           <details>
             <summary>他の先生にURLを教えたら、使えてしまいませんか？</summary>
             <p>
-              利用には購入者用のアカウントが必要です。コードは購入時のメールアドレスに紐づき、一度だけ使えます。別端末でログインすると以前のセッションは無効になります。パスワードや利用コードは他の方に渡さず、購入者ご本人でお使いください。
+              利用には取得済みのアカウントが必要です。クーポンで無料取得した場合も登録が必要です。通常購入の利用コードはメールアドレスに紐づき、一度だけ使えます。別端末でログインすると以前のセッションは無効になります。パスワードや利用コードは他の方に渡さず、購入者ご本人でお使いください。
             </p>
           </details>
           <details>
@@ -387,12 +392,23 @@
             </p>
           </details>
           <details>
+            <summary>アプリはどこからダウンロードできますか？</summary>
+            <p>
+              取得後にアプリを開き、iPad・iPhoneではSafariの共有メニューから「ホーム画面に追加」を選びます。Android・PCでは、対応するブラウザのインストール機能を使えます。App
+              StoreやZIPファイルを使わずに追加できるPWAです。
+            </p>
+          </details>
+          <details>
             <summary>今すぐ購入できますか？</summary>
             <p>
-              アプリ版は公開準備中です。価格と販売開始日は公開時にご案内します。現時点では、このページで決済やアプリ版の利用コード発行は行っていません。ご質問は<a
+              本体価格は980円です。取得受付の状況は<a
+                href="checkout.html"
+                data-checkout
+                >こちらの画面</a
+              >で確認できます。特別クーポンの特典は適用後に表示され、お支払い額が0円なら決済情報なしで取得できます。通常購入は<a
                 href="https://lin.ee/cTwWhUI"
                 >公式LINE</a
-              >で受け付けています。
+              >で購入方法をご案内し、確認後に利用コードをお渡しします。
             </p>
           </details>
         </div>

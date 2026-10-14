@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#244c43" />
+    <meta name="robots" content="noindex" />
+    <title>アプリを取得する | シゴデキ先生</title>
+    <link rel="icon" href="app/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="landing.css" />
+    <link rel="stylesheet" href="checkout.css" />
+    <script type="module" src="checkout.mjs"></script>
+  </head>
+  <body>
+    <header class="checkout-header section-wrap">
+      <a class="brand" href="./"
+        ><img src="app/icon.svg" width="36" height="36" alt="" /><span
+          >シゴデキ先生<small>TEACHER'S NOTEBOOK</small></span
+        ></a
+      >
+      <a class="quiet-link" href="./#purchase">商品ページへ戻る</a>
+    </header>
+    <main class="checkout-wrap">
+      <p class="eyebrow">YOUR NEXT NOTEBOOK</p>
+      <h1>あなたの一冊を、<br />ここから。</h1>
+      <p class="checkout-lead">
+        アプリを取得して、ホーム画面に追加。<br />時間割も手書きも、いつでも手元に。
+      </p>
+      <p id="loading" role="status">受付状況を確認しています…</p>
+      <section
+        id="unavailable"
+        class="checkout-card"
+        hidden
+        aria-labelledby="unavailable-title"
+      >
+        <h2 id="unavailable-title">アプリの受付を準備しています。</h2>
+        <p>
+          本体価格は980円です。特別クーポンによる無料取得は、アプリ公開後にご利用いただけます。
+        </p>
+        <p id="unavailable-reason" class="muted"></p>
+        <a class="button primary" href="https://lin.ee/cTwWhUI"
+          >公式LINEで公開状況を確認する ↗</a
+        >
+        <button id="retry" class="text-button" type="button">
+          もう一度確認する
+        </button>
+      </section>
+      <div id="checkout" hidden>
+        <section class="checkout-card" aria-labelledby="product-title">
+          <div class="checkout-product">
+            <img src="app/icon.svg" width="52" height="52" alt="" />
+            <div>
+              <p class="eyebrow">PWA APP</p>
+              <h2 id="product-title">シゴデキ先生 アプリ本体</h2>
+            </div>
+          </div>
+          <dl class="price-lines">
+            <div>
+              <dt>本体価格</dt>
+              <dd>980円</dd>
+            </div>
+          </dl>
+          <form id="coupon-form">
+            <label for="coupon">特別クーポンをお持ちの方</label>
+            <div class="coupon-input">
+              <input
+                id="coupon"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                maxlength="100"
+                required
+                placeholder="クーポンコードを入力"
+              /><button
+                id="apply-coupon"
+                class="button secondary"
+                type="submit"
+              >
+                適用する
+              </button>
+            </div>
+            <p class="field-help">特典の内容は、適用後に表示されます。</p>
+          </form>
+          <p id="coupon-error" class="error" role="alert"></p>
+          <div id="quote" hidden aria-live="polite">
+            <p class="coupon-success">特別クーポンを適用しました。</p>
+            <dl class="price-lines">
+              <div>
+                <dt>特別クーポン</dt>
+                <dd id="coupon-discount"></dd>
+              </div>
+              <div class="total-line">
+                <dt>お支払い額</dt>
+                <dd id="total"></dd>
+              </div>
+            </dl>
+            <p class="field-help">
+              割引は商品代金を上限に適用します。差額の返金・換金はありません。決済情報の入力は不要です。
+            </p>
+            <p id="quote-expiry" class="field-help"></p>
+            <button id="remove-coupon" class="text-button" type="button">
+              クーポンを取り消す
+            </button>
+          </div>
+          <div id="paid-option">
+            <p class="muted">
+              通常購入（980円）は、公式LINEで購入方法をご案内します。購入確認後に、登録用の利用コードをお渡しします。
+            </p>
+            <a class="button primary" href="https://lin.ee/cTwWhUI"
+              >980円での購入について問い合わせる ↗</a
+            >
+          </div>
+        </section>
+        <section
+          id="registration"
+          class="checkout-card"
+          hidden
+          aria-labelledby="register-title"
+        >
+          <p class="eyebrow">CREATE YOUR ACCOUNT</p>
+          <h2 id="register-title">無料で取得して、使いはじめる。</h2>
+          <p>
+            メールアドレスとパスワードを登録すると、あなた専用のノートが使えるようになります。
+          </p>
+          <form id="register-form">
+            <label for="buyer-email">メールアドレス</label
+            ><input
+              id="buyer-email"
+              type="email"
+              autocomplete="username"
+              maxlength="254"
+              required
+            />
+            <label for="buyer-password">パスワード</label
+            ><input
+              id="buyer-password"
+              type="password"
+              autocomplete="new-password"
+              minlength="12"
+              maxlength="128"
+              required
+            />
+            <p class="field-help">12〜128文字。次回のログインにも使います。</p>
+            <label for="password-confirm">パスワード（確認）</label
+            ><input
+              id="password-confirm"
+              type="password"
+              autocomplete="new-password"
+              minlength="12"
+              maxlength="128"
+              required
+            />
+            <p class="field-help">
+              1アカウントにつき1年度分のノートです。登録内容はアプリの認証・保存に使用します。起動時はインターネット接続が必要です。
+            </p>
+            <p id="register-error" class="error" role="alert"></p>
+            <button id="get-app" class="button primary" type="submit">
+              0円で取得して、アプリへ進む →
+            </button>
+          </form>
+          <p class="field-help">
+            登録済みの方は<a href="app/">こちらからログイン</a>してください。
+          </p>
+        </section>
+      </div>
+      <section
+        id="complete"
+        class="checkout-card"
+        hidden
+        aria-labelledby="complete-title"
+        tabindex="-1"
+      >
+        <p class="eyebrow">YOUR NOTEBOOK IS READY</p>
+        <h2 id="complete-title">アプリを使う準備ができました。</h2>
+        <p id="complete-email"></p>
+        <p id="receipt" class="receipt"></p>
+        <a id="open-app" class="button primary" href="app/"
+          >アプリを開く・ホーム画面に追加 →</a
+        >
+        <div class="install-instructions">
+          <h3>アプリを端末に追加するには</h3>
+          <ol>
+            <li>上のボタンからアプリを開きます。</li>
+            <li>iPad・iPhoneはSafariの共有ボタン →「ホーム画面に追加」。</li>
+            <li>
+              Android・PCはアプリ内の「アプリをインストール」を選びます。対応しないブラウザでは案内が表示されます。
+            </li>
+          </ol>
+          <p class="field-help">
+            App
+            Storeからのダウンロードやファイルの解凍は不要です。このアプリはホーム画面に追加して使うPWAです。
+          </p>
+        </div>
+      </section>
+      <noscript
+        ><p>アプリの取得にはJavaScriptを有効にしてください。</p></noscript
+      >
+    </main>
+    <footer class="checkout-footer">
+      シゴデキ先生 · <a href="https://lin.ee/cTwWhUI">お問い合わせ</a>
+    </footer>
+  </body>
+</html>

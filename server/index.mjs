@@ -15,9 +15,11 @@ import {
 } from "./store.mjs";
 import { validateState } from "../tools/shigodeki-sensei/app/validation.mjs";
 import { createState } from "../tools/shigodeki-sensei/app/model.mjs";
+import { PRODUCT, couponMatches, freeQuote } from "./commerce.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const APP = "/tools/shigodeki-sensei/app/";
+const SITE = "/tools/shigodeki-sensei/";
 const API = "/api/shigodeki/";
 const MAX_BODY = 8 * 1024 * 1024;
 const SESSION_MS = 7 * 86400000;
@@ -29,6 +31,9 @@ const mime = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".webmanifest": "application/manifest+json",
+  ".json": "application/json; charset=utf-8",
+  ".ttf": "font/ttf",
+  ".txt": "text/plain; charset=utf-8",
 };
 class Failure extends Error {
   constructor(status, message) {
@@ -60,7 +65,11 @@ async function body(req) {
   }
 }
 
-export function createApp({ dbPath, origin = "http://127.0.0.1:3000" }) {
+export function createApp({
+  dbPath,
+  origin = "http://127.0.0.1:3000",
+  couponCode = "",
+}) {
   const expectedOrigin = new URL(origin).origin;
   if (expectedOrigin !== origin)
     throw new Error("APP_ORIGINにはパスを含まないオリジンを指定してください。");
@@ -71,6 +80,14 @@ export function createApp({ dbPath, origin = "http://127.0.0.1:3000" }) {
   )
     throw new Error("公開環境はHTTPSが必要です。");
   const db = openStore(dbPath);
+  if (
+    typeof couponCode !== "string" ||
+    couponCode.length > 100 ||
+    couponCode !== couponCode.trim()
+  )
+    throw new Error(
+      "特別クーポンは前後の空白を含まない100文字以内のコードで設定してください。",
+    );
   function cookie(token, age = SESSION_MS / 1000) {
     return `shigodeki_session=${token}; Path=/api/shigodeki/; HttpOnly; SameSite=Strict; Max-Age=${age}${secure ? "; Secure" : ""}`;
   }
@@ -101,7 +118,7 @@ export function createApp({ dbPath, origin = "http://127.0.0.1:3000" }) {
       );
     return user;
   }
-  function startSession(res, user) {
+  function startSession(res, user, extra = {}) {
     const token = randomBytes(32).toString("base64url"),
       expires = Date.now() + SESSION_MS;
     db.prepare("DELETE FROM sessions WHERE user_id=? OR expires<?").run(
@@ -116,7 +133,7 @@ export function createApp({ dbPath, origin = "http://127.0.0.1:3000" }) {
     send(
       res,
       200,
-      { user: { id: user.id, email: user.email }, expires },
+      { user: { id: user.id, email: user.email }, expires, ...extra },
       { "Set-Cookie": cookie(token) },
     );
   }
@@ -142,6 +159,10 @@ export function createApp({ dbPath, origin = "http://127.0.0.1:3000" }) {
     if (secure) res.setHeader("Strict-Transport-Security", "max-age=31536000");
     try {
       const path = new URL(req.url, "http://local").pathname;
+      if (path === "/healthz" && req.method === "GET") {
+        db.prepare("SELECT 1").get();
+        return send(res, 200, { ok: true });
+      }
       if (path.startsWith(API)) {
         if (
           req.headers["sec-fetch-site"] === "cross-site" ||
@@ -153,6 +174,90 @@ export function createApp({ dbPath, origin = "http://127.0.0.1:3000" }) {
           req.headers.origin !== expectedOrigin
         )
           throw new Failure(403, "接続元を確認できません。");
+        if (path === `${API}product` && req.method === "GET")
+          return send(res, 200, {
+            ...PRODUCT,
+            couponAvailable: Boolean(couponCode),
+          });
+        if (path === `${API}quote` && req.method === "POST") {
+          throttle(`coupon:${req.socket.remoteAddress}`, 100);
+          const data = await body(req);
+          if (!couponCode)
+            throw new Failure(503, "特別クーポンの受付は準備中です。");
+          if (!couponMatches(data.coupon, couponCode))
+            throw new Failure(400, "クーポンコードを確認してください。");
+          const token = randomBytes(32).toString("base64url"),
+            expires = Date.now() + 15 * 60000;
+          db.prepare("DELETE FROM quotes WHERE expires<?").run(Date.now());
+          db.prepare(
+            "INSERT INTO quotes(token,coupon_hash,expires) VALUES(?,?,?)",
+          ).run(hash(token), hash(couponCode), expires);
+          return send(res, 200, { ...freeQuote(), quoteId: token, expires });
+        }
+        if (path === `${API}checkout/free` && req.method === "POST") {
+          throttle(`checkout:${req.socket.remoteAddress}`, 30);
+          const data = await body(req),
+            email = emailOf(data.email);
+          if (!validEmail(email) || !validPassword(data.password))
+            throw new Failure(
+              400,
+              "メールアドレスと12〜128文字のパスワードを入力してください。",
+            );
+          if (typeof data.quoteId !== "string" || data.quoteId.length > 100)
+            throw new Failure(400, "特別クーポンを適用してください。");
+          const quoteHash = hash(data.quoteId),
+            encoded = await passwordHash(data.password);
+          db.exec("BEGIN IMMEDIATE");
+          try {
+            const quote = db
+              .prepare(
+                "SELECT * FROM quotes WHERE token=? AND used IS NULL AND expires>?",
+              )
+              .get(quoteHash, Date.now());
+            if (!couponCode || !quote || quote.coupon_hash !== hash(couponCode))
+              throw new Failure(
+                409,
+                "クーポンをもう一度適用してください。有効期限切れ、または取得済みです。",
+              );
+            const price = freeQuote();
+            if (price.total !== 0)
+              throw new Failure(409, "無料取得の対象ではありません。");
+            if (db.prepare("SELECT id FROM users WHERE email=?").get(email))
+              throw new Failure(
+                409,
+                "このメールアドレスは登録済みです。アプリのログイン画面から開いてください。",
+              );
+            const user = { id: randomUUID(), email },
+              orderId = randomUUID();
+            db.prepare(
+              "INSERT INTO users(id,email,password) VALUES(?,?,?)",
+            ).run(user.id, email, encoded);
+            db.prepare(
+              "INSERT INTO orders(id,user_id,currency,list_price,coupon_discount,applied_discount,total,created_at) VALUES(?,?,?,?,?,?,?,?)",
+            ).run(
+              orderId,
+              user.id,
+              price.currency,
+              price.price,
+              price.couponDiscount,
+              price.appliedDiscount,
+              price.total,
+              Date.now(),
+            );
+            db.prepare("UPDATE quotes SET used=? WHERE token=?").run(
+              Date.now(),
+              quoteHash,
+            );
+            db.exec("COMMIT");
+            return startSession(res, user, {
+              order: { id: orderId, ...price },
+              appPath: APP,
+            });
+          } catch (error) {
+            if (db.isTransaction) db.exec("ROLLBACK");
+            throw error;
+          }
+        }
         if (path === `${API}session` && req.method === "GET") {
           const user = session(req);
           return send(res, 200, {
@@ -233,6 +338,18 @@ export function createApp({ dbPath, origin = "http://127.0.0.1:3000" }) {
           }
         }
         const user = session(req);
+        if (path === `${API}access` && req.method === "GET") {
+          const order = db
+            .prepare(
+              "SELECT id,currency,list_price AS price,coupon_discount AS couponDiscount,applied_discount AS appliedDiscount,total FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 1",
+            )
+            .get(user.id);
+          return send(res, 200, {
+            user: { id: user.id, email: user.email },
+            order: order || null,
+            appPath: APP,
+          });
+        }
         if (path === `${API}logout` && req.method === "POST") {
           db.prepare("DELETE FROM sessions WHERE user_id=?").run(user.id);
           return send(res, 200, { ok: true }, { "Set-Cookie": cookie("", 0) });
@@ -287,16 +404,27 @@ export function createApp({ dbPath, origin = "http://127.0.0.1:3000" }) {
       }
       if (!["GET", "HEAD"].includes(req.method))
         throw new Failure(405, "この操作には対応していません。");
-      if (path === "/" || path === APP.slice(0, -1)) {
-        res.writeHead(302, { Location: APP });
+      if (
+        path === "/" ||
+        path === SITE.slice(0, -1) ||
+        path === APP.slice(0, -1)
+      ) {
+        res.writeHead(302, {
+          Location: path === APP.slice(0, -1) ? APP : SITE,
+        });
         return res.end();
       }
-      if (!path.startsWith(APP))
+      if (path === `${SITE}commerce-config.json`)
+        return send(res, 200, { appOrigin: expectedOrigin });
+      if (!path.startsWith(SITE))
         throw new Failure(404, "ページが見つかりません。");
       const relative =
-        decodeURIComponent(path.slice(APP.length)) || "index.html";
-      const appRoot = resolve(ROOT, "tools/shigodeki-sensei/app");
-      const file = resolve(appRoot, relative);
+        decodeURIComponent(path.slice(SITE.length)) || "index.html";
+      const appRoot = resolve(ROOT, "tools/shigodeki-sensei");
+      const requested = relative.endsWith("/")
+        ? relative + "index.html"
+        : relative;
+      const file = resolve(appRoot, requested);
       if (
         !file.startsWith(appRoot + sep) ||
         relative.split("/").some((part) => part.startsWith(".")) ||
@@ -345,7 +473,11 @@ if (
     process.env.SHIGODEKI_DATA_DIR || defaultDataDir,
     "app.sqlite",
   );
-  const { server } = createApp({ dbPath, origin });
+  const { server } = createApp({
+    dbPath,
+    origin,
+    couponCode: process.env.SHIGODEKI_COUPON_CODE || "",
+  });
   server.listen(port, host, () =>
     console.log(`Shigodeki server listening on ${host}:${port}`),
   );

@@ -43,7 +43,9 @@ export function openStore(path) {
     CREATE TABLE IF NOT EXISTS licenses (token TEXT PRIMARY KEY, email TEXT NOT NULL, expires INTEGER NOT NULL, used INTEGER);
     CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS notebooks (user_id TEXT PRIMARY KEY REFERENCES users(id), revision INTEGER NOT NULL, document TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS attempts (key TEXT PRIMARY KEY, count INTEGER NOT NULL, reset_at INTEGER NOT NULL);`);
+    CREATE TABLE IF NOT EXISTS attempts (key TEXT PRIMARY KEY, count INTEGER NOT NULL, reset_at INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS quotes (token TEXT PRIMARY KEY, coupon_hash TEXT NOT NULL, expires INTEGER NOT NULL, used INTEGER);
+    CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), currency TEXT NOT NULL, list_price INTEGER NOT NULL, coupon_discount INTEGER NOT NULL, applied_discount INTEGER NOT NULL, total INTEGER NOT NULL CHECK(total>=0), created_at INTEGER NOT NULL);`);
   return db;
 }
 export function issueLicense(db, email) {

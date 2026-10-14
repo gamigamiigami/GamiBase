@@ -87,6 +87,11 @@
           <p class="auth-help">
             購入者専用のノートです。URLを知っているだけでは利用できません。パスワードを忘れた場合は、販売者から再設定用の利用コードを受け取ってください。
           </p>
+          <p class="auth-help">
+            まだ取得していない方は<a href="../checkout.html"
+              >購入・特別クーポンの画面へ</a
+            >。
+          </p>
           <details class="install-guide">
             <summary>ホーム画面に追加して使う</summary>
             <p>
@@ -145,8 +150,8 @@
             <span id="save-status" role="status" aria-live="polite"
               >保存済み</span
             ><button id="retry-save" class="small" hidden>再接続・保存</button
-            ><button id="install-button" class="small" hidden>
-              アプリとして追加
+            ><button id="install-button" class="small">
+              アプリをインストール
             </button>
           </div>
         </header>
@@ -391,6 +396,30 @@
           ><button type="submit" class="primary">ノートに反映する</button>
         </div>
       </form>
+    </dialog>
+    <dialog id="install-dialog" aria-labelledby="install-title">
+      <div class="dialog-heading">
+        <h2 id="install-title">アプリをホーム画面に追加</h2>
+        <button
+          type="button"
+          data-close="install-dialog"
+          aria-label="インストール案内を閉じる"
+        >
+          閉じる ×
+        </button>
+      </div>
+      <p>
+        iPad・iPhoneはSafariでこのページを開き、共有ボタン
+        →「ホーム画面に追加」→「追加」を選びます。
+      </p>
+      <p>
+        AndroidはChromeのメニュー
+        →「ホーム画面に追加」または「アプリをインストール」。PCはChrome・Edgeのアドレスバーやメニューのインストールを選びます。
+      </p>
+      <p class="muted">
+        App
+        StoreやZIPファイルは使いません。対応しないブラウザでは、ブラウザのまま使えます。起動・ログイン時はインターネット接続が必要です。
+      </p>
     </dialog>
     <noscript>このアプリの利用にはJavaScriptを有効にしてください。</noscript>
   </body>

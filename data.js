@@ -317,7 +317,7 @@ const SITE_DATA = [
     description: "時間割変更・授業時数の集計・手書きがひとつになる週案ノート。アプリ版の機能と利用案内、PDF作成デモはこちら。",
     url: "./tools/shigodeki-sensei/",
     emoji: "📘",
-    tags: ["週案", "授業時数", "アプリ版準備中"],
+    tags: ["週案", "授業時数", "アプリ本体980円"],
   },
   {
     category: "useful",

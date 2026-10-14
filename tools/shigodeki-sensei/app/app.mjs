@@ -22,6 +22,7 @@ import {
 import { Ink } from "./ink.mjs";
 import { draft } from "./storage.mjs";
 import { validateState } from "./validation.mjs";
+import { setupInstall } from "./install.mjs";
 const $ = (id) => document.getElementById(id);
 let localAvailable = true;
 const escape = (value) =>
@@ -835,19 +836,7 @@ setInterval(() => {
       if (error.status === 401) lock(error.message);
     });
 }, 60000);
-let installPrompt;
-window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault();
-  installPrompt = event;
-  $("install-button").hidden = false;
-});
-$("install-button").onclick = async () => {
-  if (installPrompt) {
-    await installPrompt.prompt();
-    installPrompt = null;
-    $("install-button").hidden = true;
-  }
-};
+setupInstall();
 if ("serviceWorker" in navigator && window.isSecureContext)
   navigator.serviceWorker.register("./sw.js").catch(() => {});
 api("session")
