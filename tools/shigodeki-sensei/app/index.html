@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#244c43" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="シゴデキ先生" />
+    <meta
+      name="description"
+      content="時間割の変更も、授業の時数も、手書きの記録も。先生のための週案ノート。"
+    />
+    <title>シゴデキ先生 | 週案ノート</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon-180.png" />
+    <link rel="stylesheet" href="app.css" />
+    <script type="module" src="app.mjs"></script>
+  </head>
+  <body>
+    <div id="auth-view" class="auth-layout">
+      <section class="welcome">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true">▤</span
+          ><span>シゴデキ先生<small>TEACHER'S NOTEBOOK</small></span>
+        </div>
+        <div class="welcome-copy">
+          <p class="eyebrow">毎日の授業に、少しの余白を。</p>
+          <h1>予定も、記録も。<br />いつもの一冊に。</h1>
+          <p>
+            時間割を変えたら、時数も変わる。<br />気づいたことは、その場で手書き。<br />あなたの授業と一緒に育つ、週案ノートです。
+          </p>
+        </div>
+        <div class="welcome-cards" aria-hidden="true">
+          <span>01 <b>時間割</b> 変更はその場で</span
+          ><span>02 <b>時数</b> 週と累計をひと目で</span
+          ><span>03 <b>手書き</b> 思いのままに記録</span>
+        </div>
+        <p class="welcome-footer">iPadのホーム画面から、アプリのように。</p>
+      </section>
+      <section class="auth-panel" aria-labelledby="auth-title">
+        <div class="auth-card">
+          <p class="eyebrow">YOUR OWN NOTEBOOK</p>
+          <h2 id="auth-title">おかえりなさい。</h2>
+          <p id="auth-description" class="muted">
+            あなたのノートを開きましょう。
+          </p>
+          <form id="auth-form">
+            <label
+              >購入時のメールアドレス<input
+                id="email"
+                type="email"
+                autocomplete="username"
+                required
+                maxlength="254"
+                placeholder="teacher@example.com"
+            /></label>
+            <label
+              >パスワード<input
+                id="password"
+                type="password"
+                autocomplete="current-password"
+                minlength="12"
+                maxlength="128"
+                required
+                placeholder="12文字以上"
+            /></label>
+            <label id="code-label" hidden
+              >購入者用の利用コード<input
+                id="license-code"
+                autocomplete="off"
+                maxlength="100"
+                placeholder="販売者から届いたコード"
+            /></label>
+            <p id="auth-error" class="error" role="alert"></p>
+            <button id="auth-submit" type="submit" class="primary wide">
+              ノートを開く <span aria-hidden="true">→</span>
+            </button>
+          </form>
+          <button id="auth-toggle" class="text-button">
+            はじめての方・利用コードをお持ちの方
+          </button>
+          <p class="auth-help">
+            購入者専用のノートです。URLを知っているだけでは利用できません。パスワードを忘れた場合は、販売者から再設定用の利用コードを受け取ってください。
+          </p>
+          <details class="install-guide">
+            <summary>ホーム画面に追加して使う</summary>
+            <p>
+              iPadのSafariでこのページを開き、共有ボタン
+              →「ホーム画面に追加」を選びます。起動・ログインにはインターネット接続が必要です。
+            </p>
+          </details>
+        </div>
+      </section>
+    </div>
+
+    <div id="app-view" class="app-layout" hidden>
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true">▤</span
+          ><span>シゴデキ先生<small>TEACHER'S NOTEBOOK</small></span>
+        </div>
+        <div class="notebook-label">
+          <span class="eyebrow">MY NOTEBOOK</span>
+          <h2 id="owner-label">わたしの週案</h2>
+          <span id="school-year" class="year-pill"></span>
+        </div>
+        <nav aria-label="ノートの操作">
+          <button id="nav-week" class="nav-item active">
+            <span aria-hidden="true">▦</span>週案ノート</button
+          ><button id="nav-counts" class="nav-item">
+            <span aria-hidden="true">▥</span>授業の時数</button
+          ><button id="settings-open" class="nav-item">
+            <span aria-hidden="true">⚙</span>基本設定
+          </button>
+        </nav>
+        <div class="sidebar-note">
+          <span aria-hidden="true">✎</span>
+          <p>今日の小さな気づきが、<br />明日の授業につながる。</p>
+        </div>
+        <div class="account">
+          <span id="account-email"></span
+          ><button id="backup" class="text-button">
+            バックアップを書き出す</button
+          ><button id="restore" class="text-button">バックアップを復元</button
+          ><input
+            id="restore-file"
+            type="file"
+            accept=".json,application/json"
+            hidden
+          /><button id="logout" class="text-button muted">ログアウト</button>
+        </div>
+      </aside>
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">WEEKLY PLANNER</p>
+            <h1>週案ノート</h1>
+          </div>
+          <div class="save-area">
+            <span id="save-status" role="status" aria-live="polite"
+              >保存済み</span
+            ><button id="retry-save" class="small" hidden>再接続・保存</button
+            ><button id="install-button" class="small" hidden>
+              アプリとして追加
+            </button>
+          </div>
+        </header>
+        <div id="notice" class="notice" role="status" hidden></div>
+        <section id="recovery" class="notice recovery" hidden>
+          <strong>この端末に、まだ同期していない変更があります。</strong>
+          <p>
+            サーバーにも別の変更があるため、自動で上書きしません。端末の変更をダウンロードして保管し、サーバーのノートを開いてください。
+          </p>
+          <button id="recovery-download">端末の変更を保存</button
+          ><button id="recovery-server">サーバーのノートを開く</button>
+        </section>
+        <section class="planner-card" aria-label="週間時間割">
+          <div class="week-toolbar">
+            <div class="week-nav">
+              <button id="prev-week" class="square" aria-label="前の週">
+                ‹
+              </button>
+              <div>
+                <h2 id="week-label"></h2>
+                <p id="week-subtitle"></p>
+              </div>
+              <button id="next-week" class="square" aria-label="次の週">
+                ›
+              </button>
+            </div>
+            <div class="week-actions">
+              <button id="today-button" class="small">今週</button
+              ><label class="date-jump"
+                ><span class="sr-only">表示する日</span
+                ><input id="jump-date" type="date" aria-label="表示する日"
+              /></label>
+            </div>
+          </div>
+          <div class="drawing-toolbar">
+            <div class="segmented" aria-label="操作モード">
+              <button data-mode="edit" class="selected" aria-pressed="true">
+                ▦ 時間割</button
+              ><button data-mode="pen" aria-pressed="false">✎ ペン</button
+              ><button data-mode="marker" aria-pressed="false">
+                ▰ マーカー</button
+              ><button data-mode="eraser" aria-pressed="false">
+                ▱ 消しゴム
+              </button>
+            </div>
+            <div class="ink-options">
+              <label class="color-picker"
+                >色
+                <input
+                  id="ink-color"
+                  type="color"
+                  value="#30483f"
+                  aria-label="ペンの色" /></label
+              ><label class="width-picker"
+                >太さ
+                <input
+                  id="ink-width"
+                  type="range"
+                  min="1"
+                  max="8"
+                  value="2"
+                  aria-label="ペンの太さ" /></label
+              ><button
+                id="undo"
+                class="square"
+                aria-label="手書きを取り消す"
+                disabled
+              >
+                ↶</button
+              ><button
+                id="redo"
+                class="square"
+                aria-label="手書きをやり直す"
+                disabled
+              >
+                ↷
+              </button>
+            </div>
+          </div>
+          <div class="paper-help">
+            <span id="mode-help"
+              >コマをタップして、授業・休講・振替を変更できます。</span
+            ><label
+              ><input id="pencil-only" type="checkbox" checked />
+              指では書かない</label
+            >
+          </div>
+          <div id="paper-viewport" class="paper-viewport">
+            <div id="paper" class="paper">
+              <div id="week-grid" class="week-grid"></div>
+              <div class="free-note">
+                <span>MEMO & IDEAS</span><span>授業の気づき、次の一歩。</span>
+              </div>
+              <canvas
+                id="ink-canvas"
+                width="1200"
+                height="920"
+                aria-label="週案に重ねて書く手書きエリア"
+              ></canvas>
+            </div>
+          </div>
+          <div class="planner-bottom">
+            <span
+              ><i class="dot planned"></i>予定 <i class="dot done"></i>実施済み
+              <i class="dot cancelled"></i>休講</span
+            ><span>1コマ＝1時数 ／ 土日も変更できます</span>
+          </div>
+        </section>
+        <section id="counts-section" class="counts-section">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">LESSON COUNTS</p>
+              <h2>授業の積み重ね</h2>
+            </div>
+            <p>休講は除外。振替・変更はすぐ反映されます。</p>
+          </div>
+          <p id="count-explanation" class="muted"></p>
+          <div id="counts-list" class="counts-list"></div>
+        </section>
+        <section class="reflection">
+          <label for="week-note"
+            ><span class="eyebrow">WEEKLY REFLECTION</span>
+            <h2>今週のふりかえり</h2></label
+          ><textarea
+            id="week-note"
+            rows="3"
+            maxlength="10000"
+            placeholder="うまくいったこと、次の授業で試したいこと。"
+          ></textarea>
+        </section>
+        <footer class="workspace-footer">
+          シゴデキ先生 <span>あなたの毎日に、書き込める余白を。</span>
+        </footer>
+      </main>
+    </div>
+
+    <dialog id="slot-dialog">
+      <form id="slot-form">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">EDIT LESSON</p>
+            <h2 id="slot-title"></h2>
+          </div>
+          <button
+            type="button"
+            class="square"
+            data-close="slot-dialog"
+            aria-label="閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <p id="slot-day-note" class="muted"></p>
+        <label>授業<select id="slot-lesson"></select></label
+        ><label
+          >状態<select id="slot-status">
+            <option value="planned">予定</option>
+            <option value="done">実施済み</option>
+            <option value="cancelled">休講（時数に含めない）</option>
+          </select></label
+        ><label
+          >授業メモ<textarea
+            id="slot-note"
+            maxlength="2000"
+            rows="3"
+            placeholder="単元、教材、次回への引き継ぎなど"
+          ></textarea>
+        </label>
+        <details class="swap">
+          <summary>別のコマへ振り替える・入れ替える</summary>
+          <p class="muted">
+            振替先に授業がある場合は交換します。手書きは元の場所に残ります。編集中の内容は先に保存してください。
+          </p>
+          <label>振替先の日付<input id="swap-date" type="date" /></label
+          ><label
+            >時限<select id="swap-period">
+              <option value="1">1限</option>
+              <option value="2">2限</option>
+              <option value="3">3限</option>
+              <option value="4">4限</option>
+              <option value="5">5限</option>
+              <option value="6">6限</option>
+            </select></label
+          ><button type="button" id="swap-button">このコマと入れ替える</button>
+        </details>
+        <p id="slot-error" class="error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" id="slot-reset">基本時間割に戻す</button
+          ><button type="submit" class="primary">変更を保存</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="settings-dialog" class="settings-dialog">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">NOTEBOOK SETTINGS</p>
+          <h2>わたしの基本設定</h2>
+        </div>
+        <button class="square" data-close="settings-dialog" aria-label="閉じる">
+          ×
+        </button>
+      </div>
+      <p class="muted">
+        授業を登録して、曜日ごとの基本時間割を選びます。時間割と手書きは、あなたのアカウント専用のサーバーに保存されます。
+      </p>
+      <form id="settings-form">
+        <div class="settings-basics">
+          <label
+            >ノートの名前<input
+              id="owner"
+              maxlength="80"
+              placeholder="例：伊神先生の週案" /></label
+          ><label
+            >年度<input id="year" type="number" min="2025" max="2098" required
+          /></label>
+        </div>
+        <p id="year-hint" class="muted"></p>
+        <h3>01 担当する授業</h3>
+        <p class="muted">
+          「2年3組 国語」のように、クラスと教科をひと組にします。
+        </p>
+        <div id="lesson-settings"></div>
+        <button type="button" id="add-lesson">＋ 授業を追加</button>
+        <h3>02 基本時間割</h3>
+        <label class="effective-date"
+          >適用開始日<input id="template-from" type="date" required
+        /></label>
+        <p class="muted">
+          この日以降に適用します。過去の週と、個別に変更済みのコマは変わりません。開始日を選び直すと、その日の基本時間割を読み込みます。
+        </p>
+        <div class="template-scroll"><table id="template-table"></table></div>
+        <h3>03 長期休業・授業のない日</h3>
+        <p class="muted">
+          祝日は自動で除外します。それ以外の休業期間を登録してください。期間を変えると、個別変更のない日すべてに反映されます。
+        </p>
+        <div id="break-settings"></div>
+        <button type="button" id="add-break">＋ 休業期間を追加</button>
+        <p id="settings-error" class="error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" data-close="settings-dialog">キャンセル</button
+          ><button type="submit" class="primary">ノートに反映する</button>
+        </div>
+      </form>
+    </dialog>
+    <noscript>このアプリの利用にはJavaScriptを有効にしてください。</noscript>
+  </body>
+</html>

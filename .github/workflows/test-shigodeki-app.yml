@@ -1,0 +1,27 @@
+name: Test Shigodeki app
+on:
+  push:
+    paths:
+      - "tools/shigodeki-sensei/app/**"
+      - "server/**"
+      - "tests/**"
+      - "package.json"
+      - ".github/workflows/test-shigodeki-app.yml"
+  pull_request:
+    paths:
+      - "tools/shigodeki-sensei/app/**"
+      - "server/**"
+      - "tests/**"
+      - "package.json"
+      - ".github/workflows/test-shigodeki-app.yml"
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm test

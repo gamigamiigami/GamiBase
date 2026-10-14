@@ -151,10 +151,13 @@
 
   // 画面の切り替え
   const steps = [...document.querySelectorAll(".step")];
-  // 画面を切り替えたら、購入フローの先頭に合わせる。
-  // （LPの中に埋め込んでいるので、ページ最上部まで戻すと購入から離れてしまう）
+  // 画面を切り替えたら、PDF作成フォームの先頭に合わせる。
   const flowTop = document.getElementById("purchase-flow");
   function show(step) {
+    if (step === 2) {
+      if (!document.getElementById("fp").reportValidity()) return;
+      updateConfirmation();
+    }
     steps.forEach((s) => s.setAttribute("aria-selected", String(s.dataset.step === String(step))));
     [1, 2, 3].forEach((n) => { document.getElementById("panel-" + n).hidden = n !== step; });
     if (flowTop) {
@@ -169,8 +172,8 @@
     btn.addEventListener("click", () => show(Number(btn.dataset.go)));
   });
 
-  // 「確認・購入へ進む」で、入力内容から購入画面の確認欄を作る。
-  document.getElementById("to-purchase").addEventListener("click", () => {
+  // 確認画面には、最新の入力内容を反映する。
+  function updateConfirmation() {
     const input = collectInput();
     document.getElementById("c-year").textContent = `${input.schoolYear}年度`;
     document.getElementById("c-free").textContent = input.freePages + "枚";
@@ -178,85 +181,8 @@
     Object.values(input.timetable.grid).forEach((periods) => { lessonCount += Object.keys(periods).length; });
     document.getElementById("c-lessons").textContent = lessonCount + "コマ";
     document.getElementById("c-events").textContent = input.events.length + "件";
-  });
-
-  // ── お会計（見た目だけの購入フロー） ───────────────────
-  // 定価は適当な金額。クーポンはその100倍を割り引くので、使うと必ず0円まで
-  // 落ちる（遊び心：割引額が定価よりずっと大きいという冗談）。クーポンは
-  // 既に取得済みという設定で、使うかどうかだけ選べる。割引額は「使う」を
-  // 押すまでは伏せておき、使った瞬間に初めて明かして反映する。
-  // 決済は一切行わず、カード欄は見本表示のみで、値は読み取っても保存・送信もしない。
-  const PRICE = 1980;
-  const COUPON_MULTIPLIER = 100;
-  const yen = (n) => "¥" + n.toLocaleString("ja-JP");
-
-  const couponRow = document.querySelector(".coupon-row");
-  const couponAmount = document.getElementById("coupon-amount");
-  const toggleCoupon = document.getElementById("toggle-coupon");
-  const discountRow = document.getElementById("discount-row");
-  const priceDiscount = document.getElementById("price-discount");
-  const priceStrike = document.getElementById("price-strike");
-  const priceTotal = document.getElementById("price-total");
-  const paymentBox = document.getElementById("payment");
-  const paymentBadge = document.getElementById("payment-badge");
-  const paymentNote = document.getElementById("payment-note");
-
-  let couponUsed = false;
-
-  function updatePrice() {
-    const discount = PRICE * COUPON_MULTIPLIER;
-    const total = couponUsed ? Math.max(0, PRICE - discount) : PRICE;
-
-    document.getElementById("price-base").textContent = yen(PRICE);
-    discountRow.hidden = !couponUsed;
-    if (couponUsed) priceDiscount.textContent = "−" + yen(discount);
-    priceStrike.hidden = !couponUsed;
-    priceStrike.textContent = yen(PRICE);
-    priceTotal.textContent = yen(total);
-
-    couponRow.classList.toggle("is-applied", couponUsed);
-    toggleCoupon.setAttribute("aria-pressed", String(couponUsed));
-    toggleCoupon.textContent = couponUsed ? "使用中（取り消す）" : "クーポンを使う";
-    couponAmount.textContent = couponUsed
-      ? `${yen(discount)}引き（なんと定価の100倍オフ）`
-      : "";
-
-    paymentBox.classList.toggle("is-waived", total === 0);
-    paymentBadge.hidden = total !== 0;
-    document.getElementById("make").textContent = total === 0 ? "0円で購入する" : yen(total) + "で購入する";
-    paymentNote.textContent = total === 0
-      ? "クーポンにより合計0円です。カード情報は入力しなくても購入に進めます（お試しで入れても実際には使われません）。"
-      : "このデモでは実際の請求は発生しません。カード情報は送信・保存されません。";
-
-    // クーポンを使えば0円になるので、使った時点で案内は引っ込める。
-    if (couponUsed) couponAlert.hidden = true;
   }
-  toggleCoupon.addEventListener("click", () => {
-    couponUsed = !couponUsed;
-    updatePrice();
-  });
-
-  // クーポンを使わずにカード情報を入れようとしたら、まず教えてあげる。
-  const couponAlert = document.getElementById("coupon-alert");
-  const cardFields = ["cc-num", "cc-exp", "cc-cvc"].map((id) => document.getElementById(id));
-  function nudgeCoupon(e) {
-    if (couponUsed) return;
-    couponAlert.hidden = false;
-    couponAlert.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    if (e && e.target) e.target.blur();
-  }
-  cardFields.forEach((el) => {
-    if (!el) return;
-    el.addEventListener("focus", nudgeCoupon);
-    el.addEventListener("beforeinput", nudgeCoupon);
-  });
-  document.getElementById("coupon-alert-use").addEventListener("click", () => {
-    couponUsed = true;
-    updatePrice();
-    couponRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  });
-
-  updatePrice();
+  document.getElementById("to-purchase").addEventListener("click", () => show(2));
 
   // ── 年間行事予定の読み取り ──────────────────────────
   // 1行1件。「日付 , 行事名」をカンマ・読点・タブのどれで区切ってもよい
@@ -387,24 +313,14 @@
   const progress = document.getElementById("progress");
   const barFill = document.getElementById("bar-fill");
   const progressText = document.getElementById("progress-text");
-  const mailEl = document.getElementById("mail");
   let blobUrl = null;
 
-  // 購入前の確認事項は3つとも同意しないと購入ボタンを押せない。
-  const agreeBoxes = ["agree-content", "agree-nomod", "agree-noshare"].map((id) => document.getElementById(id));
-  function syncMakeEnabled() {
-    makeBtn.disabled = !agreeBoxes.every((box) => box.checked);
-  }
-  agreeBoxes.forEach((box) => box.addEventListener("change", syncMakeEnabled));
-  syncMakeEnabled();
-
+  let generating = false;
   makeBtn.addEventListener("click", async () => {
-    // メールアドレスは必須（本番の購入確認メール送付先として使う想定）。
-    if (!mailEl.value.trim() || !mailEl.checkValidity()) {
-      mailEl.reportValidity();
-      mailEl.focus();
-      return;
-    }
+    if (generating) return;
+    if (!document.getElementById("fp").reportValidity()) { show(1); return; }
+    generating = true;
+    steps.forEach(step => { step.disabled = true; });
     const input = collectInput();
     makeBtn.disabled = true;
     makeNote.hidden = true;
@@ -437,7 +353,10 @@
       progressText.textContent = "作成できませんでした: " + (err && err.message ? err.message : err);
       barFill.style.width = "0";
     } finally {
-      syncMakeEnabled();
-      setTimeout(() => { progress.hidden = true; makeNote.hidden = false; }, 600);
+      generating = false;
+      makeBtn.disabled = false;
+      steps.forEach(step => { step.disabled = step.dataset.step === "3" && !blobUrl; });
+      makeNote.hidden = false;
+      if (!document.getElementById("panel-3").hidden) progress.hidden = true;
     }
   });

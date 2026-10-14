@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "シゴデキ先生 — 週案ノート",
+  "short_name": "シゴデキ先生",
+  "description": "時間割、授業時数、手書きがひとつになった先生の週案ノート",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5ef",
+  "theme_color": "#244c43",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
