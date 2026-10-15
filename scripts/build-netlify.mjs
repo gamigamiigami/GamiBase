@@ -11,6 +11,7 @@ for (const path of [
   "data.js",
   "script.js",
   "style.css",
+  "school",
   "tools",
   "downloads",
 ])

@@ -73,6 +73,16 @@ header {
   flex-shrink: 0;
 }
 
+.school-info {
+  display: block;
+  flex-shrink: 0;
+  margin-top: 0.6rem;
+  text-align: center;
+  font-size: 0.8rem;
+}
+.school-info a { color: #675077; text-underline-offset: 0.2em; }
+.school-info a:focus-visible { outline: 3px solid #675077; outline-offset: 4px; }
+
 .title-wrap {
   display: inline-block;
   position: relative;

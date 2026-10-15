@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学校での利用について | GamiBase for Education</title>
+  <meta name="description" content="GamiBase for Educationの掲載内容と、学校のICT担当者向けのアクセス確認・許可依頼の案内です。">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #293747; background: #f3f7fb; font-family: system-ui, sans-serif; line-height: 1.8; }
+    main { max-width: 800px; margin: auto; padding: 24px 20px 48px; }
+    h1 { font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1.5; }
+    h2 { font-size: 1.25rem; margin-top: 0; }
+    section { padding: 24px; margin-top: 24px; background: white; border: 1px solid #d4dfeb; border-radius: 12px; }
+    a { color: #175c9c; text-underline-offset: 0.2em; overflow-wrap: anywhere; }
+    a:focus-visible, textarea:focus-visible { outline: 3px solid #175c9c; outline-offset: 4px; }
+    li + li { margin-top: 8px; }
+    ul, ol { padding-left: 1.5em; }
+    textarea { display: block; width: 100%; min-height: 420px; padding: 14px; border: 1px solid #8394a8; border-radius: 6px; font: inherit; line-height: 1.7; resize: vertical; color: inherit; background: #f8fafc; }
+    .note { border-left: 4px solid #3977ad; padding-left: 16px; }
+    @media print { body { background: white; } main { max-width: none; padding: 0; } section { break-inside: avoid; } textarea { height: 470px; } }
+  </style>
+</head>
+<body>
+<main>
+  <nav aria-label="サイト内"><a href="../">← GamiBase for Educationへ戻る</a></nav>
+  <h1>学校での利用について</h1>
+  <p>学校のICT担当者・ネットワーク管理者の方へ、サイトの内容とアクセス確認に必要な情報をご案内します。</p>
+
+  <section aria-labelledby="purpose">
+    <h2 id="purpose">サイトの内容と利用目的</h2>
+    <p>GamiBase for Educationは、授業・学習支援ツールや教材を中心に、ゲーム・イベント・便利ツールのリンクをまとめたポータルサイトです。座席配置、授業準備、学習活動などで使うツールを探せます。</p>
+    <p>教育ゲームのほか、その他ゲームやイベントのリンクも掲載しています。掲載先すべてが教育専用ではありません。授業で使用するツールを事前に選び、学校の運用方針に沿ってご利用ください。</p>
+    <ul>
+      <li>ポータル：<a href="https://gamigamiigami.github.io/GamiBase/">https://gamigamiigami.github.io/GamiBase/</a></li>
+      <li>この案内：<a href="https://gamigamiigami.github.io/GamiBase/school/">https://gamigamiigami.github.io/GamiBase/school/</a></li>
+      <li>掲載ツールの例：<a href="../tools/sekigae/">席替えツール</a>、<a href="../tools/shigodeki-sensei/">シゴデキ先生</a></li>
+    </ul>
+    <p>リンク先には別のGitHub PagesサイトやNetlify上のサイトなども含まれます。ポータルの許可だけでは、それらが開けない場合があります。ダウンロードやアカウント登録が必要な機能も、利用前に個別に確認してください。</p>
+  </section>
+
+  <section aria-labelledby="blocked">
+    <h2 id="blocked">「不確定サイト」と表示される場合</h2>
+    <p>サイトの分類や評価が確定していないために制限されている可能性があります。ただし、この表示だけではフィルター製品、判定の詳細、制限がURL単位かドメイン単位かは分かりません。</p>
+    <p class="note">サイト名や説明の「Education」という表記は、教育用途を伝えるためのものです。学校のアクセス制限の解除や、教育カテゴリへの分類を保証するものではありません。</p>
+    <ol>
+      <li>開こうとした正確なURL、表示日時、ブロック理由を記録してください。制限画面に製品名があれば併せて確認してください。</li>
+      <li>学校のICT担当者へ、下の依頼文と授業で使うツールのURLを渡してください。必要に応じて制限画面も提示してください。</li>
+      <li>担当者にサイト内容と学校の方針を確認してもらい、必要なURLの許可や、利用中のフィルター提供元への分類確認・再審査を相談してください。</li>
+    </ol>
+    <p>別の回線で開けても、学校の回線や端末で許可されたことにはなりません。確認後は実際に使用する学校端末と回線で再確認してください。</p>
+  </section>
+
+  <section aria-labelledby="request">
+    <h2 id="request">ICT担当者への依頼文</h2>
+    <p id="request-help">以下を選択・コピーし、角括弧の部分を記入してお渡しください。学校名や個人名をこのサイトへ送信するフォームではありません。</p>
+    <label for="request-text">アクセス確認・許可の相談文</label>
+    <textarea id="request-text" readonly aria-describedby="request-help" spellcheck="false">学校端末でのWebサイト利用について相談します。
+
+サイト名：GamiBase for Education
+URL：https://gamigamiigami.github.io/GamiBase/
+サイトの案内：https://gamigamiigami.github.io/GamiBase/school/
+表示された内容：このWebサイトへのアクセスが禁止されています。
+ブロック理由：不確定サイト
+確認した日時：[日時]
+端末・利用回線：[学校の端末・回線名]
+授業等での利用目的：[対象の授業や準備作業と、使いたい機能]
+実際に利用するツールのURL：[ツールの正確なURL]
+
+本サイトは授業・学習支援ツール等のリンク集で、その他ゲームやイベントも掲載されています。学校の運用方針に照らして、必要なページの利用可否をご確認いただけますでしょうか。
+併せて、利用中のフィルター製品名と判定範囲をご確認いただき、必要に応じてURLの許可や提供元への分類確認・再審査をご検討ください。</textarea>
+  </section>
+</main>
+</body>
+</html>
