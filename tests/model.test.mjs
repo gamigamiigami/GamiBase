@@ -56,14 +56,13 @@ test("cross-week swaps update both weeks without moving handwritten notes", () =
   assert.equal(counts(s, "2026-04-13").a.week, 5);
   assert.equal(s.notes["2026-04-06"], "元の週のメモ");
   setSlot(s, "2026-04-14", 2, { lessonId: "a", status: "done" });
-  assert.throws(
+  assert.doesNotThrow(
     () =>
       swapSlots(
         s,
         { date: "2026-04-14", period: 2 },
         { date: "2026-04-15", period: 1 },
       ),
-    /実施済み/,
   );
 });
 test("dated basic timetable revisions preserve history and individual exceptions", () => {

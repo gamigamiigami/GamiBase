@@ -18,8 +18,9 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-180.png" />
-    <link rel="stylesheet" href="app.css" />
-    <script type="module" src="app.mjs"></script>
+    <link rel="stylesheet" href="app.css?v=4" />
+    <link rel="stylesheet" href="notebook.css?v=4" />
+    <script type="module" src="app.mjs?v=4"></script>
   </head>
   <body>
     <div id="auth-view" class="auth-layout">
@@ -117,7 +118,7 @@
         <nav aria-label="ノートの操作">
           <button id="nav-week" class="nav-item active">
             <span aria-hidden="true">▦</span>週案ノート</button
-          ><button id="nav-counts" class="nav-item">
+          ><button id="nav-blocks" class="nav-item">年間カレンダー</button><button id="nav-list" class="nav-item">年間行事予定</button><button id="nav-free" class="nav-item">自由ページ</button><button id="nav-counts" class="nav-item">
             <span aria-hidden="true">▥</span>授業の時数</button
           ><button id="settings-open" class="nav-item">
             <span aria-hidden="true">⚙</span>基本設定
@@ -144,7 +145,7 @@
         <header class="workspace-header">
           <div>
             <p class="eyebrow">WEEKLY PLANNER</p>
-            <h1>週案ノート</h1>
+            <h1 id="view-title">週案ノート</h1>
           </div>
           <div class="save-area">
             <span id="save-status" role="status" aria-live="polite"
@@ -178,7 +179,7 @@
                 ›
               </button>
             </div>
-            <div class="week-actions">
+            <div class="week-actions"><label class="weekend-toggle"><input id="show-weekend" type="checkbox" />土日の授業</label>
               <button id="today-button" class="small">今週</button
               ><label class="date-jump"
                 ><span class="sr-only">表示する日</span
@@ -191,13 +192,13 @@
               <button data-mode="edit" class="selected" aria-pressed="true">
                 ▦ 時間割</button
               ><button data-mode="pen" aria-pressed="false">✎ ペン</button
-              ><button data-mode="marker" aria-pressed="false">
+              ><button data-mode="line" aria-pressed="false">╱ 直線</button><button data-mode="marker" aria-pressed="false">
                 ▰ マーカー</button
               ><button data-mode="eraser" aria-pressed="false">
                 ▱ 消しゴム
               </button>
             </div>
-            <div class="ink-options">
+            <div class="ink-options"><div id="palette" class="palette" aria-label="お気に入りのペン色"></div><button id="save-color" class="small" title="選択中の色枠を現在の色で更新">色を登録</button>
               <label class="color-picker"
                 >色
                 <input
@@ -233,7 +234,7 @@
           </div>
           <div class="paper-help">
             <span id="mode-help"
-              >コマをタップして、授業・休講・振替を変更できます。</span
+              >コマをタップして編集。行事・指導計画・メモにも記入できます。</span
             ><label
               ><input id="pencil-only" type="checkbox" checked />
               指では書かない</label
@@ -241,10 +242,7 @@
           </div>
           <div id="paper-viewport" class="paper-viewport">
             <div id="paper" class="paper">
-              <div id="week-grid" class="week-grid"></div>
-              <div class="free-note">
-                <span>MEMO & IDEAS</span><span>授業の気づき、次の一歩。</span>
-              </div>
+              <div id="sheet-content"></div>
               <canvas
                 id="ink-canvas"
                 width="1200"
@@ -253,34 +251,18 @@
               ></canvas>
             </div>
           </div>
-          <div class="planner-bottom">
-            <span
-              ><i class="dot planned"></i>予定 <i class="dot done"></i>実施済み
-              <i class="dot cancelled"></i>休講</span
-            ><span>1コマ＝1時数 ／ 土日も変更できます</span>
-          </div>
+          <div class="planner-bottom"><span id="sheet-caption">赤字の「変更」は基本時間割から変更したコマです。</span><button id="print-sheet" class="text-button">印刷・PDF</button></div>
         </section>
-        <section id="counts-section" class="counts-section">
+        <section id="counts-section" class="counts-section" hidden>
           <div class="section-title">
             <div>
               <p class="eyebrow">LESSON COUNTS</p>
               <h2>授業の積み重ね</h2>
             </div>
-            <p>休講は除外。振替・変更はすぐ反映されます。</p>
+            <p>時間割の変更はすぐ反映されます。</p>
           </div>
           <p id="count-explanation" class="muted"></p>
           <div id="counts-list" class="counts-list"></div>
-        </section>
-        <section class="reflection">
-          <label for="week-note"
-            ><span class="eyebrow">WEEKLY REFLECTION</span>
-            <h2>今週のふりかえり</h2></label
-          ><textarea
-            id="week-note"
-            rows="3"
-            maxlength="10000"
-            placeholder="うまくいったこと、次の授業で試したいこと。"
-          ></textarea>
         </section>
         <footer class="workspace-footer">
           シゴデキ先生 <span>あなたの毎日に、書き込める余白を。</span>
@@ -288,6 +270,12 @@
       </main>
     </div>
 
+
+    <dialog id="sheet-dialog"><form id="sheet-form">
+      <div class="dialog-heading"><h2 id="sheet-title"></h2><button type="button" class="square" data-close="sheet-dialog" aria-label="閉じる">×</button></div>
+      <p id="sheet-date-help" class="muted"></p><label>記入内容<textarea id="sheet-text" rows="7" maxlength="2000"></textarea></label>
+      <div class="dialog-actions"><button id="open-event-week" type="button">この週を開く</button><button class="primary" type="submit">保存</button></div>
+    </form></dialog>
     <dialog id="slot-dialog">
       <form id="slot-form">
         <div class="dialog-heading">
@@ -306,12 +294,6 @@
         </div>
         <p id="slot-day-note" class="muted"></p>
         <label>授業<select id="slot-lesson"></select></label
-        ><label
-          >状態<select id="slot-status">
-            <option value="planned">予定</option>
-            <option value="done">実施済み</option>
-            <option value="cancelled">休講（時数に含めない）</option>
-          </select></label
         ><label
           >授業メモ<textarea
             id="slot-note"

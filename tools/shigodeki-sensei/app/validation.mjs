@@ -1,4 +1,5 @@
-import { validDate, monday, yearBounds } from "./model.mjs";
+import {validatePlanner} from './sheets.mjs?v=4';
+import { validDate, monday, yearBounds } from "./model.mjs?v=4";
 
 export function validateState(state) {
   const fail = () => {
@@ -88,9 +89,11 @@ export function validateState(state) {
     fail();
   for (const [key, value] of Object.entries(state.notes))
     if (!week(key) || !text(value, 10000)) fail();
+  if (state.planner !== undefined) validatePlanner(state.planner,state);
+  if (Object.keys(state.ink).some(key => !week(key))) fail();
   let points = 0;
-  for (const [key, strokes] of Object.entries(state.ink)) {
-    if (!week(key) || !Array.isArray(strokes) || strokes.length > 5000) fail();
+  for (const [key, strokes] of [...Object.entries(state.ink), ...Object.entries(state.planner?.ink || {})]) {
+    if (!(week(key) || ['blocks','list','free'].includes(key)) || !Array.isArray(strokes) || strokes.length > 5000) fail();
     for (const stroke of strokes) {
       if (
         !object(stroke) ||

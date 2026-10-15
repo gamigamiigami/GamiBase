@@ -125,10 +125,11 @@ export class Ink {
     this.pointer = e.pointerId;
     this.canvas.setPointerCapture(e.pointerId);
     this.before = this.strokes;
+    this.straight = this.mode === "line";
     if (this.mode === "eraser") this.erase(this.point(e));
     else
       this.current = {
-        tool: this.mode,
+        tool: this.mode === "line" ? "pen" : this.mode,
         color: this.color,
         width: this.mode === "marker" ? this.width * 3 : this.width,
         points: [this.point(e)],
@@ -150,20 +151,36 @@ export class Ink {
       : [e]) {
       const point = this.point(event);
       if (this.mode === "eraser") this.erase(point);
-      else if (
+      else if (this.current && this.straight) {
+        this.current.points = [this.current.points[0], point];
+      } else if (
         this.current &&
         Math.hypot(
           point[0] - this.current.points.at(-1)[0],
           point[1] - this.current.points.at(-1)[1],
         ) > 0.4
-      )
+      ) {
         this.current.points.push(point);
+        this.scheduleStraighten();
+      }
     }
     if (!this.frame)
       this.frame = requestAnimationFrame(() => {
         this.frame = 0;
         this.paint();
       });
+  }
+  scheduleStraighten() {
+    clearTimeout(this.holdTimer);
+    if (this.mode !== "pen" || !this.current) return;
+    this.holdTimer = setTimeout(() => {
+      if (!this.current || this.pointer == null) return;
+      const first = this.current.points[0], last = this.current.points.at(-1);
+      if (Math.hypot(last[0] - first[0], last[1] - first[1]) < 12) return;
+      this.current.points = [first, last];
+      this.straight = true;
+      this.paint();
+    }, 600);
   }
   erase(point) {
     const kept = this.strokes.filter(
@@ -182,6 +199,9 @@ export class Ink {
   up(e, cancel = false) {
     if (this.pan?.id === e.pointerId) this.pan = null;
     if (e.pointerId !== this.pointer) return;
+    clearTimeout(this.holdTimer);
+    if (!cancel && this.current && this.straight && Number.isFinite(e.clientX))
+      this.current.points = [this.current.points[0], this.point(e)];
     this.pointer = null;
     if (this.current && !cancel) {
       this.remember();

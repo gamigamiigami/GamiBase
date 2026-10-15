@@ -132,7 +132,7 @@ export function slotAt(state, date, period) {
   if (!inYear(state, date))
     return { lessonId: "", status: "empty", note: "", outside: true };
   const override = state.overrides[slotKey(date, period)];
-  if (override) return { ...override, changed: true };
+  if (override) return { ...override, ...(override.status === 'cancelled' ? {lessonId:'',status:'empty'} : {}), changed: true };
   const lessonId = closedReason(state, date)
     ? ""
     : templateFor(state, date)[`${weekday(date)}:${period}`] || "";
@@ -157,10 +157,6 @@ export function swapSlots(state, from, to) {
   const a = slotAt(state, from.date, from.period),
     b = slotAt(state, to.date, to.period);
   if (a.outside || b.outside) throw new Error("年度内のコマを選んでください。");
-  if (a.status === "done" || b.status === "done")
-    throw new Error(
-      "実施済みの授業は振替できません。先に状態を変更してください。",
-    );
   setSlot(state, to.date, to.period, a);
   setSlot(state, from.date, from.period, b);
 }

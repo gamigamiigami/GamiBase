@@ -1,0 +1,100 @@
+.week-nav{display:grid;grid-template-columns:36px 220px 36px;gap:8px;flex-shrink:0;text-align:center}
+.week-nav h2{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:18px;letter-spacing:0}
+.weekend-toggle{display:flex;align-items:center;gap:4px;font-size:10px;white-space:nowrap}
+.weekend-toggle input{margin:0}
+.annual-toolbar{display:none}
+.palette{display:flex;gap:5px}
+.swatch{width:22px;height:22px;padding:0;border-radius:50%;background:var(--swatch);border:2px solid white;box-shadow:0 0 0 1px #ccc}
+.swatch:hover{background:var(--swatch)}
+.swatch.selected{outline:2px solid #244c43;outline-offset:2px}
+.paper,#ink-canvas{height:848px;background:#fff}
+#ink-canvas{background:transparent}
+#sheet-content{height:100%;color:#202020;font-family:Arial,'Yu Gothic',sans-serif}
+.weekly-sheet{display:grid;grid-template-columns:57.5% minmax(0,1fr);gap:10px;height:100%}
+.week-grid{height:100%;grid-template-columns:32px repeat(var(--days),minmax(0,1fr));grid-template-rows:52px repeat(5,minmax(0,1fr)) 34px repeat(3,minmax(0,1fr));border-color:#555}
+.week-grid>*{border:0;border-right:1px solid #777;border-bottom:1px solid #777;border-radius:0;min-width:0;min-height:0}
+.day-head,.period-label,.corner{background:#eee;color:#222}
+.day-head{flex-direction:row;flex-wrap:wrap;gap:3px 10px;padding:3px}
+.day-head>strong{font-size:17px}
+.day-head>small{flex-basis:100%;text-align:center;font-size:10px;line-height:1}
+.period-label{font-size:14px}
+.lesson-cell{padding:7px 6px;gap:5px;background:color-mix(in srgb,var(--lesson-color,#fff) 7%,white)}
+.lesson-tag{font-size:15px;padding-left:4px;margin-right:24px}
+.lesson-note{font-size:12px;color:#444;-webkit-line-clamp:3;line-height:1.4}
+.change-marker{color:#d32f2f;font-size:11px;font-weight:700;right:3px;top:7px;background:#fff}
+.sheet-write{border:0;border-radius:0;background:white;padding:5px;text-align:left;font-size:13px;min-width:0;min-height:0;overflow:hidden;white-space:pre-wrap;color:#222}
+.sheet-write:hover{background:#f4f7ef}
+.sheet-write span{overflow-wrap:anywhere}
+.week-grid>.sheet-write{border-right:1px solid #777;border-bottom:1px solid #777}
+.week-side{display:grid;grid-template-rows:minmax(0,59fr) minmax(0,25fr) minmax(0,16fr);gap:8px;min-width:0;min-height:0}
+.day-events{display:grid;grid-template-rows:repeat(7,minmax(0,1fr));border:1px solid #555}
+.event-row{display:grid;grid-template-columns:72px minmax(0,1fr);min-height:0;border-bottom:1px solid #777}
+.event-row:last-child{border-bottom:0}
+.event-row>span{font-size:13px;display:flex;align-items:center;justify-content:center;border-right:1px solid #777}
+.event-row .sheet-write{display:flex;flex-direction:column;gap:3px}
+.event-row small{font-size:11px;color:#a33333}
+.saturday>span,.saturday>strong{color:#1565c0}
+.sunday>span,.sunday>strong{color:#c62828}
+.teaching-plan{display:grid;grid-template-rows:24px repeat(5,minmax(0,1fr));border:1px solid #555}
+.teaching-plan h3{font-size:14px;text-align:center;line-height:23px;background:#eee;margin:0;border-bottom:1px solid #777}
+.teaching-plan>div{display:grid;grid-template-columns:22% 78%;min-height:0;border-bottom:1px solid #777}
+.teaching-plan>div:last-child{border-bottom:0}
+.teaching-plan .sheet-write:first-child{border-right:1px solid #777}
+.weekly-memo{border:1px solid #555;display:flex;flex-direction:column;min-height:0;padding:5px}
+.weekly-memo label{font-size:11px;font-weight:400;color:#666}
+.weekly-memo textarea{border:0;border-radius:0;resize:none;padding:3px;margin:0;flex:1;min-height:0;font-size:13px;background:#fff;line-height:1.5}
+.annual-sheet{height:100%;display:grid;gap:10px}
+.annual-sheet.blocks{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr))}
+.month-panel{min-width:0;min-height:0;display:flex;flex-direction:column;border:1px solid #666}
+.month-panel h3{margin:0;background:#eee;font-size:18px;line-height:27px;text-align:center;border-bottom:1px solid #777}
+.month-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;line-height:20px}
+.month-weekdays span:first-child{color:#c62828}.month-weekdays span:last-child{color:#1565c0}
+.month-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));flex:1;min-height:0}
+.annual-day,.blank-day{border:0;border-top:1px solid #ccc;border-right:1px solid #ccc;border-radius:0;min-height:0;min-width:0;background:#fff}
+.annual-day{display:flex;flex-direction:column;align-items:flex-start;padding:2px;font-size:11px;text-align:left;overflow:hidden}
+.annual-day small{font-size:8px;line-height:1.2;overflow-wrap:anywhere;color:#333;overflow:hidden}
+.annual-day.holiday{background:#fff0f1}.annual-day:hover{background:#edf3e8}
+.annual-sheet.list{grid-template-columns:repeat(12,minmax(0,1fr));gap:0}
+.month-list{display:grid;grid-template-rows:repeat(31,minmax(0,1fr));flex:1;min-height:0}
+.list .month-panel{border-right:0}.list .month-panel:last-child{border-right:1px solid #666}
+.list .annual-day{flex-direction:row;align-items:center;gap:3px;padding:2px;font-size:11px}
+.list .annual-day>span{flex-shrink:0;width:25px;letter-spacing:-.5px}
+.list .annual-day small{font-size:9px;line-height:1.2;max-height:22px}
+.free-sheet{height:100%;border:1px solid #777;background-image:radial-gradient(#ccc .7px,transparent .7px);background-size:20px 20px;padding:20px}
+.free-sheet h2{font-size:18px;color:#777}
+.paper-viewport{overflow:hidden}
+.planner-bottom{align-items:center;padding:3px 12px;min-height:30px}
+.planner-bottom .text-button{padding:3px;font-size:10px}
+@media (orientation:landscape){
+ .app-layout{display:grid;grid-template-columns:155px minmax(0,1fr)}
+ .sidebar{height:100dvh;padding:14px 10px;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:0}
+ .sidebar .brand{font-size:12px;margin:0}.sidebar .brand-icon{width:24px}
+ .notebook-label{display:block;margin:20px 4px}.notebook-label h2{font-size:13px;margin:6px 0 10px}
+ .sidebar nav{display:grid;gap:3px}.nav-item{font-size:11px;padding:9px 6px;gap:6px}
+ .sidebar-note{display:none}.account{margin-top:auto;display:flex;flex-direction:column;align-items:stretch;gap:0;padding-top:10px}
+ .account .text-button{font-size:9px;padding:4px 0}.account>span{max-width:100%;font-size:8px}
+ .workspace{max-width:none;padding:8px 12px}.workspace-header{min-height:34px;margin-bottom:6px;gap:6px}
+ .workspace-header h1{font-size:18px}.workspace-header .eyebrow{display:none}.save-area{max-width:none;font-size:9px}
+ .week-toolbar{padding:5px 10px;gap:6px;flex-wrap:nowrap}.week-nav h2{margin:0;font-size:16px}.week-nav p{font-size:9px}
+ .drawing-toolbar{padding:4px 8px;gap:6px}.ink-options{gap:7px}.segmented button{padding:6px 7px}
+ .paper-help{padding:4px 10px;min-height:24px}.paper-viewport{margin:0 8px}
+ .workspace-footer{display:none}.planner-card{border-radius:8px}
+ .width-picker input{width:55px}.paper-help label{font-size:9px}
+}
+@media (orientation:landscape) and (max-height:550px){
+ .app-layout{grid-template-columns:124px minmax(0,1fr)}.sidebar{padding:6px}.sidebar .brand{font-size:10px}.sidebar .brand small,.notebook-label,.account>span{display:none}
+ .sidebar nav{margin-top:8px}.nav-item{padding:6px;font-size:10px}.account .text-button{font-size:8px}
+ .workspace{padding:3px 6px}.workspace-header{min-height:27px;margin-bottom:3px}.workspace-header h1{font-size:14px}.save-area .small{padding:3px;font-size:9px}
+ .week-nav{grid-template-columns:28px 170px 28px;gap:2px}.week-nav .square{width:28px;height:28px}.week-nav h2{font-size:13px}.week-toolbar{padding:2px 5px}
+ .week-actions{gap:3px}.week-actions .small{padding:4px}.date-jump input{font-size:10px;padding:3px;width:106px}
+ .drawing-toolbar{padding:2px 4px;gap:3px}.segmented button{font-size:9px;padding:4px}.ink-options{gap:4px}.ink-options label{gap:2px}.swatch{width:17px;height:17px}.palette{gap:4px}
+ .ink-options .small{font-size:9px;padding:4px}.ink-options .square{width:22px;height:22px}.color-picker input{width:23px;height:23px}.width-picker input{width:38px}
+ .paper-help{padding:2px 5px;font-size:8px;min-height:18px}.paper-help label{font-size:8px}.planner-bottom{min-height:24px;font-size:8px}
+}
+@media print{
+ @page{size:A4 landscape;margin:8mm}
+ body,.app-layout,.workspace,.planner-card{display:block!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;background:white!important;border:0!important;box-shadow:none!important}
+ .sidebar,.workspace-header,.week-toolbar,.drawing-toolbar,.paper-help,.planner-bottom,.workspace-footer,.notice,.counts-section,dialog{display:none!important}
+ .paper-viewport{margin:0!important;overflow:hidden!important}.paper-viewport>div{width:281mm!important;height:198mm!important;margin:0!important}
+ .paper{transform:scale(.883)!important;position:absolute!important}#sheet-content,#ink-canvas{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+}
