@@ -56,10 +56,16 @@ function complete(result) {
 async function init() {
   $("loading").hidden = false;
   $("unavailable").hidden = true;
+  $("unavailable-title").textContent = "受付状況を確認できませんでした。";
+  $("unavailable-help").textContent =
+    "接続を確認して「もう一度確認する」を押してください。取得済みの方は、ノートにログインできます。";
   try {
     const site = await storefront();
-    if (!site)
+    if (!site) {
+      $("unavailable-title").textContent = "アプリの受付を準備しています。";
+      $("unavailable-help").textContent = "公開設定を確認しています。時間をおいて、もう一度お試しください。";
       throw new Error("公開開始後に、こちらから取得できるようになります。");
+    }
     if (site.origin !== location.origin) {
       location.replace(new URL("checkout.html", site));
       return;
