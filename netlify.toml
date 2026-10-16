@@ -5,6 +5,8 @@
 
 [build.environment]
   NODE_VERSION = "24"
+  # The storefront origin is public and is intentionally included in the Pages redirect config.
+  SECRETS_SCAN_OMIT_KEYS = "APP_ORIGIN"
 
 [functions]
   node_bundler = "esbuild"
