@@ -1,4 +1,4 @@
-import {DAYS, addDays, weekday, closedReason, inYear, slotAt, yearBounds, validDate} from './model.mjs?v=4';
+import {DAYS, addDays, weekday, closedReason, inYear, slotAt, yearBounds, validDate} from './model.mjs?v=6';
 export const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const DEFAULT_PALETTE = ['#263238','#d32f2f','#1565c0','#2e7d32','#f9a825','#7b1fa2'];
 export function plannerData(state) {
@@ -26,17 +26,17 @@ export function weekMarkup(state,week,weekend=false) {
   const data=plannerData(state), fields=data.weeks[week]||{}, dayCount=weekend?7:5;
   const edit=(key,label,cls='')=>`<button class="sheet-write ${cls}" data-field="${key}" aria-label="${esc(label)}"><span>${esc(fields[key]||'')}</span></button>`;
   let grid='<div class="corner"></div>';
-  for(let d=0;d<dayCount;d++) {const date=addDays(week,d);grid+=`<div class="day-head ${dayClass(state,date)}"><strong>${DAYS[d]}</strong><strong>${short(date)}</strong><small>${esc(closedReason(state,date))}</small></div>`;}
+  for(let d=0;d<dayCount;d++) {const date=addDays(week,d);grid+=`<div class="day-head ${dayClass(state,date)}"><strong>${short(date)}</strong><strong>${DAYS[d]}</strong><small>${esc(closedReason(state,date))}</small></div>`;}
   for(const period of ['朝',1,2,3,4,'昼',5,6,'業後']) {
     grid+=`<div class="period-label">${period}</div>`;
     for(let d=0;d<dayCount;d++) {
       const date=addDays(week,d);
-      if(typeof period==='string') {grid+=inYear(state,date)?edit(`${date}:${period}`,`${short(date)} ${period}`):'<div class="outside"></div>';continue;}
+      if(typeof period==='string') {grid+=inYear(state,date)?edit(`${date}:${period}`,`${short(date)} ${period}`,closedReason(state,date)?'closed':''):'<div class="outside"></div>';continue;}
       const slot=slotAt(state,date,period),lesson=state.lessons.find(l=>l.id===slot.lessonId);
       grid+=`<button class="lesson-cell ${slot.outside?'outside':''} ${closedReason(state,date)?'closed':''}" data-date="${date}" data-period="${period}" ${slot.outside?'disabled':''} ${lesson?`style="--lesson-color:${esc(lesson.color)}"`:''} aria-label="${short(date)} ${DAYS[d]}曜${period}限 ${esc(lesson?.name||'空き時間')}">${lesson?`<span class="lesson-tag">${esc(lesson.name)}</span>`:''}<span class="lesson-note">${esc(slot.note)}</span>${slot.changed?'<span class="change-marker">変更</span>':''}</button>`;
     }
   }
-  return `<div class="weekly-sheet"><div id="week-grid" class="week-grid" style="--days:${dayCount}">${grid}</div><aside class="week-side"><div class="day-events">${Array.from({length:7},(_,d)=>{const date=addDays(week,d);return `<div class="event-row ${dayClass(state,date)}"><span>${short(date)}(${DAYS[d]})</span><button class="sheet-write" data-event="${date}" ${inYear(state,date)?'':'disabled'} aria-label="${short(date)}の行事・予定"><small>${esc(closedReason(state,date))}</small><span>${esc(data.events[date]||'')}</span></button></div>`;}).join('')}</div><div class="teaching-plan"><h3>指導計画</h3>${Array.from({length:5},(_,i)=>`<div>${edit(`plan-title-${i}`,`指導計画${i+1}の項目`)}${edit(`plan-text-${i}`,`指導計画${i+1}の内容`)}</div>`).join('')}</div><div class="weekly-memo"><label for="week-note">メモ・ふりかえり</label><textarea id="week-note" maxlength="10000" aria-label="メモ・ふりかえり">${esc(state.notes[week]||'')}</textarea></div></aside></div>`;
+  return `<div class="weekly-sheet"><div id="week-grid" class="week-grid" style="--days:${dayCount}">${grid}</div><aside class="week-side"><div class="day-events">${Array.from({length:7},(_,d)=>{const date=addDays(week,d);return `<div class="event-row ${dayClass(state,date)}"><span>${short(date)} ${DAYS[d]}</span><button class="sheet-write" data-event="${date}" ${inYear(state,date)?'':'disabled'} aria-label="${short(date)}の行事・予定"><small>${esc(closedReason(state,date))}</small><span>${esc(data.events[date]||'')}</span></button></div>`;}).join('')}</div><div class="teaching-plan"><h3>指導計画</h3>${Array.from({length:5},(_,i)=>`<div>${edit(`plan-title-${i}`,`指導計画${i+1}の項目`)}${edit(`plan-text-${i}`,`指導計画${i+1}の内容`)}</div>`).join('')}</div><div class="weekly-memo"><label for="week-note">メモ・ふりかえり</label><textarea id="week-note" maxlength="10000" aria-label="メモ・ふりかえり">${esc(state.notes[week]||'')}</textarea></div></aside></div>`;
 }
 export function validatePlanner(p,state) {
   const object=v=>v&&typeof v==='object'&&!Array.isArray(v), text=(v,n)=>typeof v==='string'&&v.length<=n;

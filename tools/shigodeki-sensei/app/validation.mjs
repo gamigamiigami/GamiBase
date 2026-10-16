@@ -1,5 +1,5 @@
-import {validatePlanner} from './sheets.mjs?v=4';
-import { validDate, monday, yearBounds } from "./model.mjs?v=4";
+import {validatePlanner} from './sheets.mjs?v=6';
+import { validDate, monday, yearBounds } from "./model.mjs?v=6";
 
 export function validateState(state) {
   const fail = () => {

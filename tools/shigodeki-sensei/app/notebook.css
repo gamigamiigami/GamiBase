@@ -26,6 +26,7 @@
 .sheet-write:hover{background:#f4f7ef}
 .sheet-write span{overflow-wrap:anywhere}
 .week-grid>.sheet-write{border-right:1px solid #777;border-bottom:1px solid #777}
+.week-grid>.sheet-write.closed,.week-grid>.lesson-cell.closed{background:#f2f3ef}
 .week-side{display:grid;grid-template-rows:minmax(0,59fr) minmax(0,25fr) minmax(0,16fr);gap:8px;min-width:0;min-height:0}
 .day-events{display:grid;grid-template-rows:repeat(7,minmax(0,1fr));border:1px solid #555}
 .event-row{display:grid;grid-template-columns:72px minmax(0,1fr);min-height:0;border-bottom:1px solid #777}
@@ -63,6 +64,25 @@
 .free-sheet{height:100%;border:1px solid #777;background-image:radial-gradient(#ccc .7px,transparent .7px);background-size:20px 20px;padding:20px}
 .free-sheet h2{font-size:18px;color:#777}
 .paper-viewport{overflow:hidden}
+.paper-viewport{overflow:auto;touch-action:none;overscroll-behavior:contain;scrollbar-width:thin}
+.paper-shell{position:relative;overflow:hidden}
+#ink-canvas.writing{touch-action:none}
+.paper-help{align-items:center}
+#mode-help{min-width:0;flex:1}
+.zoom-controls{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.zoom-controls button{font-size:11px;min-width:26px;height:26px;padding:2px 6px}
+.zoom-controls output{font-size:10px;min-width:36px;text-align:center;font-variant-numeric:tabular-nums}
+.date-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 20px}
+.date-actions button{padding:13px 8px;color:var(--green);background:var(--green-light);font-weight:600}
+.compact-sheet .day-head{gap:1px 6px}.compact-sheet .day-head>strong{font-size:15px}
+.compact-sheet .lesson-cell{padding:4px;gap:2px}.compact-sheet .lesson-tag{font-size:14px}
+.compact-sheet .lesson-note{font-size:11px;line-height:1.25;-webkit-line-clamp:2}
+.compact-sheet .change-marker{top:4px;font-size:10px}
+.compact-sheet .sheet-write{font-size:11px;padding:3px}
+.compact-sheet .event-row>span{font-size:12px}.compact-sheet .event-row small{font-size:10px}
+.compact-sheet .weekly-memo textarea{font-size:11px;padding:1px}
+.compact-sheet .teaching-plan{grid-template-rows:20px repeat(5,minmax(0,1fr))}
+.compact-sheet .teaching-plan h3{line-height:19px;font-size:12px}
 .planner-bottom{align-items:center;padding:3px 12px;min-height:30px}
 .planner-bottom .text-button{padding:3px;font-size:10px}
 @media (orientation:landscape){
@@ -90,11 +110,12 @@
  .drawing-toolbar{padding:2px 4px;gap:3px}.segmented button{font-size:9px;padding:4px}.ink-options{gap:4px}.ink-options label{gap:2px}.swatch{width:17px;height:17px}.palette{gap:4px}
  .ink-options .small{font-size:9px;padding:4px}.ink-options .square{width:22px;height:22px}.color-picker input{width:23px;height:23px}.width-picker input{width:38px}
  .paper-help{padding:2px 5px;font-size:8px;min-height:18px}.paper-help label{font-size:8px}.planner-bottom{min-height:24px;font-size:8px}
+ .zoom-controls{gap:2px}.zoom-controls button{height:22px;font-size:9px;min-width:20px;padding:2px 4px}.zoom-controls output{font-size:9px;min-width:28px}
 }
 @media print{
  @page{size:A4 landscape;margin:8mm}
  body,.app-layout,.workspace,.planner-card{display:block!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;background:white!important;border:0!important;box-shadow:none!important}
  .sidebar,.workspace-header,.week-toolbar,.drawing-toolbar,.paper-help,.planner-bottom,.workspace-footer,.notice,.counts-section,dialog{display:none!important}
- .paper-viewport{margin:0!important;overflow:hidden!important}.paper-viewport>div{width:281mm!important;height:198mm!important;margin:0!important}
- .paper{transform:scale(.883)!important;position:absolute!important}#sheet-content,#ink-canvas{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .paper-viewport{margin:0!important;overflow:hidden!important;width:281mm!important;height:198mm!important}.paper-viewport>div{width:281mm!important;height:198mm!important;margin:0!important}
+ .paper{transform:scale(.883)!important;position:absolute!important;top:0!important;left:0!important}.paper,#ink-canvas{height:848px!important}#sheet-content,#ink-canvas{print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }

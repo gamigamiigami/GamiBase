@@ -116,8 +116,6 @@ export class Ink {
   down(e) {
     if (this.mode === "edit" || this.pointer != null || e.button !== 0) return;
     if (e.pointerType === "touch" && this.pencilOnly()) {
-      this.pan = { id: e.pointerId, x: e.clientX, y: e.clientY };
-      this.canvas.setPointerCapture(e.pointerId);
       return;
     }
     this.pan = null;
@@ -203,12 +201,13 @@ export class Ink {
     if (!cancel && this.current && this.straight && Number.isFinite(e.clientX))
       this.current.points = [this.current.points[0], this.point(e)];
     this.pointer = null;
+    if (cancel && this.mode === "eraser") this.strokes = this.before;
     if (this.current && !cancel) {
       this.remember();
       this.strokes = [...this.strokes, this.current];
       this.current = null;
       this.onChange(this.strokes);
-    } else if (this.mode === "eraser" && this.strokes !== this.before) {
+    } else if (!cancel && this.mode === "eraser" && this.strokes !== this.before) {
       this.undoStack.push(this.before);
       if (this.undoStack.length > 40) this.undoStack.shift();
       this.redoStack = [];
@@ -219,6 +218,10 @@ export class Ink {
   }
   finish() {
     if (this.pointer != null) this.up({ pointerId: this.pointer });
+  }
+  cancel() {
+    if (this.pointer != null) this.up({pointerId:this.pointer}, true);
+    this.pan = null;
   }
   undo() {
     this.finish();

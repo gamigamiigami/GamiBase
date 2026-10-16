@@ -18,9 +18,9 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-180.png" />
-    <link rel="stylesheet" href="app.css?v=4" />
-    <link rel="stylesheet" href="notebook.css?v=4" />
-    <script type="module" src="app.mjs?v=4"></script>
+    <link rel="stylesheet" href="app.css?v=6" />
+    <link rel="stylesheet" href="notebook.css?v=6" />
+    <script type="module" src="app.mjs?v=6"></script>
   </head>
   <body>
     <div id="auth-view" class="auth-layout">
@@ -235,7 +235,7 @@
           <div class="paper-help">
             <span id="mode-help"
               >コマをタップして編集。行事・指導計画・メモにも記入できます。</span
-            ><label
+            ><div class="zoom-controls" aria-label="ノートのズーム"><button id="zoom-out" type="button" aria-label="縮小">−</button><output id="zoom-level" aria-live="polite">100%</output><button id="zoom-in" type="button" aria-label="拡大">＋</button><button id="zoom-fit" type="button">全体表示</button></div><label
               ><input id="pencil-only" type="checkbox" checked />
               指では書かない</label
             >
@@ -273,8 +273,10 @@
 
     <dialog id="sheet-dialog"><form id="sheet-form">
       <div class="dialog-heading"><h2 id="sheet-title"></h2><button type="button" class="square" data-close="sheet-dialog" aria-label="閉じる">×</button></div>
-      <p id="sheet-date-help" class="muted"></p><label>記入内容<textarea id="sheet-text" rows="7" maxlength="2000"></textarea></label>
-      <div class="dialog-actions"><button id="open-event-week" type="button">この週を開く</button><button class="primary" type="submit">保存</button></div>
+      <p id="sheet-date-help" class="muted"></p>
+      <div id="date-actions" class="date-actions"><button id="edit-event" type="button">✎ 内容を入力</button><button id="open-event-week" type="button">▦ 週案を開く</button></div>
+      <label>記入内容<textarea id="sheet-text" rows="5" maxlength="2000"></textarea></label>
+      <div class="dialog-actions"><button type="button" data-close="sheet-dialog">閉じる</button><button class="primary" type="submit">入力を保存</button></div>
     </form></dialog>
     <dialog id="slot-dialog">
       <form id="slot-form">

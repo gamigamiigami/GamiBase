@@ -1,4 +1,4 @@
-import {plannerData, annualMarkup, weekMarkup} from './sheets.mjs?v=4';
+import {plannerData, annualMarkup, weekMarkup} from './sheets.mjs?v=6';
 import {
   DAYS,
   COLORS,
@@ -19,11 +19,12 @@ import {
   saveTemplate,
   templateFor,
   counts,
-} from "./model.mjs?v=4";
-import { Ink } from "./ink.mjs?v=4";
-import { draft } from "./storage.mjs?v=4";
-import { validateState } from "./validation.mjs?v=4";
-import { setupInstall } from "./install.mjs?v=4";
+} from "./model.mjs?v=6";
+import { Ink } from "./ink.mjs?v=6";
+import { PaperViewport } from "./viewport.mjs?v=6";
+import { draft } from "./storage.mjs?v=6";
+import { validateState } from "./validation.mjs?v=6";
+import { setupInstall } from "./install.mjs?v=6";
 const $ = (id) => document.getElementById(id);
 let localAvailable = true;
 const escape = (value) =>
@@ -400,20 +401,29 @@ $('sheet-content').addEventListener('click',e=>{
   if(locked||conflict)return;
   const b=e.target.closest('[data-event],[data-field]');if(!b)return;
   fieldSelection=b.dataset.event?{date:b.dataset.event}:{key:b.dataset.field};
-  $('sheet-title').textContent=b.dataset.event?`${formatDate(b.dataset.event)} の行事・予定`:b.getAttribute('aria-label');
-  $('sheet-date-help').textContent=b.dataset.event?closedReason(state,b.dataset.event):'';
+  $('sheet-title').textContent=b.dataset.event?`${formatDate(b.dataset.event)}（${DAYS[weekday(b.dataset.event)]}）の行事・予定`:b.getAttribute('aria-label');
+  $('sheet-date-help').textContent=b.dataset.event?[closedReason(state,b.dataset.event),'内容を入力するか、この日の週案を開けます。'].filter(Boolean).join(' / '):'';
   $('sheet-text').value=b.dataset.event?plannerData(state).events[b.dataset.event]||'':plannerData(state).weeks[week]?.[b.dataset.field]||'';
-  $('open-event-week').hidden=!b.dataset.event;
+  $('date-actions').hidden=!b.dataset.event;
+  $('open-event-week').textContent='▦ 週案を開く';
   $('sheet-dialog').showModal();
 });
-$('sheet-form').onsubmit=e=>{
-  e.preventDefault();if(locked||conflict)return;
+function saveSheetField() {
+  if(locked||conflict)return false;
   const p=plannerData(state),v=$('sheet-text').value;
+  const old=fieldSelection.date?p.events[fieldSelection.date]:p.weeks[week]?.[fieldSelection.key];
+  if((old||'')===v)return true;
   if(fieldSelection.date){if(v)p.events[fieldSelection.date]=v;else delete p.events[fieldSelection.date];}
   else{p.weeks[week]||={};p.weeks[week][fieldSelection.key]=v;}
-  changed();renderGrid();$('sheet-dialog').close();
+  changed();return true;
+}
+$('sheet-form').onsubmit=e=>{
+  e.preventDefault();if(!saveSheetField())return;
+  renderGrid();$('sheet-dialog').close();
 };
-$('open-event-week').onclick=()=>{$('sheet-dialog').close();switchWeek(fieldSelection.date);setView('week');};
+$('edit-event').onclick=()=>{$('sheet-text').focus();};
+$('sheet-text').oninput=()=>{$('open-event-week').textContent='保存して週案を開く';};
+$('open-event-week').onclick=()=>{if(!saveSheetField())return;$('sheet-dialog').close();switchWeek(fieldSelection.date);setView('week');};
 function renderCounts() {
   const rows = counts(state, week),
     limit = [today(), addDays(week, 6)].sort()[0];
@@ -793,25 +803,12 @@ $("restore-file").onchange = async () => {
     }
   }
 };
-const shell = document.createElement("div");
-shell.style.cssText = "position:relative;overflow:hidden";
-$("paper-viewport").append(shell);
-shell.append($("paper"));
-$("paper").style.position = "absolute";
+const paperView = new PaperViewport($('paper-viewport'), $('paper'), $('ink-canvas'), ink, {
+  out:$('zoom-out'), in:$('zoom-in'), fit:$('zoom-fit'), level:$('zoom-level')
+});
 function resizePaper() {
-  const viewport=$('paper-viewport'), available=viewport.clientWidth;
-  if(!available)return;
-  const landscape=matchMedia('(orientation: landscape)').matches;
-  const top=viewport.getBoundingClientRect().top;
-  const remaining=Math.max(80,(window.visualViewport?.height||innerHeight)-top-42);
-  const scale=Math.min(available/1200,landscape?remaining/848:Infinity);
-  shell.style.width=`${1200*scale}px`;shell.style.height=`${848*scale}px`;
-  shell.style.margin='0 auto';
-  $('paper').style.transform=`scale(${scale})`;
+  paperView.resize();
 }
-window.addEventListener('resize',resizePaper);
-window.visualViewport?.addEventListener('resize',resizePaper);
-new ResizeObserver(resizePaper).observe($("paper-viewport"));
 window.addEventListener("online", reconnect);
 window.addEventListener("offline", () => {
   if (user) status(dirty ? "オフライン・未同期" : "オフライン", true);

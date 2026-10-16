@@ -32,6 +32,12 @@ test('changed lessons display a change label and legacy cancelled lessons remain
  setSlot(s,'2026-04-06',1,{lessonId:'a',status:'cancelled'});
  assert.equal(slotAt(s,'2026-04-06',1).lessonId,'');
 });
+test('holiday shading includes morning, lunch and after school; headers put dates before weekdays',()=>{
+ const html=weekMarkup(createState(2026),'2026-10-12');
+ for(const period of ['朝','昼','業後'])assert.ok(html.includes(`class="sheet-write closed" data-field="2026-10-12:${period}"`));
+ assert.ok(html.includes('<strong>10/12</strong><strong>月</strong>'));
+ assert.equal((html.match(/lesson-cell [^\"]*closed/g)||[]).length,6);
+});
 test('straight strokes retain only endpoints; hold-to-straighten supports undo, redo and cancellation',async()=>{
  const ctx=new Proxy({},{get:()=>()=>{}}),canvas=()=>({getContext:()=>ctx,addEventListener(){},classList:{toggle(){}},setPointerCapture(){},getBoundingClientRect:()=>({left:0,top:0,width:1200,height:920})});
  globalThis.document={createElement:canvas};globalThis.devicePixelRatio=1;globalThis.requestAnimationFrame=()=>1;
