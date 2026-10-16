@@ -1,6 +1,7 @@
 import { cp, mkdir, rm, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildEducationEntry } from "./build-education.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url)),
   out = resolve(root, "dist");
 await rm(out, { recursive: true, force: true });
@@ -25,6 +26,7 @@ await writeFile(
   htmlPath,
   html.replace(/(data\.js|script\.js|style\.css)"/g, `$1?v=${version}"`),
 );
+await buildEducationEntry(out);
 console.log(
   "Netlify static site prepared in dist; purchaser APIs are separate functions.",
 );

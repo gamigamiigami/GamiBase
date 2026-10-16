@@ -87,7 +87,9 @@ header {
   display: inline-block;
   position: relative;
   max-width: 100%;
+  text-decoration: none;
 }
+.title-wrap:focus-visible { outline: 3px solid #675077; outline-offset: 4px; }
 
 h1.site-title {
   font-family: 'Yusei Magic', 'M PLUS Rounded 1c', sans-serif;

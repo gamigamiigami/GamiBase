@@ -5,7 +5,7 @@
 
 ## 学校タブレットからのアクセス
 
-公開URLは `https://gamigamiigami.github.io/GamiBase/` です。「Education」という表記や教育用途の説明は、学校のフィルターの解除・教育カテゴリへの分類を保証するものではありません。
+公開URLは `https://gamigamiigami.github.io/GamiBase/Education/` です。従来の `https://gamigamiigami.github.io/GamiBase/` でも同じポータルを開けます。「Education」という表記や教育用途の説明は、学校のフィルターの解除・教育カテゴリへの分類を保証するものではありません。
 
 開けない場合は、学校の管理者へ公開URLと用途、制限画面の理由・カテゴリ名を伝え、アクセス許可や分類の確認を依頼してください。ドメイン `gamigamiigami.github.io` が制限されている場合、タイトルやURLのパスに単語を足すだけでは解決しません。ポータルから開く各ツールは、それぞれのURLに対する許可が必要になる場合もあります。
 
@@ -50,10 +50,11 @@ Netlify＋Supabaseでの公開にも対応しています。[接続設定と公�
 ## ローカルで確認する
 
 ```bash
+npm run build:education
 python3 -m http.server 8000
 ```
 
-その後 `http://localhost:8000` を開いてください。
+Node.js 24以上を使用し、その後 `http://localhost:8000/Education/` を開いてください。`Education/index.html` はルートの `index.html` から生成します。ルートを編集したら生成コマンドを再実行してください。GitHub PagesとNetlifyへの公開時にも自動生成されます。
 
 ## GitHub Pagesで公開する
 
