@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createState,setSlot,slotAt} from '../tools/shigodeki-sensei/app/model.mjs';
+import {createState,setSlot,slotAt,counts,swapSlots} from '../tools/shigodeki-sensei/app/model.mjs';
 import {plannerData,annualMarkup,weekMarkup,monthsOf} from '../tools/shigodeki-sensei/app/sheets.mjs';
 import {validateState} from '../tools/shigodeki-sensei/app/validation.mjs';
 import {Ink} from '../tools/shigodeki-sensei/app/ink.mjs';
@@ -37,6 +37,33 @@ test('holiday shading includes morning, lunch and after school; headers put date
  for(const period of ['朝','昼','業後'])assert.ok(html.includes(`class="sheet-write closed" data-field="2026-10-12:${period}"`));
  assert.ok(html.includes('<strong>10/12</strong><strong>月</strong>'));
  assert.equal((html.match(/lesson-cell [^\"]*closed/g)||[]).length,6);
+});
+test('free entries persist separately from lesson counts and survive swaps',()=>{
+ const s=createState(2026),p=plannerData(s);s.lessons=[{id:'a',name:'国語',color:'#112233'}];s.templates[0].grid={'0:1':'a','1:1':'a'};
+ p.items.push({id:'assembly',name:'学年集会',color:'#d32f2f'});
+ setSlot(s,'2026-04-06',1,{customText:'学年集会',textColor:'#d32f2f',note:'体育館'});
+ assert.equal(counts(s,'2026-04-06','2026-04-10').a.week,1);
+ assert.equal(validateState(structuredClone(s)).overrides['2026-04-06:1'].customText,'学年集会');
+ assert.ok(weekMarkup(s,'2026-04-06').includes('style="color:#d32f2f">学年集会'));
+ swapSlots(s,{date:'2026-04-06',period:1},{date:'2026-04-07',period:2});
+ assert.equal(slotAt(s,'2026-04-07',2).customText,'学年集会');assert.equal(p.items.length,1);
+ const bad=structuredClone(s);bad.overrides['2026-04-07:2'].textColor='red';assert.throws(()=>validateState(bad));
+});
+test('real current-week cumulative includes the whole current week independently of the displayed week',()=>{
+ const s=createState(2026);s.lessons=[{id:'a',name:'国語',color:'#112233'}];s.templates[0].grid={'0:1':'a','4:1':'a'};
+ const early=counts(s,'2026-04-06','2026-04-15'),late=counts(s,'2026-05-11','2026-04-15');
+ assert.equal(early.a.throughCurrentWeek,5);assert.equal(late.a.throughCurrentWeek,5);
+ setSlot(s,'2026-04-17',1,{lessonId:'',status:'empty'});
+ assert.equal(counts(s,'2026-05-11','2026-04-15').a.throughCurrentWeek,4);
+ assert.equal(counts(s,'2026-05-11','2026-03-31').a.throughCurrentWeek,1);
+});
+test('event and field colors are shared across views, survive backup validation and reject invalid references',()=>{
+ const s=createState(2026),p=plannerData(s);p.events['2026-10-15']='校外学習';p.eventColors['2026-10-15']='#1565c0';
+ p.weeks['2026-10-12']={'2026-10-15:朝':'読書'};p.weekColors['2026-10-12']={'2026-10-15:朝':'#d32f2f'};
+ assert.deepEqual(validateState(JSON.parse(JSON.stringify(s))).planner,p);
+ for(const view of ['blocks','list'])assert.ok(annualMarkup(s,view).includes('color:#1565c0'));
+ assert.ok(weekMarkup(s,'2026-10-12').includes('color:#d32f2f'));
+ for(const mutate of [x=>x.planner.eventColors['2026-02-30']='#112233',x=>x.planner.weekColors['2026-10-12'].bad='#112233',x=>x.planner.items.push({id:'bad',name:'x',color:'red'})]){const bad=structuredClone(s);mutate(bad);assert.throws(()=>validateState(bad));}
 });
 test('straight strokes retain only endpoints; hold-to-straighten supports undo, redo and cancellation',async()=>{
  const ctx=new Proxy({},{get:()=>()=>{}}),canvas=()=>({getContext:()=>ctx,addEventListener(){},classList:{toggle(){}},setPointerCapture(){},getBoundingClientRect:()=>({left:0,top:0,width:1200,height:920})});

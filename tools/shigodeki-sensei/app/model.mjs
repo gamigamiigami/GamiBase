@@ -151,6 +151,7 @@ export function setSlot(state, date, period, entry) {
     lessonId: entry.lessonId || "",
     status: entry.lessonId ? entry.status : "empty",
     note: entry.note || "",
+    ...(!entry.lessonId && entry.customText?.trim() ? {customText:entry.customText.trim(), textColor:entry.textColor || '#263238'} : {}),
   };
 }
 export function swapSlots(state, from, to) {
@@ -170,9 +171,9 @@ export function saveTemplate(state, from, grid) {
 }
 export function counts(state, week, asOf = today()) {
   const [first, last] = yearBounds(state),
-    endOfWeek = addDays(week, 6);
+    endOfWeek = addDays(week, 6), realWeekEnd = addDays(monday(asOf), 6);
   const result = Object.fromEntries(
-    state.lessons.map((l) => [l.id, { week: 0, done: 0, plannedToWeek: 0 }]),
+    state.lessons.map((l) => [l.id, { week: 0, done: 0, plannedToWeek: 0, throughCurrentWeek: 0 }]),
   );
   for (let date = first; date <= last; date = addDays(date, 1)) {
     for (let period = 1; period <= 6; period++) {
@@ -182,6 +183,7 @@ export function counts(state, week, asOf = today()) {
         continue;
       if (date >= week && date <= endOfWeek) row.week++;
       if (date <= endOfWeek) row.plannedToWeek++;
+      if (date <= realWeekEnd) row.throughCurrentWeek++;
       if (slot.status === "done" && date <= asOf && date <= endOfWeek)
         row.done++;
     }

@@ -18,9 +18,9 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-180.png" />
-    <link rel="stylesheet" href="app.css?v=6" />
-    <link rel="stylesheet" href="notebook.css?v=6" />
-    <script type="module" src="app.mjs?v=6"></script>
+    <link rel="stylesheet" href="app.css?v=7" />
+    <link rel="stylesheet" href="notebook.css?v=7" />
+    <script type="module" src="app.mjs?v=7"></script>
   </head>
   <body>
     <div id="auth-view" class="auth-layout">
@@ -276,6 +276,7 @@
       <p id="sheet-date-help" class="muted"></p>
       <div id="date-actions" class="date-actions"><button id="edit-event" type="button">✎ 内容を入力</button><button id="open-event-week" type="button">▦ 週案を開く</button></div>
       <label>記入内容<textarea id="sheet-text" rows="5" maxlength="2000"></textarea></label>
+      <label class="text-color-field">文字色<input id="sheet-text-color" type="color" value="#263238" /></label>
       <div class="dialog-actions"><button type="button" data-close="sheet-dialog">閉じる</button><button class="primary" type="submit">入力を保存</button></div>
     </form></dialog>
     <dialog id="slot-dialog">
@@ -296,7 +297,7 @@
         </div>
         <p id="slot-day-note" class="muted"></p>
         <label>授業<select id="slot-lesson"></select></label
-        ><label
+        ><div id="custom-slot-fields" hidden><label>自由入力項目<input id="slot-custom-text" maxlength="100" placeholder="例：運動会・出張・学年集会" /></label><label class="text-color-field">文字色<input id="slot-custom-color" type="color" value="#263238" /></label><label class="inline-check"><input id="slot-save-custom" type="checkbox" />この項目を選択肢に保存する</label><p class="muted">チェックを外すと、このコマだけに記入します。自由入力は授業の時数に含めません。</p></div><label
           >授業メモ<textarea
             id="slot-note"
             maxlength="2000"
@@ -374,6 +375,10 @@
         </p>
         <div id="break-settings"></div>
         <button type="button" id="add-break">＋ 休業期間を追加</button>
+        <h3>04 行事予定</h3>
+        <p class="muted">年間カレンダー・年間行事予定・週案の行事欄に共通で表示します。文字色も選べます。</p>
+        <div id="event-settings"></div>
+        <button type="button" id="add-event">＋ 行事予定を追加</button>
         <p id="settings-error" class="error" role="alert"></p>
         <div class="dialog-actions">
           <button type="button" data-close="settings-dialog">キャンセル</button

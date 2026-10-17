@@ -34,18 +34,24 @@ export class PaperViewport {
     const landscape = matchMedia('(orientation: landscape)').matches;
     const remaining = Math.max(80, (window.visualViewport?.height || innerHeight) - viewport.getBoundingClientRect().top - 42);
     this.fitScale = width / 1200;
-    const height = landscape ? remaining / this.fitScale : 848;
+    const minimum = this.minimumHeight || 0;
+    if(landscape && minimum) this.fitScale=Math.min(this.fitScale,remaining/minimum);
+    const height = Math.max(minimum, landscape ? remaining / this.fitScale : 848);
     viewport.style.height = `${height * this.fitScale}px`;
     this.scale = this.fitScale * this.zoom;
     shell.style.width = `${1200 * this.scale}px`;
     shell.style.height = `${height * this.scale}px`;
     paper.style.height = canvas.style.height = `${height}px`;
     paper.style.transform = `scale(${this.scale})`;
+    paper.style.setProperty('--print-height',`${height}px`);
+    paper.style.setProperty('--print-scale',Math.min(1062/1200,748/height));
     paper.classList.toggle('compact-sheet', height < 600);
     this.controls.level.textContent = `${Math.round(this.zoom * 100)}%`;
     this.controls.out.disabled = this.zoom <= .5;
     this.controls.in.disabled = this.zoom >= 3;
+    this.onLayout?.();
   }
+  setMinimumHeight(height) { this.minimumHeight=height; this.resize(); }
   setZoom(value, x = this.viewport.clientWidth/2, y = this.viewport.clientHeight/2) {
     const old = this.scale || 1;
     const anchor = [(this.viewport.scrollLeft+x)/old, (this.viewport.scrollTop+y)/old];

@@ -1,4 +1,4 @@
-import {plannerData, annualMarkup, weekMarkup} from './sheets.mjs?v=6';
+import {plannerData, annualMarkup, weekMarkup} from './sheets.mjs?v=7';
 import {
   DAYS,
   COLORS,
@@ -19,12 +19,13 @@ import {
   saveTemplate,
   templateFor,
   counts,
-} from "./model.mjs?v=6";
-import { Ink } from "./ink.mjs?v=6";
-import { PaperViewport } from "./viewport.mjs?v=6";
-import { draft } from "./storage.mjs?v=6";
-import { validateState } from "./validation.mjs?v=6";
-import { setupInstall } from "./install.mjs?v=6";
+} from "./model.mjs?v=7";
+import { Ink } from "./ink.mjs?v=7";
+import { PaperViewport } from "./viewport.mjs?v=7";
+import { fitCalendar } from "./calendar.mjs?v=7";
+import { draft } from "./storage.mjs?v=7";
+import { validateState } from "./validation.mjs?v=7";
+import { setupInstall } from "./install.mjs?v=7";
 const $ = (id) => document.getElementById(id);
 let localAvailable = true;
 const escape = (value) =>
@@ -37,7 +38,7 @@ const escape = (value) =>
   );
 const formatDate = (value) =>
   `${Number(value.slice(5, 7))}/${Number(value.slice(8, 10))}`;
-let view = "week", paletteSlot = 0, fieldSelection;
+let view = "week", paletteSlot = 0, fieldSelection, eventSettings = [];
 let user,
   state,
   revision = 0,
@@ -380,6 +381,9 @@ function renderGrid() {
   document.querySelector('.week-toolbar').classList.toggle('annual-toolbar',view!=='week');
   $('sheet-caption').textContent=view==='week'?'赤字の「変更」は基本時間割から変更したコマです。':view==='free'?'ペン・直線・マーカーで自由に書き込めます。':'日付をタップして行事を記入。その週の週案も開けます。';
   $('sheet-content').innerHTML=view==='week'?weekMarkup(state,week,$('show-weekend').checked):view==='blocks'||view==='list'?annualMarkup(state,view):'<div class="free-sheet"><h2>自由ページ</h2></div>';
+  paperView.setMinimumHeight(0);
+  const annual=$('sheet-content').querySelector('.annual-sheet');
+  if(annual) requestAnimationFrame(()=>{if(annual.isConnected){paperView.setMinimumHeight(fitCalendar(annual));}});
   if($('week-note')) $('week-note').oninput=()=>{if(!locked&&!conflict){state.notes[week]=$('week-note').value;changed();}};
 }
 function setView(next) {
@@ -404,17 +408,20 @@ $('sheet-content').addEventListener('click',e=>{
   $('sheet-title').textContent=b.dataset.event?`${formatDate(b.dataset.event)}（${DAYS[weekday(b.dataset.event)]}）の行事・予定`:b.getAttribute('aria-label');
   $('sheet-date-help').textContent=b.dataset.event?[closedReason(state,b.dataset.event),'内容を入力するか、この日の週案を開けます。'].filter(Boolean).join(' / '):'';
   $('sheet-text').value=b.dataset.event?plannerData(state).events[b.dataset.event]||'':plannerData(state).weeks[week]?.[b.dataset.field]||'';
+  $('sheet-text-color').value=b.dataset.event?plannerData(state).eventColors[b.dataset.event]||'#263238':plannerData(state).weekColors[week]?.[b.dataset.field]||'#263238';
+  $('sheet-text').style.color=$('sheet-text-color').value;
   $('date-actions').hidden=!b.dataset.event;
   $('open-event-week').textContent='▦ 週案を開く';
   $('sheet-dialog').showModal();
 });
 function saveSheetField() {
   if(locked||conflict)return false;
-  const p=plannerData(state),v=$('sheet-text').value;
+  const p=plannerData(state),v=$('sheet-text').value,c=$('sheet-text-color').value;
   const old=fieldSelection.date?p.events[fieldSelection.date]:p.weeks[week]?.[fieldSelection.key];
-  if((old||'')===v)return true;
-  if(fieldSelection.date){if(v)p.events[fieldSelection.date]=v;else delete p.events[fieldSelection.date];}
-  else{p.weeks[week]||={};p.weeks[week][fieldSelection.key]=v;}
+  const oldColor=fieldSelection.date?p.eventColors[fieldSelection.date]:p.weekColors[week]?.[fieldSelection.key];
+  if((old||'')===v&&(oldColor||'#263238')===c)return true;
+  if(fieldSelection.date){if(v){p.events[fieldSelection.date]=v;p.eventColors[fieldSelection.date]=c;}else{delete p.events[fieldSelection.date];delete p.eventColors[fieldSelection.date];}}
+  else{p.weeks[week]||={};p.weeks[week][fieldSelection.key]=v;p.weekColors[week]||={};p.weekColors[week][fieldSelection.key]=c;}
   changed();return true;
 }
 $('sheet-form').onsubmit=e=>{
@@ -423,17 +430,17 @@ $('sheet-form').onsubmit=e=>{
 };
 $('edit-event').onclick=()=>{$('sheet-text').focus();};
 $('sheet-text').oninput=()=>{$('open-event-week').textContent='保存して週案を開く';};
+$('sheet-text-color').oninput=()=>{$('sheet-text').style.color=$('sheet-text-color').value;$('open-event-week').textContent='保存して週案を開く';};
 $('open-event-week').onclick=()=>{if(!saveSheetField())return;$('sheet-dialog').close();switchWeek(fieldSelection.date);setView('week');};
 function renderCounts() {
-  const rows = counts(state, week),
-    limit = [today(), addDays(week, 6)].sort()[0];
+  const rows = counts(state, week), realEnd=addDays(monday(today()),6);
   $("count-explanation").textContent =
-    `年度初めから表示週末までの時間割を集計します。授業をなくす場合は「空き時間」を選びます。`;
+    `累計は年度初めから実際の今週末（${formatDate(realEnd)}）までです。今週の授業がすべて終わったものとして数えます。表示する週を変えても累計は変わりません。`;
   $("counts-list").innerHTML = state.lessons.length
     ? state.lessons
         .map(
           (lesson) =>
-            `<article class="count-card" data-lesson-id="${escape(lesson.id)}"><h3><span class="lesson-dot" style="--lesson-color:${escape(lesson.color)}"></span>${escape(lesson.name)}</h3><div class="count-values"><div><strong data-count="week">${rows[lesson.id].week}<small>時間</small></strong><label>この週の予定</label></div><div><strong data-count="done">${rows[lesson.id].plannedToWeek}<small>時間</small></strong><label>累計・時間割</label></div></div><p>この週までの予定累計 ${rows[lesson.id].plannedToWeek} 時間</p></article>`,
+            `<article class="count-card" data-lesson-id="${escape(lesson.id)}"><h3><span class="lesson-dot" style="--lesson-color:${escape(lesson.color)}"></span>${escape(lesson.name)}</h3><div class="count-values"><div><strong data-count="week">${rows[lesson.id].week}<small>コマ</small></strong><label>表示中の週</label></div><div><strong data-count="done">${rows[lesson.id].throughCurrentWeek}<small>コマ</small></strong><label>実際の今週末までの累計</label></div></div></article>`,
         )
         .join("")
     : '<div class="empty-state">最初に「基本設定」から担当する授業と時間割を登録しましょう。</div>';
@@ -469,6 +476,14 @@ $("sheet-content").addEventListener("click", (event) => {
     ? `${closedReason(state, slotSelection.date)}です。授業を指定すると、このコマだけ実施日に変更します。`
     : "この日のコマだけを変更します。";
   $("slot-lesson").innerHTML = options(state.lessons, slot.lessonId);
+  const items=plannerData(state).items;
+  const item=items.find(i=>i.name===slot.customText&&i.color===(slot.textColor||'#263238'));
+  $('slot-lesson').insertAdjacentHTML('beforeend',`<option value="__custom">自由入力…</option>${items.length?`<optgroup label="保存した自由入力">${items.map(i=>`<option value="item:${escape(i.id)}">${escape(i.name)}</option>`).join('')}</optgroup>`:''}`);
+  if(slot.customText) $('slot-lesson').value=item?`item:${item.id}`:'__custom';
+  $('slot-custom-text').value=slot.customText||'';
+  $('slot-custom-color').value=slot.textColor||'#263238';
+  $('slot-save-custom').checked=false;
+  updateCustomSlot();
   $("slot-note").value = slot.note || "";
   const [first, last] = yearBounds(state);
   $("swap-date").min = first;
@@ -489,12 +504,31 @@ function options(lessons, selected = "") {
       .join("")
   );
 }
+function updateCustomSlot() {
+  const value=$('slot-lesson').value, free=value==='__custom'||value.startsWith('item:');
+  $('custom-slot-fields').hidden=!free;
+  $('slot-custom-text').required=free;
+  if(value.startsWith('item:')) {
+    const item=plannerData(state).items.find(i=>`item:${i.id}`===value);
+    if(item){$('slot-custom-text').value=item.name;$('slot-custom-color').value=item.color;}
+  }
+}
+$('slot-lesson').onchange=()=>{$('slot-save-custom').checked=false;updateCustomSlot();};
 $("slot-form").onsubmit = (event) => {
   event.preventDefault();
+  const value=$('slot-lesson').value, free=value==='__custom'||value.startsWith('item:');
+  const text=$('slot-custom-text').value.trim(),color=$('slot-custom-color').value;
+  if(free&&!text){$('slot-error').textContent='自由入力項目を入力してください。';return;}
+  const items=plannerData(state).items;
+  if(free&&$('slot-save-custom').checked&&!items.some(i=>i.name===text&&i.color===color)) {
+    if(items.length>=100){$('slot-error').textContent='保存できる自由入力項目は100件までです。';return;}
+    items.push({id:crypto.randomUUID(),name:text,color});
+  }
   setSlot(state, slotSelection.date, slotSelection.period, {
-    lessonId: $("slot-lesson").value,
+    lessonId: free?'':value,
     status: "planned",
     note: $("slot-note").value,
+    ...(free?{customText:text,textColor:color}:{}),
   });
   changed();
   renderGrid();
@@ -551,6 +585,9 @@ function openSettings() {
   renderLessonSettings();
   renderTemplate();
   renderBreaks();
+  const planner=plannerData(settingsState);
+  eventSettings=Object.entries(planner.events).sort(([a],[b])=>a.localeCompare(b)).map(([date,text])=>({date,text,color:planner.eventColors[date]||'#263238'}));
+  renderEventSettings();
   $("settings-error").textContent = "";
   $("settings-dialog").showModal();
 }
@@ -626,7 +663,22 @@ $("year").onchange = () => {
   $("template-from").value = first;
   renderTemplate();
   renderBreaks();
+  eventSettings=[];
+  renderEventSettings();
 };
+function renderEventSettings() {
+  const [first,last]=yearBounds(settingsState);
+  $('event-settings').innerHTML=eventSettings.map((e,i)=>`<div class="event-setting"><label>日付<input type="date" data-setting-event="${i}" data-field="date" value="${escape(e.date)}" min="${first}" max="${last}" required></label><label>行事・予定<textarea data-setting-event="${i}" data-field="text" rows="2" maxlength="2000" required>${escape(e.text)}</textarea></label><label>文字色<input type="color" data-setting-event="${i}" data-field="color" value="${escape(e.color)}"></label><button type="button" class="square" data-remove-event="${i}" aria-label="行事予定${i+1}を削除">×</button></div>`).join('');
+}
+$('add-event').onclick=()=>{
+  if(eventSettings.length>=366){$('settings-error').textContent='行事予定は366日分まで登録できます。';return;}
+  const [first,last]=yearBounds(settingsState);
+  const date=[first,week,last].sort()[1];
+  eventSettings.push({date,text:'',color:'#263238'});renderEventSettings();
+  $('event-settings').lastElementChild.querySelector('textarea').focus();
+};
+$('event-settings').oninput=e=>{const i=e.target.dataset.settingEvent;if(i!==undefined)eventSettings[Number(i)][e.target.dataset.field]=e.target.value;};
+$('event-settings').onclick=e=>{const b=e.target.closest('[data-remove-event]');if(b){eventSettings.splice(Number(b.dataset.removeEvent),1);renderEventSettings();}};
 function renderBreaks() {
   $("break-settings").innerHTML = settingsState.breaks
     .map(
@@ -681,6 +733,15 @@ $("settings-form").onsubmit = (event) => {
     saveTemplate(settingsState, $("template-from").value, grid);
     settingsState.owner = $("owner").value.trim();
     settingsState.lessons.forEach((l) => (l.name = l.name.trim()));
+    const dates=new Set(), planner=plannerData(settingsState);
+    planner.events={};planner.eventColors={};
+    for(const e of eventSettings){
+      if(!inYear(settingsState,e.date)||!validDate(e.date))throw new Error('行事予定の日付は年度内にしてください。');
+      if(dates.has(e.date))throw new Error('同じ日付の行事は1つの欄にまとめてください。');
+      if(!e.text.trim())throw new Error('行事・予定を入力してください。');
+      dates.add(e.date);planner.events[e.date]=e.text;planner.eventColors[e.date]=e.color;
+    }
+    validateState(settingsState);
     // A settings dialog is a draft. No app data changes until this point.
     state = settingsState;
     const [first, last] = yearBounds(state);
@@ -823,13 +884,16 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     ink.finish();
     sync();
-  } else if (user && !locked)
+  } else if (user && !locked) {
+    renderCounts();
     api("session").catch((error) => {
       if (error.status === 401) lock(error.message);
     });
+  }
 });
 // Check entitlement periodically while open. User data/API responses never enter the service-worker cache.
 setInterval(() => {
+  if(user && !locked && !document.hidden && view==='counts') renderCounts();
   if (user && !locked && !document.hidden)
     api("session").catch((error) => {
       if (error.status === 401) lock(error.message);

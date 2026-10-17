@@ -61,6 +61,24 @@
 .list .annual-day{flex-direction:row;align-items:center;gap:3px;padding:2px;font-size:11px}
 .list .annual-day>span{flex-shrink:0;width:25px;letter-spacing:-.5px}
 .list .annual-day small{font-size:9px;line-height:1.2;max-height:22px}
+.annual-day{gap:2px;white-space:normal;padding:3px}
+.annual-date{font-size:11px;line-height:13px;flex-shrink:0}
+.annual-day .annual-copy{font-size:11px;line-height:1.2;max-height:none;overflow:visible;min-width:0;width:100%;flex:1;white-space:pre-wrap;word-break:break-all}
+.annual-copy>span{display:block}.annual-copy>span:empty{display:none}
+.annual-copy .holiday-text{color:#a33333}
+.list .annual-day{align-items:stretch;gap:3px;padding:3px}
+.list .annual-day .annual-copy{width:auto;max-height:none;flex:1}
+.list .annual-day>.annual-date{width:25px;align-self:center}
+.custom-label{font-size:15px;font-weight:600;white-space:pre-wrap;overflow-wrap:anywhere;margin-right:24px}
+.compact-sheet .custom-label{font-size:14px}
+.text-color-field{display:flex;align-items:center;gap:12px}
+.text-color-field input[type=color]{width:50px;margin:0}
+.inline-check{display:flex;align-items:center;gap:8px}.inline-check input{width:auto;margin:0}
+.event-setting{display:grid;grid-template-columns:140px minmax(0,1fr) 52px 34px;align-items:start;gap:8px;margin-bottom:10px}
+.event-setting label{font-size:11px;margin-bottom:0}.event-setting input,.event-setting textarea{font-size:12px;margin-top:5px}
+.event-setting input[type=color]{width:48px;height:40px;padding:3px}
+.event-setting .square{margin-top:23px}
+@media(max-width:600px){.event-setting{grid-template-columns:minmax(0,1fr) 52px 34px}.event-setting>label:nth-child(2){grid-column:1/-1;grid-row:2}.event-setting>label:first-child{grid-column:1}.event-setting>label:nth-child(3){grid-column:2;grid-row:1}.event-setting>button{grid-column:3;grid-row:1}}
 .free-sheet{height:100%;border:1px solid #777;background-image:radial-gradient(#ccc .7px,transparent .7px);background-size:20px 20px;padding:20px}
 .free-sheet h2{font-size:18px;color:#777}
 .paper-viewport{overflow:hidden}
@@ -117,5 +135,5 @@
  body,.app-layout,.workspace,.planner-card{display:block!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;background:white!important;border:0!important;box-shadow:none!important}
  .sidebar,.workspace-header,.week-toolbar,.drawing-toolbar,.paper-help,.planner-bottom,.workspace-footer,.notice,.counts-section,dialog{display:none!important}
  .paper-viewport{margin:0!important;overflow:hidden!important;width:281mm!important;height:198mm!important}.paper-viewport>div{width:281mm!important;height:198mm!important;margin:0!important}
- .paper{transform:scale(.883)!important;position:absolute!important;top:0!important;left:0!important}.paper,#ink-canvas{height:848px!important}#sheet-content,#ink-canvas{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .paper{transform:scale(var(--print-scale,.883))!important;position:absolute!important;top:0!important;left:0!important}.paper,#ink-canvas{height:var(--print-height,848px)!important}#sheet-content,#ink-canvas{print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }

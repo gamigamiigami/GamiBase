@@ -1,5 +1,5 @@
-import {validatePlanner} from './sheets.mjs?v=6';
-import { validDate, monday, yearBounds } from "./model.mjs?v=6";
+import {validatePlanner} from './sheets.mjs?v=7';
+import { validDate, monday, yearBounds } from "./model.mjs?v=7";
 
 export function validateState(state) {
   const fail = () => {
@@ -79,6 +79,8 @@ export function validateState(state) {
       !text(slot.note, 2000)
     )
       fail();
+    if (slot.customText !== undefined && (!text(slot.customText, 100) || !slot.customText.trim() || slot.lessonId !== '')) fail();
+    if (slot.textColor !== undefined && !/^#[0-9a-fA-F]{6}$/.test(slot.textColor)) fail();
   }
   if (
     !object(state.notes) ||

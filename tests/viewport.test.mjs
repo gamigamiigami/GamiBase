@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {PaperViewport} from '../tools/shigodeki-sensei/app/viewport.mjs';
 
 function fixture() {
-  const element=()=>({style:{},append(){},addEventListener(){},classList:{toggle(){}}});
+  const element=()=>({style:{setProperty(){}},append(){},addEventListener(){},classList:{toggle(){}}});
   globalThis.document={createElement:element};
   globalThis.window={addEventListener(){},visualViewport:{height:800,addEventListener(){}}};
   globalThis.matchMedia=()=>({matches:true});

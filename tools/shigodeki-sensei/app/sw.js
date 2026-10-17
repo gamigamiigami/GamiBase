@@ -1,4 +1,4 @@
-const CACHE = "shigodeki-shell-v6";
+const CACHE = "shigodeki-shell-v7";
 const ROOT = new URL("./", self.location.href);
 const FILES = [
   "./",
@@ -12,6 +12,7 @@ const FILES = [
   "storage.mjs",
   "ink.mjs",
   "viewport.mjs",
+  "calendar.mjs",
   "install.mjs",
   "manifest.webmanifest",
   "icon.svg",
@@ -19,7 +20,7 @@ const FILES = [
   "icon-192.png",
   "icon-512.png",
 ];
-const URLS = new Set(FILES.map((path) => new URL(/\.(mjs|css)$/.test(path) ? `${path}?v=6` : path, ROOT).href));
+const URLS = new Set(FILES.map((path) => new URL(/\.(mjs|css)$/.test(path) ? `${path}?v=7` : path, ROOT).href));
 self.addEventListener("install", (event) =>
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([...URLS]))),
 );
