@@ -11,6 +11,7 @@
     "license": "node --env-file-if-exists=.env server/admin.mjs",
     "build:netlify": "node scripts/build-netlify.mjs",
     "build:education": "node scripts/build-education.mjs",
+    "build:portal": "node scripts/build-portal.mjs",
     "license:supabase": "node --use-env-proxy --env-file-if-exists=.env server/supabase-admin.mjs",
     "cloud:setup": "node --use-env-proxy --env-file-if-exists=.env scripts/cloud-setup.mjs"
   },

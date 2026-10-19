@@ -5,7 +5,10 @@
 
 ## 学校タブレットからのアクセス
 
-公開URLは `https://gamigamiigami.github.io/GamiBase/Education/` です。従来の `https://gamigamiigami.github.io/GamiBase/` でも同じポータルを開けます。「Education」という表記や教育用途の説明は、学校のフィルターの解除・教育カテゴリへの分類を保証するものではありません。
+Netlifyの公開URLは `https://gamibase-education.netlify.app/` です。ドメイン名にeducationを含めています。
+GitHub Pagesの `https://gamigamiigami.github.io/GamiBase/Education/` と従来の `https://gamigamiigami.github.io/GamiBase/` でも同じポータルを開けます。「Education」という表記や教育用途の説明は、学校のフィルターの解除・教育カテゴリへの分類を保証するものではありません。
+
+Netlifyのポータル用ビルドと、既存の購入者アプリへの接続方法は [Educationドメインのポータル](docs/education-portal.md) を参照してください。
 
 開けない場合は、学校の管理者へ公開URLと用途、制限画面の理由・カテゴリ名を伝え、アクセス許可や分類の確認を依頼してください。ドメイン `gamigamiigami.github.io` が制限されている場合、タイトルやURLのパスに単語を足すだけでは解決しません。ポータルから開く各ツールは、それぞれのURLに対する許可が必要になる場合もあります。
 
