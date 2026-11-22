@@ -269,6 +269,14 @@ const SITE_DATA = [
   // ==== 便利ツール ====
   {
     category: "useful",
+    title: "シネマネージャー",
+    description: "愛知県の映画館を登録して、観たい作品の上映時間をまとめて比較。ポスターと日付から選び、字幕・吹替・IMAXなども確認できます。",
+    url: "https://cinema-pocket-nov26.igamiigamiigami.chatgpt.site",
+    emoji: "🎬",
+    tags: ["映画", "上映時間", "愛知県"],
+  },
+  {
+    category: "useful",
     title: "ToDo丸（とどまる）",
     description: "Windows用の付箋風TODOアプリ。期限が来ると画面最前面でお知らせ。",
     url: "./tools/todomaru/index.html",
